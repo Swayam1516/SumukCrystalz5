@@ -1,37 +1,26 @@
-const Order = require('../models/Order');
-const Product = require('../models/Product');
-const User = require('../models/User');
-const orderService = require('../services/orderService');
 const AppError = require('../utils/AppError');
 const { LOW_STOCK_THRESHOLD } = require('../utils/constants');
+const {
+  supabase,
+  getSupabaseOrders,
+  getSupabaseCustomers,
+} = require('../utils/supabase');
+const orderService = require('../services/orderService');
+const {
+  getSupabaseAllProducts,
+  getSupabaseProductBySlugOrId,
+  createSupabaseProduct,
+  updateSupabaseProduct,
+  deleteSupabaseProduct,
+} = require('../utils/supabaseProductService');
 
 /**
  * GET /api/admin/orders
  */
 async function getAllOrders(req, res, next) {
   try {
-    const { status, startDate, endDate } = req.query;
     let orders = [];
-
-    try {
-      const filter = {};
-      if (status) filter.status = status;
-      if (startDate || endDate) {
-        filter.createdAt = {};
-        if (startDate) filter.createdAt.$gte = new Date(startDate);
-        if (endDate) filter.createdAt.$lte = new Date(endDate);
-      }
-
-      if (require('mongoose').connection.readyState === 1) {
-        orders = await Order.find(filter)
-          .sort({ createdAt: -1 })
-          .populate('items.product', 'name images slug');
-      } else {
-        const { getSupabaseOrders } = require('../utils/supabase');
-        orders = await getSupabaseOrders();
-      }
-    } catch (e) {
-      const { getSupabaseOrders } = require('../utils/supabase');
+    if (supabase) {
       orders = await getSupabaseOrders();
     }
 
@@ -48,7 +37,7 @@ async function getAllOrders(req, res, next) {
 /**
  * PATCH /api/admin/orders/:id/status
  */
-async function updateStatus(req, res, next) {
+async function updateOrderStatus(req, res, next) {
   try {
     const { status, trackingNumber, carrier } = req.body;
     const order = await orderService.updateOrderStatus(req.params.id, {
@@ -69,21 +58,18 @@ async function updateStatus(req, res, next) {
 
 /**
  * GET /api/admin/inventory/low-stock
- * Alerts for items with total stock <= LOW_STOCK_THRESHOLD
  */
 async function getLowStockAlerts(req, res, next) {
   try {
     const threshold = parseInt(req.query.threshold, 10) || LOW_STOCK_THRESHOLD;
-    const lowStockProducts = await Product.find({
-      totalStock: { $lte: threshold },
-      isActive: true,
-    }).sort({ totalStock: 1 });
+    const allProducts = await getSupabaseAllProducts({ includeInactive: true });
+    const lowStock = allProducts.filter((p) => (p.stockCount || p.totalStock || 0) <= threshold);
 
     res.json({
       success: true,
       threshold,
-      count: lowStockProducts.length,
-      products: lowStockProducts,
+      count: lowStock.length,
+      products: lowStock,
     });
   } catch (err) {
     next(err);
@@ -92,10 +78,12 @@ async function getLowStockAlerts(req, res, next) {
 
 /**
  * GET /api/admin/products
+ * Retrieve all products for admin management table directly from Supabase
  */
 async function getAllProducts(req, res, next) {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const products = await getSupabaseAllProducts({ includeInactive: true });
+
     res.json({
       success: true,
       count: products.length,
@@ -108,18 +96,22 @@ async function getAllProducts(req, res, next) {
 
 /**
  * POST /api/admin/products
+ * Permanently create product, variants, and images directly in Supabase Cloud Database
  */
 async function createProduct(req, res, next) {
   try {
     const payload = req.body;
-    if (!payload.slug && payload.name) {
-      payload.slug = payload.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    if (!payload.name && !payload.title) {
+      return next(new AppError('Product name is required.', 400));
     }
 
-    const product = await Product.create(payload);
+    const created = await createSupabaseProduct(payload);
+
     res.status(201).json({
       success: true,
-      product,
+      message: 'Product permanently created in Supabase database.',
+      product: created,
     });
   } catch (err) {
     next(err);
@@ -128,21 +120,19 @@ async function createProduct(req, res, next) {
 
 /**
  * PUT /api/admin/products/:id
+ * Permanently update product, variants, and images directly in Supabase Cloud Database
  */
 async function updateProduct(req, res, next) {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const { id } = req.params;
+    const payload = req.body;
 
-    if (!product) {
-      return next(new AppError('Product not found', 404));
-    }
+    const updated = await updateSupabaseProduct(id, payload);
 
     res.json({
       success: true,
-      product,
+      message: 'Product updated successfully in Supabase database.',
+      product: updated,
     });
   } catch (err) {
     next(err);
@@ -151,17 +141,17 @@ async function updateProduct(req, res, next) {
 
 /**
  * DELETE /api/admin/products/:id
+ * Permanently delete product from Supabase Cloud Database
  */
 async function deleteProduct(req, res, next) {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) {
-      return next(new AppError('Product not found', 404));
-    }
+    const { id } = req.params;
+    const deleted = await deleteSupabaseProduct(id);
 
     res.json({
       success: true,
-      message: 'Product removed from treasury.',
+      deleted,
+      message: 'Product permanently removed from Supabase database.',
     });
   } catch (err) {
     next(err);
@@ -173,38 +163,10 @@ async function deleteProduct(req, res, next) {
  */
 async function getCustomers(req, res, next) {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
-    const customerMap = new Map();
-
-    for (const order of orders) {
-      const email = order.buyerEmail?.toLowerCase().trim();
-      if (!email) continue;
-
-      if (!customerMap.has(email)) {
-        customerMap.set(email, {
-          email,
-          fullName: order.buyerName || order.shippingAddress?.fullName || 'Collector',
-          phone: order.shippingAddress?.phone || 'N/A',
-          shippingAddress: order.shippingAddress || {},
-          totalOrders: 0,
-          totalSpent: 0,
-          lastOrderAt: order.createdAt,
-          orders: [],
-        });
-      }
-
-      const cust = customerMap.get(email);
-      cust.totalOrders += 1;
-      cust.totalSpent += order.total || 0;
-      cust.orders.push({
-        id: order._id,
-        status: order.status,
-        total: order.total,
-        date: order.createdAt,
-      });
+    let customers = [];
+    if (supabase) {
+      customers = await getSupabaseCustomers();
     }
-
-    const customers = Array.from(customerMap.values());
     res.json({
       success: true,
       count: customers.length,
@@ -217,8 +179,7 @@ async function getCustomers(req, res, next) {
 
 module.exports = {
   getAllOrders,
-  updateStatus,
-  updateOrderStatus: updateStatus,
+  updateOrderStatus,
   getLowStockAlerts,
   getAllProducts,
   createProduct,
@@ -226,4 +187,3 @@ module.exports = {
   deleteProduct,
   getCustomers,
 };
-

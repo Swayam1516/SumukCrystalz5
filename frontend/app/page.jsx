@@ -42,86 +42,7 @@ const VAULT_CATEGORIES = [
   'Sacred Energy Crystals',
 ];
 
-const DEFAULT_FEATURED_PRODUCTS = [
-  {
-    _id: 'prod-amethyst-1',
-    name: 'Royal Amethyst Cathedral Geode',
-    form: 'Cathedral Geodes',
-    price: 14500,
-    originalPrice: 18900,
-    chakra: ['Crown', 'Third Eye'],
-    rating: 5.0,
-    reviewsCount: 38,
-    stock: 3,
-    images: ['https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80'],
-    shortDescription: 'Deep Brazilian purple crystal terminations encased in a 130 Ma volcanic basalt rind.',
-  },
-  {
-    _id: 'prod-bracelet-1',
-    name: 'Consecrated Aura Crystal Bracelet',
-    form: 'Chatoyant Minerals',
-    price: 3499,
-    originalPrice: 4999,
-    chakra: ['Aura', 'Solar Plexus'],
-    rating: 5.0,
-    reviewsCount: 47,
-    stock: 12,
-    images: ['https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80'],
-    shortDescription: 'Serves as a wearable conduit to keep the specific metaphysical energies connected to your personal aura.',
-  },
-  {
-    _id: 'prod-rose-1',
-    name: 'Translucent Rose Quartz Lotus Matrix',
-    form: 'Heart & Crown Quartz',
-    price: 11200,
-    originalPrice: 14000,
-    chakra: ['Heart'],
-    rating: 5.0,
-    reviewsCount: 42,
-    stock: 2,
-    images: ['https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&fit=crop&w=800&q=80'],
-    shortDescription: 'The stone of universal love, fostering emotional healing, compassion, and deeper harmony.',
-  },
-  {
-    _id: 'prod-aventurine-1',
-    name: 'Green Aventurine Opportunity Cluster',
-    form: 'Sacred Energy Crystals',
-    price: 9600,
-    originalPrice: 12800,
-    chakra: ['Heart', 'Solar Plexus'],
-    rating: 4.9,
-    reviewsCount: 31,
-    stock: 5,
-    images: ['https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80'],
-    shortDescription: 'Stone of opportunity that attracts good luck, wealth, and abundance.',
-  },
-  {
-    _id: 'prod-tiger-1',
-    name: 'Chatoyant Tiger’s Eye Polished Monolith',
-    form: 'Chatoyant Minerals',
-    price: 9800,
-    originalPrice: 12500,
-    chakra: ['Solar Plexus', 'Root'],
-    rating: 4.9,
-    reviewsCount: 29,
-    stock: 4,
-    images: ['https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80'],
-    shortDescription: 'A grounding stone of courage and protection that boosts self-confidence, willpower, and focus.',
-  },
-  {
-    _id: 'prod-citrine-1',
-    name: 'Natural Sunset Citrine Cathedral Point',
-    form: 'Sacred Energy Crystals',
-    price: 13400,
-    originalPrice: 16800,
-    chakra: ['Solar Plexus', 'Sacral'],
-    rating: 4.9,
-    reviewsCount: 22,
-    stock: 2,
-    images: ['https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=800&q=80'],
-    shortDescription: 'Unheated honey-amber quartz crystal point radiating warm sovereign vitality.',
-  },
-];
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
 
 export default function HomePage() {
   const router = useRouter();
@@ -135,9 +56,34 @@ export default function HomePage() {
   const [quickAddedId, setQuickAddedId] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All Masterworks');
 
-  // Featured masterworks state - initialized with rich masterworks catalog for instant zero-flicker loading
-  const [featuredProducts, setFeaturedProducts] = useState(DEFAULT_FEATURED_PRODUCTS);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+  // Featured masterworks state - strictly connected to live Supabase database
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  // Fetch live products from backend Supabase API
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLiveProducts = async () => {
+      setLoadingProducts(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/products`);
+        if (res.ok) {
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : (data.products || []);
+          if (isMounted) {
+            setFeaturedProducts(items);
+          }
+        }
+      } catch (err) {
+        console.warn('Customer storefront live products fetch notice:', err.message);
+      } finally {
+        if (isMounted) setLoadingProducts(false);
+      }
+    };
+
+    fetchLiveProducts();
+    return () => { isMounted = false; };
+  }, [API_BASE]);
 
   // Auto Advance Callback for DynamicVideoEngine
   const handleAutoAdvance = useCallback(() => {
@@ -166,26 +112,39 @@ export default function HomePage() {
 
 
   const handleQuickAdd = (product) => {
+    const prodId = product.id || product._id;
+    const price = Number(product.price || product.sellingPrice || product.selling_price || product.basePrice || 0);
+    const origPrice = Number(product.originalPrice || product.original_price || price * 1.25);
+    const img = product.images?.[0] || product.heroImage || product.hero_image || product.image || 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80';
+
     addItem({
-      productId: product._id,
-      id: product._id,
+      productId: prodId,
+      id: prodId,
       name: product.name,
-      price: product.price,
-      unitPrice: product.price,
+      price: price,
+      unitPrice: price,
+      originalPrice: origPrice,
       quantity: 1,
-      variantLabel: product.form || 'Curated Specimen',
-      chakra: product.chakra || [],
-      image: product.images?.[0] || 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80',
+      variantLabel: product.variants?.[0]?.name || product.form || product.category || 'Curated Specimen',
+      chakra: Array.isArray(product.chakra) ? product.chakra : [product.chakra].filter(Boolean),
+      image: img,
     });
-    setQuickAddedId(product._id);
+    setQuickAddedId(prodId);
     crystalAudio.playSingingBowl(528);
     setTimeout(() => setQuickAddedId(null), 2000);
   };
 
-  // Filtered vault products
+  // Filtered vault products from live Supabase data
   const filteredVaultProducts = featuredProducts.filter((p) => {
     if (selectedCategory === 'All Masterworks') return true;
-    return p.form === selectedCategory || p.chakra?.includes(selectedCategory);
+    const cat = p.category || p.form || '';
+    const col = p.collection || '';
+    const chk = Array.isArray(p.chakra) ? p.chakra.join(' ') : (p.chakra || '');
+    return (
+      cat.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+      col.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+      chk.toLowerCase().includes(selectedCategory.toLowerCase())
+    );
   });
 
   return (
@@ -380,74 +339,119 @@ export default function HomePage() {
         </div>
 
         {/* Vault Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredVaultProducts.map((p) => (
-            <div
-              key={p._id}
-              className="rounded-3xl p-6 bg-[#0c0b12] border border-white/10 hover:border-amber-400/40 transition-all duration-500 flex flex-col justify-between group shadow-2xl relative overflow-hidden"
+        {loadingProducts ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="rounded-3xl p-6 bg-[#0c0b12] border border-white/10 flex flex-col justify-between shadow-2xl animate-pulse space-y-4"
+              >
+                <div className="aspect-square w-full rounded-2xl bg-white/5 border border-white/5" />
+                <div className="h-5 w-3/4 bg-white/10 rounded-full" />
+                <div className="h-3.5 w-1/2 bg-white/5 rounded-full" />
+                <div className="pt-4 border-t border-white/10 flex justify-between items-center">
+                  <div className="h-6 w-20 bg-white/10 rounded-full" />
+                  <div className="h-8 w-24 bg-amber-400/20 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredVaultProducts.length === 0 ? (
+          <div className="text-center py-16 px-4 rounded-3xl bg-[#0c0b12] border border-white/10">
+            <Gem className="w-12 h-12 text-amber-400/60 mx-auto mb-4" />
+            <h3 className="font-editorial text-2xl font-bold text-white mb-2">
+              No Specimens in this Vault Category
+            </h3>
+            <p className="text-xs sm:text-sm font-sans-ui text-neutral-400 max-w-md mx-auto mb-6">
+              All live specimens are synchronized directly with our sacred Supabase vault. Select another category or browse all masterworks.
+            </p>
+            <button
+              onClick={() => setSelectedCategory('All Masterworks')}
+              className="px-6 py-2.5 rounded-full bg-amber-400 text-black text-xs font-mono font-bold uppercase tracking-wider hover:bg-amber-300 transition-all cursor-pointer"
             >
-              <div className="space-y-4">
-                <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-black/40 border border-white/10">
-                  <Image
-                    src={p.images?.[0] || 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80'}
-                    alt={p.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
+              Show All Masterworks
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredVaultProducts.map((p) => {
+              const prodId = p.id || p._id;
+              const prodSlug = p.slug || prodId;
+              const prodImage = p.images?.[0] || p.heroImage || p.hero_image || p.image || 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80';
+              const prodPrice = Number(p.price || p.sellingPrice || p.selling_price || p.basePrice || 0);
+              const prodOrigPrice = Number(p.originalPrice || p.original_price || (prodPrice ? prodPrice * 1.25 : 0));
+              const prodCategory = p.category || p.form || 'Masterwork';
 
-                  <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono uppercase tracking-wider text-amber-300">
-                    {p.form}
+              return (
+                <div
+                  key={prodId}
+                  className="rounded-3xl p-6 bg-[#0c0b12] border border-white/10 hover:border-amber-400/40 transition-all duration-500 flex flex-col justify-between group shadow-2xl relative overflow-hidden"
+                >
+                  <div className="space-y-4">
+                    <Link
+                      href={`/product/${prodSlug}`}
+                      className="relative block aspect-square w-full rounded-2xl overflow-hidden bg-black/40 border border-white/10"
+                    >
+                      <Image
+                        src={prodImage}
+                        alt={p.name || 'Crystal Specimen'}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+
+                      <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono uppercase tracking-wider text-amber-300">
+                        {prodCategory}
+                      </div>
+                    </Link>
+
+                    <div>
+                      <Link href={`/product/${prodSlug}`}>
+                        <h3 className="font-editorial text-lg sm:text-xl font-bold text-white group-hover:text-amber-300 transition line-clamp-1 cursor-pointer">
+                          {p.name}
+                        </h3>
+                      </Link>
+                      <p className="text-xs font-sans-ui text-neutral-400 mt-1 line-clamp-2 leading-relaxed">
+                        {p.shortDescription || p.short_description || p.description || 'Authentic certified high-frequency mineral specimen.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+                    <div>
+                      <span className="font-mono text-xl font-bold text-white">
+                        ₹{prodPrice.toLocaleString('en-IN')}
+                      </span>
+                      {prodOrigPrice > prodPrice && (
+                        <span className="text-xs text-neutral-500 font-mono line-through ml-2">
+                          ₹{prodOrigPrice.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleQuickAdd(p)}
+                      className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-xs font-mono font-bold uppercase tracking-[0.14em] flex items-center gap-1.5 cursor-pointer shadow-lg transition-all"
+                    >
+                      {quickAddedId === prodId ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>ADDED</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>ADD</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
-
-                <div>
-                  <h3 className="font-editorial text-lg sm:text-xl font-bold text-white group-hover:text-amber-300 transition line-clamp-1">
-                    {p.name}
-                  </h3>
-                  <p className="text-xs font-sans-ui text-neutral-400 mt-1 line-clamp-2 leading-relaxed">
-                    {p.shortDescription}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3">
-                <div>
-                  <span className="font-mono text-xl font-bold text-white">
-                    ₹{Number(p.price || 0).toLocaleString('en-IN')}
-                  </span>
-                  {p.originalPrice ? (
-                    <span className="text-xs text-neutral-500 font-mono line-through ml-2">
-                      ₹{Number(p.originalPrice).toLocaleString('en-IN')}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-neutral-500 font-mono line-through ml-2">
-                      ₹{Number((p.price || 0) * 1.25).toFixed(0)}
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickAdd(p)}
-                  className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-xs font-mono font-bold uppercase tracking-[0.14em] flex items-center gap-1.5 cursor-pointer shadow-lg transition-all"
-                >
-                  {quickAddedId === p._id ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>ADDED</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>ADD</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );

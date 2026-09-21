@@ -1,9 +1,5 @@
 const paymentService = require('../services/paymentService');
-const Order = require('../models/Order');
-const Product = require('../models/Product');
-const { sendOrderConfirmationNotification } = require('../services/emailService');
-const { syncCustomerToSupabase, syncOrderToSupabase } = require('../utils/supabase');
-const { ORDER_STATUS } = require('../utils/constants');
+const { supabase } = require('../utils/supabase');
 
 /**
  * POST /api/payment/create-order (or /api/checkout/create-order)
@@ -39,7 +35,7 @@ async function verifyPayment(req, res, next) {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
-    const result = await paymentService.verifyPayment({
+    const result = await paymentService.verifyAndFulfillPayment({
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
@@ -60,7 +56,6 @@ async function verifyPayment(req, res, next) {
 async function handleWebhook(req, res, next) {
   try {
     const signature = req.headers['x-razorpay-signature'];
-    // Strict raw buffer preservation for Razorpay HMAC verification
     const rawBuffer = req.rawBody
       ? req.rawBody
       : Buffer.isBuffer(req.body)
@@ -84,39 +79,31 @@ async function confirmLinkPayment(req, res, next) {
       return res.status(400).json({ success: false, error: 'Missing orderId' });
     }
 
-    const order = await Order.findOneAndUpdate(
-      { _id: orderId, status: { $ne: ORDER_STATUS.PAID } },
-      {
-        status: ORDER_STATUS.PAID,
-        razorpayPaymentId: utrNumber ? `utr_${utrNumber}` : `rzp_link_${Date.now()}`,
-        razorpaySignature: `rzp_me_${paymentHandle || 'verified'}`,
-        paidAt: new Date(),
-      },
-      { new: true }
-    );
+    let updatedOrder = null;
+    if (supabase) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+      let query = supabase.from('orders').update({
+        status: 'paid',
+        razorpay_payment_id: utrNumber ? `utr_${utrNumber}` : `rzp_link_${Date.now()}`,
+        paid_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
-    if (!order) {
-      const existing = await Order.findById(orderId);
-      if (existing && existing.status === ORDER_STATUS.PAID) {
-        return res.json({ success: true, orderId: existing._id, message: 'Order already reconciled' });
+      if (isUuid) {
+        query = query.eq('id', orderId);
+      } else {
+        query = query.eq('order_number', orderId);
       }
-      return res.status(404).json({ success: false, error: 'Order not found' });
+
+      const { data } = await query.select().single();
+      updatedOrder = data;
     }
 
-    // Atomic Stock Deduction
-    for (const item of order.items) {
-      if (item.product) {
-        await Product.updateOne(
-          { _id: item.product },
-          { $inc: { totalStock: -item.quantity } }
-        ).catch(() => {});
-      }
-    }
-
-    syncOrderToSupabase(order).catch(() => {});
-    sendOrderConfirmationNotification(order).catch(() => {});
-
-    res.json({ success: true, orderId: order._id, status: ORDER_STATUS.PAID });
+    res.json({
+      success: true,
+      orderId: updatedOrder?.order_number || orderId,
+      status: 'paid',
+    });
   } catch (err) {
     next(err);
   }

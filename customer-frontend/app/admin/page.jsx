@@ -69,6 +69,8 @@ import {
   MessageSquare,
 } from 'lucide-react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+
 export default function AdminPage() {
   const router = useRouter();
   const { user, token, isAdmin, login, logout, initAuth } = useAuthStore();
@@ -140,9 +142,10 @@ export default function AdminPage() {
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3500);
+    }, 4000);
   };
 
+  // Auth Initialization on Load
   useEffect(() => {
     setMounted(true);
     initAuth();
@@ -174,15 +177,20 @@ export default function AdminPage() {
   const loadAllAdminData = async () => {
     setLoadingData(true);
     try {
-      // 1. Load Products (Init with Catalog merged with localStorage overrides)
-      let initialProducts = [...ENERGY_STONES_CATALOG];
+      // 1. Load Products live from Backend REST API
       try {
-        const localOverrides = localStorage.getItem('sumuk_admin_products');
-        if (localOverrides) {
-          initialProducts = JSON.parse(localOverrides);
+        const res = await fetch(`${API_BASE}/api/products`);
+        if (res.ok) {
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : (data.products || []);
+          setProducts(items);
+        } else {
+          setProducts([]);
         }
-      } catch (e) {}
-      setProducts(initialProducts);
+      } catch (err) {
+        console.warn('Backend products fetch notice:', err.message);
+        setProducts([]);
+      }
 
       // 2. Load Orders from Supabase & Local Cache
       let fetchedOrders = [];
@@ -443,23 +451,43 @@ export default function AdminPage() {
     const nextState = !currentInStock;
 
     try {
-      // 1. Sync Supabase
-      await updateProductAvailabilityInSupabase(productId, nextState);
+      // 1. Sync backend REST API
+      try {
+        const prod = products.find((p) => p.id === productId || p._id === productId);
+        await fetch(`${API_BASE}/api/admin/products/${productId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            inStock: nextState,
+            isActive: nextState,
+            total_stock: nextState ? (prod?.stockCount || prod?.total_stock || 10) : 0,
+          }),
+        });
+      } catch (err) {
+        console.warn('Backend update failed:', err);
+      }
 
-      // 2. Update local state & localStorage
+      // 2. Sync Supabase
+      try {
+        await updateProductAvailabilityInSupabase(productId, nextState);
+      } catch (e) {}
+
+      // 3. Update local state
       const updatedProducts = products.map((prod) => {
         if (prod.id === productId || prod._id === productId) {
           return {
             ...prod,
             inStock: nextState,
             isActive: nextState,
-            total_stock: nextState ? (prod.stockCount || 10) : 0,
+            total_stock: nextState ? (prod.stockCount || prod.total_stock || 10) : 0,
           };
         }
         return prod;
       });
       setProducts(updatedProducts);
-      localStorage.setItem('sumuk_admin_products', JSON.stringify(updatedProducts));
 
       addToast(
         `Product marked as ${nextState ? '✨ AVAILABLE (In Stock)' : '❌ CURRENTLY NOT AVAILABLE (Out of Stock)'}`,
@@ -470,11 +498,31 @@ export default function AdminPage() {
     }
   };
 
-  const handleAdjustStock = (productId, delta) => {
+  const handleAdjustStock = async (productId, delta) => {
+    const targetProd = products.find((p) => p.id === productId || p._id === productId);
+    const currentCount = targetProd?.stockCount || targetProd?.total_stock || 0;
+    const newCount = Math.max(0, currentCount + delta);
+
+    try {
+      await fetch(`${API_BASE}/api/admin/products/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          stockCount: newCount,
+          total_stock: newCount,
+          inStock: newCount > 0,
+          isActive: newCount > 0,
+        }),
+      });
+    } catch (err) {
+      console.warn('Backend stock adjust failed:', err);
+    }
+
     const updatedProducts = products.map((prod) => {
       if (prod.id === productId || prod._id === productId) {
-        const currentCount = prod.stockCount || prod.total_stock || 0;
-        const newCount = Math.max(0, currentCount + delta);
         return {
           ...prod,
           stockCount: newCount,
@@ -486,36 +534,65 @@ export default function AdminPage() {
       return prod;
     });
     setProducts(updatedProducts);
-    localStorage.setItem('sumuk_admin_products', JSON.stringify(updatedProducts));
     addToast('Inventory count updated', 'success');
   };
 
-  const handleSaveProductEdit = (e) => {
+  const handleSaveProductEdit = async (e) => {
     e.preventDefault();
     if (!editingProduct) return;
+    const targetId = editingProduct.id || editingProduct._id;
+
+    try {
+      await fetch(`${API_BASE}/api/admin/products/${targetId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(editingProduct),
+      });
+    } catch (err) {
+      console.warn('Backend product update failed:', err);
+    }
 
     const updatedProducts = products.map((prod) =>
-      prod.id === editingProduct.id ? editingProduct : prod
+      prod.id === targetId || prod._id === targetId ? editingProduct : prod
     );
     setProducts(updatedProducts);
-    localStorage.setItem('sumuk_admin_products', JSON.stringify(updatedProducts));
     addToast(`Changes saved for "${editingProduct.name}"`, 'success');
     setEditingProduct(null);
   };
 
-  const handleCreateProduct = (e) => {
+  const handleCreateProduct = async (e) => {
     e.preventDefault();
     const createdItem = {
       ...newProduct,
-      id: `prod_${Date.now()}`,
       slug: newProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       rating: 5.0,
       reviewsCount: 0,
     };
 
-    const updated = [createdItem, ...products];
-    setProducts(updated);
-    localStorage.setItem('sumuk_admin_products', JSON.stringify(updated));
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(createdItem),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const saved = data.product || createdItem;
+        setProducts([saved, ...products]);
+      } else {
+        setProducts([{ ...createdItem, id: `prod_${Date.now()}` }, ...products]);
+      }
+    } catch (err) {
+      console.warn('Backend create product failed:', err);
+      setProducts([{ ...createdItem, id: `prod_${Date.now()}` }, ...products]);
+    }
+
     setShowAddProductModal(false);
     addToast(`"${newProduct.name}" consecrated and added to the store!`, 'success');
     setNewProduct({
@@ -532,11 +609,20 @@ export default function AdminPage() {
     });
   };
 
-  const handleDeleteProduct = (productId) => {
+  const handleDeleteProduct = async (productId) => {
     if (!confirm('Are you sure you wish to remove this specimen from the live catalog?')) return;
+    try {
+      await fetch(`${API_BASE}/api/admin/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+    } catch (err) {
+      console.warn('Backend delete product failed:', err);
+    }
     const filtered = products.filter((p) => p.id !== productId && p._id !== productId);
     setProducts(filtered);
-    localStorage.setItem('sumuk_admin_products', JSON.stringify(filtered));
     addToast('Product specimen removed from catalog.', 'info');
   };
 

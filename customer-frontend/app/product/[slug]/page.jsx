@@ -64,49 +64,68 @@ export default function ProductDetailPage() {
     setOpenAccordions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+
+  const [notFound, setNotFound] = useState(false);
+
   useEffect(() => {
     if (!slug) return;
-    // 1. Search in ENERGY_STONES_CATALOG
-    const foundEnergy = ENERGY_STONES_CATALOG.find((p) => p.slug === slug || p.id === slug);
-    if (foundEnergy) {
-      setProduct(foundEnergy);
-      return;
-    }
 
-    // 2. Fallback to raw crystal catalog
-    const foundRaw = CRYSTAL_CATALOG.find((p) => p.id === slug || p.specimenCode?.includes(slug));
-    if (foundRaw) {
-      setProduct({
-        id: foundRaw.id,
-        slug: foundRaw.id,
-        name: foundRaw.name,
-        subtitle: foundRaw.subtitle,
-        description: foundRaw.description,
-        shortDescription: foundRaw.subtitle,
-        price: foundRaw.price,
-        originalPrice: foundRaw.originalPrice,
-        discountPercent: Math.round(((foundRaw.originalPrice - foundRaw.price) / foundRaw.originalPrice) * 100),
-        badge: 'MASTERWORK',
-        badgeColor: 'bg-[#B8860B] text-white',
-        rating: 5.0,
-        reviewsCount: 420,
-        beadSize: 'Museum Geode Matrix',
-        images: [
-          'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=1000&q=80',
-          'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=1000&q=80',
-        ],
-        vedicBenefits: [
-          '528Hz Solfeggio frequency sound-consecrated',
-          'Ethically mined with zero synthetic heating',
-          'Includes certificate of origin and mineral provenance',
-        ],
-      });
-      return;
-    }
+    let isMounted = true;
+    const loadProduct = async () => {
+      setNotFound(false);
+      // 1. Fetch live product from Backend REST API (Supabase)
+      try {
+        const res = await fetch(`${API_BASE}/api/products/${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.product) {
+            setProduct(data.product);
+            if (data.product.variants && data.product.variants.length > 0) {
+              setSelectedVariant(data.product.variants[0]);
+              setSelectedSize(data.product.variants[0].name);
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Backend product slug fetch note:', e.message);
+      }
 
-    // 3. Fallback default
-    setProduct(ENERGY_STONES_CATALOG[0]);
-  }, [slug]);
+      if (isMounted) {
+        setNotFound(true);
+      }
+    };
+
+    loadProduct();
+    return () => { isMounted = false; };
+  }, [slug, API_BASE]);
+
+  if (notFound) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6 text-center px-4 bg-[#FCFAF6]">
+        <div className="w-16 h-16 rounded-full bg-[#FFF4E0] border border-[#D4AF37]/40 flex items-center justify-center shadow-lg">
+          <Sparkles className="w-8 h-8 text-[#8C6208]" />
+        </div>
+        <div className="space-y-2 max-w-md">
+          <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#1F1A15]">
+            Specimen Not Located in Vault
+          </h2>
+          <p className="text-xs sm:text-sm font-sans-ui text-[#6B6357] leading-relaxed">
+            The requested crystal specimen may have been acquired or relocated in our sacred treasury.
+          </p>
+        </div>
+        <Link
+          href="/shop"
+          className="cta-3d-gold px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+        >
+          <span>Explore Treasury Catalog</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -119,21 +138,27 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Dynamic price calculation with Energized Pran Pratishta Addon (+₹100)
+  // Dynamic price calculation with Selected Variant & Energized Pran Pratishta Addon (+₹100)
+  const basePrice = selectedVariant?.price || product.price || 699;
+  const baseOriginalPrice = selectedVariant?.originalPrice || product.originalPrice || (basePrice * 1.6);
   const addonCost = isEnergizedAddon ? 100 : 0;
-  const unitPrice = product.price + addonCost;
-  const originalUnitPrice = product.originalPrice + addonCost;
+  const unitPrice = basePrice + addonCost;
+  const originalUnitPrice = baseOriginalPrice + addonCost;
   const totalPrice = unitPrice * quantity;
   const installmentPrice = Math.round(unitPrice / 3);
+  const discountPercent =
+    originalUnitPrice > unitPrice
+      ? Math.round(((originalUnitPrice - unitPrice) / originalUnitPrice) * 100)
+      : (product.discountPercent || 40);
 
   const handleAddToCart = () => {
     addItem({
       productId: product.id,
       id: product.id,
       slug: product.slug,
-      name: `${product.name} ${isEnergizedAddon ? '(Vedic Energized)' : ''}`,
-      image: product.images[0],
-      variantLabel: selectedSize,
+      name: `${product.name} - ${selectedVariant?.name || selectedSize} ${isEnergizedAddon ? '(Vedic Energized)' : ''}`,
+      image: product.images?.[0] || product.image,
+      variantLabel: selectedVariant?.name || selectedSize,
       price: unitPrice,
       unitPrice,
       quantity,
@@ -148,9 +173,9 @@ export default function ProductDetailPage() {
       productId: product.id,
       id: product.id,
       slug: product.slug,
-      name: `${product.name} ${isEnergizedAddon ? '(Vedic Energized)' : ''}`,
-      image: product.images[0],
-      variantLabel: selectedSize,
+      name: `${product.name} - ${selectedVariant?.name || selectedSize} ${isEnergizedAddon ? '(Vedic Energized)' : ''}`,
+      image: product.images?.[0] || product.image,
+      variantLabel: selectedVariant?.name || selectedSize,
       price: unitPrice,
       unitPrice,
       quantity,
@@ -359,35 +384,69 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* 3D Size Selector Pills */}
+            {/* Dynamic Crystal Variant Selector (Flipkart-Style) */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-[#1F1A15] font-bold uppercase tracking-wider">Select Bracelet Size:</span>
-                <span className="text-[#8C6208] font-bold">{selectedSize}</span>
+                <span className="text-[#1F1A15] font-bold uppercase tracking-wider">
+                  {product.variants && product.variants.length > 0 ? 'Select Specification / Variant:' : 'Select Bracelet Size:'}
+                </span>
+                <span className="text-[#8C6208] font-bold">{selectedVariant?.name || selectedSize}</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {['8mm Regular', '6mm Slim'].map((size) => {
-                  const isSelected = selectedSize === size;
-                  return (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setSelectedSize(size)}
-                      className={`py-3 px-4 rounded-xl text-xs font-option transition-all flex flex-col items-center justify-center gap-0.5 ${
-                        isSelected
-                          ? 'option-3d-light-active-gold text-black scale-102'
-                          : 'option-3d-light'
-                      }`}
-                    >
-                      <span className="font-bold">{size.toUpperCase()}</span>
-                      <span className={`text-[10px] font-mono ${isSelected ? 'text-black/70' : 'text-[#8C8377]'}`}>
-                        {size === '8mm Regular' ? 'Standard Wrist (6.5"-7.5")' : 'Slim Wrist (5.5"-6.5")'}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              {product.variants && product.variants.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {product.variants.map((v, idx) => {
+                    const isSelected = selectedVariant?.id ? selectedVariant.id === v.id : selectedVariant?.name === v.name;
+                    return (
+                      <button
+                        key={v.id || idx}
+                        type="button"
+                        disabled={v.isAvailable === false || v.stock <= 0}
+                        onClick={() => {
+                          setSelectedVariant(v);
+                          setSelectedSize(v.name);
+                        }}
+                        className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-[#FFF9EE] border-[#D4AF37] ring-1 ring-[#D4AF37]/50 shadow-md text-[#1F1A15]'
+                            : 'bg-white border-[#EDE6DA] hover:border-[#D4AF37]/60 text-[#6B6357]'
+                        } ${v.isAvailable === false || v.stock <= 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      >
+                        <div className="font-bold text-xs truncate">{v.name}</div>
+                        <div className="flex items-center justify-between mt-1 text-[11px]">
+                          <span className="text-[#8C6208] font-bold">₹{v.price || product.price}</span>
+                          {v.sizeOrWeight && (
+                            <span className="text-[10px] text-[#8C8377] font-mono">{v.sizeOrWeight}</span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {['8mm Regular', '6mm Slim'].map((size) => {
+                    const isSelected = selectedSize === size;
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setSelectedSize(size)}
+                        className={`py-3 px-4 rounded-xl text-xs font-option transition-all flex flex-col items-center justify-center gap-0.5 ${
+                          isSelected
+                            ? 'option-3d-light-active-gold text-black scale-102'
+                            : 'option-3d-light'
+                        }`}
+                      >
+                        <span className="font-bold">{size.toUpperCase()}</span>
+                        <span className={`text-[10px] font-mono ${isSelected ? 'text-black/70' : 'text-[#8C8377]'}`}>
+                          {size === '8mm Regular' ? 'Standard Wrist (6.5"-7.5")' : 'Slim Wrist (5.5"-6.5")'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Spiritual Upsell Add-on Box: Vedic Consecration Ceremony (+₹100) */}

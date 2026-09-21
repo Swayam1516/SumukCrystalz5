@@ -41,8 +41,8 @@ function MasterworksShopContent() {
   const [selectedModality, setSelectedModality] = useState('');
   const [selectedBeads, setSelectedBeads] = useState(initialBead ? [initialBead] : []);
   const [selectedSizes, setSelectedSizes] = useState([]);
-  const [maxPrice, setMaxPrice] = useState(2500);
   const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(50000);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('bestselling'); // 'bestselling' | 'price-low' | 'price-high' | 'rating'
   const [gridCols, setGridCols] = useState(4); // 4 or 2
@@ -60,8 +60,8 @@ function MasterworksShopContent() {
 
   const { addItem, openDrawer } = useCartStore();
 
-  const toggleSection = (section) => {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  const toggleSection = (key) => {
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const toggleBead = (bead) => {
@@ -82,58 +82,129 @@ function MasterworksShopContent() {
     setSelectedBeads([]);
     setSelectedSizes([]);
     setMinPrice(0);
-    setMaxPrice(2500);
+    setMaxPrice(50000);
     setSearchQuery('');
   };
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+  const [catalog, setCatalog] = useState([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCatalog = async () => {
+      setLoadingCatalog(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/products`);
+        if (res.ok) {
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : (data.products || []);
+          if (isMounted) {
+            setCatalog(items);
+          }
+        }
+      } catch (err) {
+        console.warn('Storefront live catalog fetch notice:', err.message);
+      } finally {
+        if (isMounted) setLoadingCatalog(false);
+      }
+    };
+
+    fetchCatalog();
+    return () => { isMounted = false; };
+  }, [API_BASE]);
 
   // Filter & Sort Logic
   const filteredProducts = useMemo(() => {
-    let list = [...ENERGY_STONES_CATALOG];
+    let list = [...catalog];
 
     // Purpose filter
     if (selectedPurpose && selectedPurpose !== 'all') {
-      list = list.filter((p) => p.purpose === selectedPurpose);
+      const pLow = selectedPurpose.toLowerCase();
+      list = list.filter((p) =>
+        (p.purpose && p.purpose.toLowerCase().includes(pLow)) ||
+        (p.category && p.category.toLowerCase().includes(pLow)) ||
+        (p.collection && p.collection.toLowerCase().includes(pLow)) ||
+        (p.chakra && (Array.isArray(p.chakra) ? p.chakra.some((c) => c.toLowerCase().includes(pLow)) : String(p.chakra).toLowerCase().includes(pLow)))
+      );
+    }
+
+    // Modality filter
+    if (selectedModality) {
+      const mLow = selectedModality.toLowerCase();
+      list = list.filter((p) =>
+        (p.category && p.category.toLowerCase().includes(mLow)) ||
+        (p.collection && p.collection.toLowerCase().includes(mLow)) ||
+        (p.crystalType && p.crystalType.toLowerCase().includes(mLow)) ||
+        (p.crystal_type && p.crystal_type.toLowerCase().includes(mLow))
+      );
     }
 
     // Bead type filter
     if (selectedBeads.length > 0) {
-      list = list.filter((p) => selectedBeads.includes(p.beadType));
+      list = list.filter((p) =>
+        selectedBeads.some((b) => {
+          const bLow = b.toLowerCase();
+          return (
+            (p.beadType && p.beadType.toLowerCase().includes(bLow)) ||
+            (p.crystalType && p.crystalType.toLowerCase().includes(bLow)) ||
+            (p.crystal_type && p.crystal_type.toLowerCase().includes(bLow)) ||
+            (p.name && p.name.toLowerCase().includes(bLow))
+          );
+        })
+      );
     }
 
     // Size filter
     if (selectedSizes.length > 0) {
-      list = list.filter((p) => selectedSizes.some((s) => p.beadSize?.includes(s) || s === 'all'));
+      list = list.filter((p) =>
+        selectedSizes.some((s) => {
+          const sLow = s.toLowerCase();
+          return (
+            (p.beadSize && p.beadSize.toLowerCase().includes(sLow)) ||
+            (p.variants && p.variants.some((v) => (v.name && v.name.toLowerCase().includes(sLow)) || (v.sizeOrWeight && v.sizeOrWeight.toLowerCase().includes(sLow))))
+          );
+        })
+      );
     }
 
     // Price range
-    list = list.filter((p) => p.price >= minPrice && p.price <= maxPrice);
+    list = list.filter((p) => {
+      const price = Number(p.price || p.sellingPrice || p.selling_price || p.basePrice || 0);
+      return price >= minPrice && price <= maxPrice;
+    });
 
     // Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
         (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.subtitle.toLowerCase().includes(q) ||
-          p.beadType.toLowerCase().includes(q) ||
-          p.purposeLabel.toLowerCase().includes(q)
+          p.name?.toLowerCase().includes(q) ||
+          p.subtitle?.toLowerCase().includes(q) ||
+          p.shortDescription?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q) ||
+          p.beadType?.toLowerCase().includes(q) ||
+          p.crystalType?.toLowerCase().includes(q) ||
+          p.crystal_type?.toLowerCase().includes(q) ||
+          p.purposeLabel?.toLowerCase().includes(q) ||
+          (Array.isArray(p.chakra) ? p.chakra.some((c) => c.toLowerCase().includes(q)) : String(p.chakra || '').toLowerCase().includes(q)) ||
+          p.zodiac?.toLowerCase().includes(q)
       );
     }
 
     // Sort
     if (sortBy === 'bestselling') {
-      list.sort((a, b) => b.reviewsCount - a.reviewsCount);
+      list.sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0));
     } else if (sortBy === 'price-low') {
-      list.sort((a, b) => a.price - b.price);
+      list.sort((a, b) => (a.price || a.sellingPrice || 0) - (b.price || b.sellingPrice || 0));
     } else if (sortBy === 'price-high') {
-      list.sort((a, b) => b.price - a.price);
+      list.sort((a, b) => (b.price || b.sellingPrice || 0) - (a.price || a.sellingPrice || 0));
     } else if (sortBy === 'rating') {
-      list.sort((a, b) => b.rating - a.rating);
+      list.sort((a, b) => (b.rating || 5) - (a.rating || 5));
     }
 
     return list;
-  }, [selectedPurpose, selectedBeads, selectedSizes, minPrice, maxPrice, searchQuery, sortBy]);
+  }, [catalog, selectedPurpose, selectedModality, selectedBeads, selectedSizes, minPrice, maxPrice, searchQuery, sortBy]);
 
   const handleQuickAdd = (product, e) => {
     e?.preventDefault();
@@ -517,64 +588,76 @@ function MasterworksShopContent() {
                     : 'sm:grid-cols-2'
                 } gap-4 sm:gap-6`}
               >
-                {filteredProducts.map((prod) => (
-                  <div
-                    key={prod.id}
-                    className="store-card-light group flex flex-col justify-between overflow-hidden relative"
-                  >
-                    {/* Top Image Container */}
-                    <Link href={`/product/${prod.slug}`} className="relative aspect-square w-full overflow-hidden block bg-[#F5EFE6]">
-                      <Image
-                        src={prod.images[0]}
-                        alt={prod.name}
-                        fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                        className="object-cover group-hover:scale-108 transition-transform duration-500"
-                      />
+                {filteredProducts.map((prod) => {
+                  const prodId = prod.id || prod._id;
+                  const prodSlug = prod.slug || prodId;
+                  const prodImg = prod.images?.[0] || prod.heroImage || prod.hero_image || prod.image || 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80';
+                  const prodPrice = Number(prod.price || prod.sellingPrice || prod.selling_price || prod.basePrice || 0);
+                  const prodOrigPrice = Number(prod.originalPrice || prod.original_price || (prodPrice ? prodPrice * 1.25 : 0));
+                  const prodDiscount = prod.discountPercent || prod.discountPercentage || (prodOrigPrice > prodPrice ? Math.round(((prodOrigPrice - prodPrice) / prodOrigPrice) * 100) : 0);
+                  const prodBadge = prod.badge || (prod.newArrival ? 'New Arrival' : prod.bestseller ? 'Best Seller' : prod.premiumCollection ? 'Masterwork' : null);
 
+                  return (
+                    <div
+                      key={prodId}
+                      className="store-card-light group flex flex-col justify-between overflow-hidden relative"
+                    >
+                      {/* Top Image Container */}
+                      <Link href={`/product/${prodSlug}`} className="relative aspect-square w-full overflow-hidden block bg-[#F5EFE6]">
+                        <Image
+                          src={prodImg}
+                          alt={prod.name || 'Consecrated Crystal'}
+                          fill
+                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                          className="object-cover group-hover:scale-108 transition-transform duration-500"
+                        />
 
-                      {/* Badge Overlays */}
-                      <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
-                        {prod.badge && (
-                          <span
-                            className={`px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-wider uppercase shadow-md ${
-                              prod.badgeColor || 'bg-[#B8860B] text-white'
-                            }`}
-                          >
-                            {prod.badge}
-                          </span>
-                        )}
-                        <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-[#8C6208] text-[9px] font-mono uppercase tracking-wider border border-[#D4AF37]/40 shadow-sm font-bold">
-                          {prod.beadSize}
-                        </span>
-                      </div>
-
-                      {/* Savings pill top-right */}
-                      <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-[#BA3C2A] text-white text-[10px] font-mono font-extrabold shadow-md">
-                        {prod.discountPercent}% OFF
-                      </div>
-
-                      {/* Quick Add Slide-Up Overlay */}
-                      <div className="absolute inset-x-2 bottom-2 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-20">
-                        <button
-                          type="button"
-                          onClick={(e) => handleQuickAdd(prod, e)}
-                          className="w-full cta-3d-gold py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xl"
-                        >
-                          {quickAddedId === prod.id ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-white" />
-                              <span className="text-white font-bold">Added to Vault!</span>
-                            </>
-                          ) : (
-                            <>
-                              <ShoppingBag className="w-3.5 h-3.5 text-white" />
-                              <span className="text-white font-bold">Quick Add &bull; ₹{prod.price}</span>
-                            </>
+                        {/* Badge Overlays */}
+                        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
+                          {prodBadge && (
+                            <span
+                              className={`px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-wider uppercase shadow-md ${
+                                prod.badgeColor || 'bg-[#B8860B] text-white'
+                              }`}
+                            >
+                              {prodBadge}
+                            </span>
                           )}
-                        </button>
-                      </div>
-                    </Link>
+                          {(prod.beadSize || prod.category) && (
+                            <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-[#8C6208] text-[9px] font-mono uppercase tracking-wider border border-[#D4AF37]/40 shadow-sm font-bold">
+                              {prod.beadSize || prod.category}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Savings pill top-right */}
+                        {prodDiscount > 0 && (
+                          <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-[#BA3C2A] text-white text-[10px] font-mono font-extrabold shadow-md">
+                            {prodDiscount}% OFF
+                          </div>
+                        )}
+
+                        {/* Quick Add Slide-Up Overlay */}
+                        <div className="absolute inset-x-2 bottom-2 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => handleQuickAdd(prod, e)}
+                            className="w-full cta-3d-gold py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xl"
+                          >
+                            {quickAddedId === prodId ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-white" />
+                                <span className="text-white font-bold">Added to Vault!</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingBag className="w-3.5 h-3.5 text-white" />
+                                <span className="text-white font-bold">Quick Add &bull; ₹{prodPrice.toLocaleString('en-IN')}</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </Link>
 
                     {/* Content Section */}
                     <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3 bg-[#FFFFFF]">
@@ -591,7 +674,7 @@ function MasterworksShopContent() {
                         </div>
 
                         {/* Title */}
-                        <Link href={`/product/${prod.slug}`}>
+                        <Link href={`/product/${prodSlug}`}>
                           <h3 className="font-editorial text-sm sm:text-base font-bold text-[#1F1A15] group-hover:text-[#BA3C2A] transition line-clamp-2 leading-snug">
                             {prod.name}
                           </h3>
@@ -599,7 +682,7 @@ function MasterworksShopContent() {
 
                         {/* Subtitle / Gemstone breakdown */}
                         <p className="text-[11px] text-[#6B6357] line-clamp-1 font-sans-ui">
-                          {prod.subtitle}
+                          {prod.subtitle || prod.shortDescription || prod.category || 'High-Vibrational Energy Specimen'}
                         </p>
                       </div>
 
@@ -608,30 +691,35 @@ function MasterworksShopContent() {
                         <div className="flex items-baseline justify-between">
                           <div className="flex items-baseline gap-2">
                             <span className="font-display text-lg sm:text-xl font-bold text-[#1F1A15]">
-                              ₹{prod.price}
+                              ₹{prodPrice.toLocaleString('en-IN')}
                             </span>
-                            <span className="text-xs text-[#9E9589] font-mono line-through">
-                              ₹{prod.originalPrice}
-                            </span>
+                            {prodOrigPrice > prodPrice && (
+                              <span className="text-xs text-[#9E9589] font-mono line-through">
+                                ₹{prodOrigPrice.toLocaleString('en-IN')}
+                              </span>
+                            )}
                           </div>
-                          <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            Save ₹{prod.originalPrice - prod.price}
-                          </span>
+                          {prodOrigPrice > prodPrice && (
+                            <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              Save ₹{(prodOrigPrice - prodPrice).toLocaleString('en-IN')}
+                            </span>
+                          )}
                         </div>
 
                         {/* Order Now (Terracotta Red High-Intent 3D CTA) */}
                         <Link
-                          href={`/product/${prod.slug}`}
+                          href={`/product/${prodSlug}`}
                           className="w-full py-2.5 px-3 rounded-xl cta-3d-red text-white font-option text-xs font-bold flex items-center justify-center gap-1.5 transition group/btn"
                         >
                           <Zap className="w-3.5 h-3.5 fill-white" />
-                          <span>Select Size &bull; Buy Now</span>
+                          <span>Acquire Specimen</span>
                           <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
                         </Link>
                       </div>
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
             )}
           </div>

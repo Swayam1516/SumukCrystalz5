@@ -38,7 +38,6 @@ async function syncCustomerToSupabase(customer) {
       .select();
 
     if (error) {
-      // Table might not exist yet or policy restriction
       console.warn('Supabase customer sync notice:', error.message);
       return null;
     }
@@ -90,6 +89,80 @@ async function syncOrderToSupabase(order) {
 }
 
 /**
+ * Syncs / Upserts a Product into Supabase
+ */
+async function syncProductToSupabase(product) {
+  if (!supabase) return null;
+  try {
+    const slug = product.slug || product.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const payload = {
+      title: product.name || product.title,
+      slug,
+      description: product.description || product.shortDescription || '',
+      base_price: parseFloat(product.price || product.basePrice || 0),
+      currency: product.currency || 'INR',
+      images: Array.isArray(product.images) ? product.images : (product.image ? [product.image] : []),
+      total_stock: parseInt(product.stockCount || product.totalStock || 0, 10),
+      is_active: product.isActive !== undefined ? product.isActive : true,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from('products')
+      .upsert(payload, { onConflict: 'slug' })
+      .select();
+
+    if (error) {
+      console.warn('Supabase product sync notice:', error.message);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    console.warn('Supabase product sync exception:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Deletes a Product from Supabase
+ */
+async function deleteProductFromSupabase(idOrSlug) {
+  if (!supabase) return null;
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+    let query = supabase.from('products').delete();
+    if (isUuid) {
+      query = query.eq('id', idOrSlug);
+    } else {
+      query = query.eq('slug', idOrSlug);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  } catch (e) {
+    console.warn('Supabase product delete exception:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Retrieves products from Supabase
+ */
+async function getSupabaseProducts() {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
  * Retrieves orders from Supabase
  */
 async function getSupabaseOrders() {
@@ -127,6 +200,9 @@ module.exports = {
   supabase,
   syncCustomerToSupabase,
   syncOrderToSupabase,
+  syncProductToSupabase,
+  deleteProductFromSupabase,
+  getSupabaseProducts,
   getSupabaseOrders,
   getSupabaseCustomers,
 };

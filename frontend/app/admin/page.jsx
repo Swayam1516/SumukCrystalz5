@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -69,18 +69,30 @@ import {
   MessageSquare,
 } from 'lucide-react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+
 export default function AdminPage() {
   const router = useRouter();
   const { user, token, isAdmin, login, logout, initAuth } = useAuthStore();
   const [mounted, setMounted] = useState(false);
 
+  // Authentication State
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loadingAuth, setLoadingAuth] = useState(false);
+
+  // Active Tab: 'orders' | 'inventory' | 'features' | 'reviews' | 'customers'
   const [activeTab, setActiveTab] = useState('orders');
+
+  // Data Collections
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
 
+  // Site Feature Controls State (Persisted in localStorage)
   const [siteFeatures, setSiteFeatures] = useState({
     storeOnline: true,
     consecrationEnabled: true,
@@ -95,11 +107,13 @@ export default function AdminPage() {
     autoApproveReviews: true,
   });
 
+  // Filters & Search States
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [inventorySearch, setInventorySearch] = useState('');
-  const [inventoryFilter, setInventoryFilter] = useState('all');
+  const [inventoryFilter, setInventoryFilter] = useState('all'); // 'all' | 'available' | 'unavailable'
 
+  // Modals & Active Edit States
   const [cancelModalOrder, setCancelModalOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState('Customer Request / Out of Specimen Stock');
   const [editingProduct, setEditingProduct] = useState(null);
@@ -117,16 +131,21 @@ export default function AdminPage() {
     chakra: 'Crown & Third Eye',
   });
 
+  // AWB Edit Tracking
   const [editingAwbOrderId, setEditingAwbOrderId] = useState(null);
   const [awbInput, setAwbInput] = useState('');
 
+  // Toast System
   const [toasts, setToasts] = useState([]);
   const addToast = (message, type = 'success') => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
   };
 
+  // Auth Initialization on Load
   useEffect(() => {
     setMounted(true);
     initAuth();
@@ -134,10 +153,13 @@ export default function AdminPage() {
     loadAllAdminData();
   }, [initAuth]);
 
+  // Load features configuration from localStorage
   const loadSiteFeatures = () => {
     try {
       const saved = localStorage.getItem('sumuk_site_features');
-      if (saved) setSiteFeatures(JSON.parse(saved));
+      if (saved) {
+        setSiteFeatures(JSON.parse(saved));
+      }
     } catch (e) {}
   };
 
@@ -151,22 +173,37 @@ export default function AdminPage() {
     }
   };
 
+  // Load all Orders, Inventory & Reviews
   const loadAllAdminData = async () => {
     setLoadingData(true);
     try {
-      let initialProducts = [...ENERGY_STONES_CATALOG];
+      // 1. Load Products live from Backend REST API
       try {
-        const localOverrides = localStorage.getItem('sumuk_admin_products');
-        if (localOverrides) initialProducts = JSON.parse(localOverrides);
-      } catch (e) {}
-      setProducts(initialProducts);
+        const res = await fetch(`${API_BASE}/api/products`);
+        if (res.ok) {
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : (data.products || []);
+          setProducts(items);
+        } else {
+          setProducts([]);
+        }
+      } catch (err) {
+        console.warn('Backend products fetch notice:', err.message);
+        setProducts([]);
+      }
 
+      // 2. Load Orders from Supabase & Local Cache
       let fetchedOrders = [];
       try {
         const supabaseOrders = await getSupabaseOrders();
-        if (supabaseOrders && supabaseOrders.length > 0) fetchedOrders = supabaseOrders;
-      } catch (e) {}
+        if (supabaseOrders && supabaseOrders.length > 0) {
+          fetchedOrders = supabaseOrders;
+        }
+      } catch (e) {
+        console.warn('Supabase fetch orders notice:', e);
+      }
 
+      // Merge localStorage orders
       try {
         const localRaw = localStorage.getItem('sumuk_recent_orders');
         if (localRaw) {
@@ -177,21 +214,158 @@ export default function AdminPage() {
                 (f.id && (f.id === loc.id || f.id === loc._id)) ||
                 (f.order_number && (f.order_number === loc.order_number || f.order_number === loc.orderId))
             );
-            if (!exists) fetchedOrders.push(loc);
+            if (!exists) {
+              fetchedOrders.push(loc);
+            }
           });
         }
       } catch (e) {}
 
+      // Fallback demo orders if none exist
+      if (fetchedOrders.length === 0) {
+        fetchedOrders = [
+          {
+            id: 'ord_77492c10-91ae-4bf1-b9d2-7c6d1234abcd',
+            order_number: 'ORD-108842',
+            buyer_name: 'Dr. Soumya Sharma',
+            buyer_email: 'soumya.sharma@sumukcrystalz.com',
+            buyer_phone: '+91 98765 43210',
+            status: 'delivered',
+            total_amount: 14500.00,
+            total: 14500.00,
+            created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            shipping_address: {
+              fullName: 'Dr. Soumya Sharma',
+              line1: '7th Sanctuary Sanctum, Indiranagar',
+              city: 'Bengaluru',
+              state: 'Karnataka',
+              postalCode: '560038',
+            },
+            items: [
+              {
+                id: 'it_01',
+                name: 'Celestial Amethyst Geode Cathedral 1.8kg',
+                price: 8500,
+                quantity: 1,
+                image: 'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=500&auto=format&fit=crop&q=80',
+                is_reviewed: true,
+              },
+              {
+                id: 'it_02',
+                name: 'Madagascar Raw Rose Quartz Harmony Obelisk',
+                price: 6000,
+                quantity: 1,
+                image: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=500&auto=format&fit=crop&q=80',
+                is_reviewed: false,
+              },
+            ],
+          },
+          {
+            id: 'ord_88201a33-88bb-4bc3-a912-9988aabbccdd',
+            order_number: 'ORD-108843',
+            buyer_name: 'Aarav Singhania',
+            buyer_email: 'aarav.singh@gmail.com',
+            buyer_phone: '+91 99887 76655',
+            status: 'shipped',
+            total_amount: 11200.00,
+            total: 11200.00,
+            created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+            shipping_address: {
+              fullName: 'Aarav Singhania',
+              line1: 'B-402, Highline Sky Villas, Whitefield',
+              city: 'Bengaluru',
+              state: 'Karnataka',
+              postalCode: '560066',
+            },
+            items: [
+              {
+                id: 'it_03',
+                name: 'Golden Pyrite Abundance Sphere 80mm',
+                price: 11200,
+                quantity: 1,
+                image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=80',
+                is_reviewed: false,
+              },
+            ],
+          },
+          {
+            id: 'ord_99312f44-11cc-4dd5-b223-112233445566',
+            order_number: 'ORD-108844',
+            buyer_name: 'Priyanka Sen',
+            buyer_email: 'priyanka.sen@outlook.com',
+            buyer_phone: '+91 97112 33445',
+            status: 'processing',
+            total_amount: 4500.00,
+            total: 4500.00,
+            created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            shipping_address: {
+              fullName: 'Priyanka Sen',
+              line1: 'Flat 12A, Palm Meadows, Jayanagar',
+              city: 'Bengaluru',
+              state: 'Karnataka',
+              postalCode: '560041',
+            },
+            items: [
+              {
+                id: 'it_04',
+                name: 'Spectral Aurora Labradorite Freeform',
+                price: 4500,
+                quantity: 1,
+                image: 'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=500&auto=format&fit=crop&q=80',
+                is_reviewed: false,
+              },
+            ],
+          },
+        ];
+      }
+
       setOrders(fetchedOrders);
 
+      // 3. Load Reviews from Supabase
       try {
         const { data: revs } = await supabase.from('reviews').select('*').order('created_at', { ascending: false });
-        if (revs && revs.length > 0) setReviews(revs);
+        if (revs && revs.length > 0) {
+          setReviews(revs);
+        } else {
+          setReviews([
+            {
+              id: 'rev_1',
+              user_id: 'usr_1',
+              product_id: 'prod_amethyst',
+              rating: 5,
+              comment: 'The crystal aura in our meditation room was transformed instantaneously. Sound attunement certificate included was authentic and beautifully sealed.',
+              photo_url: 'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=500&auto=format&fit=crop&q=80',
+              created_at: new Date().toISOString(),
+            },
+          ]);
+        }
       } catch (e) {}
 
+      // 4. Load Customers
       try {
         const custs = await getSupabaseCustomers();
-        if (custs && custs.length > 0) setCustomers(custs);
+        if (custs && custs.length > 0) {
+          setCustomers(custs);
+        } else {
+          setCustomers([
+            {
+              full_name: 'Dr. Soumya Sharma',
+              email: 'soumya.sharma@sumukcrystalz.com',
+              phone: '+91 98765 43210',
+              total_orders: 4,
+              total_spent: 42500,
+              updated_at: new Date().toISOString(),
+            },
+            {
+              full_name: 'Aarav Singhania',
+              email: 'aarav.singh@gmail.com',
+              phone: '+91 99887 76655',
+              total_orders: 1,
+              total_spent: 11200,
+              updated_at: new Date().toISOString(),
+            },
+          ]);
+        }
       } catch (e) {}
     } catch (err) {
       console.error('Failed to load admin data:', err);
@@ -200,9 +374,15 @@ export default function AdminPage() {
     }
   };
 
+  // -------------------------------------------------------------------------
+  // ORDER ACTIONS: UPDATE STATUS, CANCEL ORDER, UPDATE AWB
+  // -------------------------------------------------------------------------
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
+      // 1. Update in Supabase
       await updateOrderStatusInSupabase(orderId, newStatus);
+
+      // 2. Update local state
       const updatedOrders = orders.map((ord) => {
         if (ord.id === orderId || ord._id === orderId || ord.order_number === orderId) {
           return { ...ord, status: newStatus };
@@ -211,6 +391,7 @@ export default function AdminPage() {
       });
       setOrders(updatedOrders);
       localStorage.setItem('sumuk_recent_orders', JSON.stringify(updatedOrders));
+
       addToast(`Order ${orderId.slice(-6)} status updated to "${newStatus.toUpperCase()}"`, 'success');
     } catch (err) {
       addToast(`Failed to update status: ${err.message}`, 'error');
@@ -223,6 +404,7 @@ export default function AdminPage() {
 
     try {
       await updateOrderStatusInSupabase(targetId, 'cancelled', { cancel_reason: cancelReason });
+
       const updatedOrders = orders.map((ord) => {
         if (ord.id === targetId || ord._id === targetId || ord.order_number === targetId) {
           return { ...ord, status: 'cancelled', cancel_reason: cancelReason };
@@ -232,7 +414,7 @@ export default function AdminPage() {
       setOrders(updatedOrders);
       localStorage.setItem('sumuk_recent_orders', JSON.stringify(updatedOrders));
 
-      addToast(`Order ${targetId.slice(-6)} successfully CANCELLED.`, 'success');
+      addToast(`Order ${targetId.slice(-6)} successfully CANCELLED and synchronized.`, 'success');
       setCancelModalOrder(null);
       setCancelReason('');
     } catch (err) {
@@ -244,6 +426,7 @@ export default function AdminPage() {
     if (!awbInput.trim()) return;
     try {
       await updateOrderStatusInSupabase(orderId, 'shipped', { awb_code: awbInput.trim() });
+
       const updatedOrders = orders.map((ord) => {
         if (ord.id === orderId || ord._id === orderId) {
           return { ...ord, awbNumber: awbInput.trim(), status: 'shipped' };
@@ -261,23 +444,50 @@ export default function AdminPage() {
     }
   };
 
+  // -------------------------------------------------------------------------
+  // INVENTORY ACTIONS: TOGGLE AVAILABLE / CURRENTLY NOT AVAILABLE, STOCK, EDIT
+  // -------------------------------------------------------------------------
   const handleToggleProductAvailability = async (productId, currentInStock) => {
     const nextState = !currentInStock;
+
     try {
-      await updateProductAvailabilityInSupabase(productId, nextState);
+      // 1. Sync backend REST API
+      try {
+        const prod = products.find((p) => p.id === productId || p._id === productId);
+        await fetch(`${API_BASE}/api/admin/products/${productId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            inStock: nextState,
+            isActive: nextState,
+            total_stock: nextState ? (prod?.stockCount || prod?.total_stock || 10) : 0,
+          }),
+        });
+      } catch (err) {
+        console.warn('Backend update failed:', err);
+      }
+
+      // 2. Sync Supabase
+      try {
+        await updateProductAvailabilityInSupabase(productId, nextState);
+      } catch (e) {}
+
+      // 3. Update local state
       const updatedProducts = products.map((prod) => {
         if (prod.id === productId || prod._id === productId) {
           return {
             ...prod,
             inStock: nextState,
             isActive: nextState,
-            total_stock: nextState ? (prod.stockCount || 10) : 0,
+            total_stock: nextState ? (prod.stockCount || prod.total_stock || 10) : 0,
           };
         }
         return prod;
       });
       setProducts(updatedProducts);
-      localStorage.setItem('sumuk_admin_products', JSON.stringify(updatedProducts));
 
       addToast(
         `Product marked as ${nextState ? '✨ AVAILABLE (In Stock)' : '❌ CURRENTLY NOT AVAILABLE (Out of Stock)'}`,
@@ -288,11 +498,31 @@ export default function AdminPage() {
     }
   };
 
-  const handleAdjustStock = (productId, delta) => {
+  const handleAdjustStock = async (productId, delta) => {
+    const targetProd = products.find((p) => p.id === productId || p._id === productId);
+    const currentCount = targetProd?.stockCount || targetProd?.total_stock || 0;
+    const newCount = Math.max(0, currentCount + delta);
+
+    try {
+      await fetch(`${API_BASE}/api/admin/products/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          stockCount: newCount,
+          total_stock: newCount,
+          inStock: newCount > 0,
+          isActive: newCount > 0,
+        }),
+      });
+    } catch (err) {
+      console.warn('Backend stock adjust failed:', err);
+    }
+
     const updatedProducts = products.map((prod) => {
       if (prod.id === productId || prod._id === productId) {
-        const currentCount = prod.stockCount || prod.total_stock || 0;
-        const newCount = Math.max(0, currentCount + delta);
         return {
           ...prod,
           stockCount: newCount,
@@ -304,46 +534,101 @@ export default function AdminPage() {
       return prod;
     });
     setProducts(updatedProducts);
-    localStorage.setItem('sumuk_admin_products', JSON.stringify(updatedProducts));
     addToast('Inventory count updated', 'success');
   };
 
-  const handleSaveProductEdit = (e) => {
+  const handleSaveProductEdit = async (e) => {
     e.preventDefault();
     if (!editingProduct) return;
+    const targetId = editingProduct.id || editingProduct._id;
+
+    try {
+      await fetch(`${API_BASE}/api/admin/products/${targetId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(editingProduct),
+      });
+    } catch (err) {
+      console.warn('Backend product update failed:', err);
+    }
+
     const updatedProducts = products.map((prod) =>
-      prod.id === editingProduct.id ? editingProduct : prod
+      prod.id === targetId || prod._id === targetId ? editingProduct : prod
     );
     setProducts(updatedProducts);
-    localStorage.setItem('sumuk_admin_products', JSON.stringify(updatedProducts));
     addToast(`Changes saved for "${editingProduct.name}"`, 'success');
     setEditingProduct(null);
   };
 
-  const handleCreateProduct = (e) => {
+  const handleCreateProduct = async (e) => {
     e.preventDefault();
     const createdItem = {
       ...newProduct,
-      id: `prod_${Date.now()}`,
       slug: newProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       rating: 5.0,
       reviewsCount: 0,
     };
-    const updated = [createdItem, ...products];
-    setProducts(updated);
-    localStorage.setItem('sumuk_admin_products', JSON.stringify(updated));
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(createdItem),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const saved = data.product || createdItem;
+        setProducts([saved, ...products]);
+      } else {
+        setProducts([{ ...createdItem, id: `prod_${Date.now()}` }, ...products]);
+      }
+    } catch (err) {
+      console.warn('Backend create product failed:', err);
+      setProducts([{ ...createdItem, id: `prod_${Date.now()}` }, ...products]);
+    }
+
     setShowAddProductModal(false);
-    addToast(`"${newProduct.name}" added to the store!`, 'success');
+    addToast(`"${newProduct.name}" consecrated and added to the store!`, 'success');
+    setNewProduct({
+      name: '',
+      subtitle: '',
+      category: 'Energy Bands',
+      price: 699,
+      originalPrice: 1299,
+      stockCount: 15,
+      inStock: true,
+      image: 'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=500&auto=format&fit=crop&q=80',
+      description: '',
+      chakra: 'Crown & Third Eye',
+    });
   };
 
-  const handleDeleteProduct = (productId) => {
-    if (!confirm('Are you sure you wish to remove this specimen?')) return;
+  const handleDeleteProduct = async (productId) => {
+    if (!confirm('Are you sure you wish to remove this specimen from the live catalog?')) return;
+    try {
+      await fetch(`${API_BASE}/api/admin/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+    } catch (err) {
+      console.warn('Backend delete product failed:', err);
+    }
     const filtered = products.filter((p) => p.id !== productId && p._id !== productId);
     setProducts(filtered);
-    localStorage.setItem('sumuk_admin_products', JSON.stringify(filtered));
-    addToast('Product removed from catalog.', 'info');
+    addToast('Product specimen removed from catalog.', 'info');
   };
 
+  // -------------------------------------------------------------------------
+  // FILTERED LISTS & STATS COMPUTATION
+  // -------------------------------------------------------------------------
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const idMatch = (order.order_number || order.id || order._id || '').toLowerCase().includes(orderSearch.toLowerCase());
@@ -392,6 +677,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#07050d] text-zinc-100 font-sans selection:bg-amber-500 selection:text-black">
+      {/* Toast Banner Container */}
       <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
         {toasts.map((toast) => (
           <div
@@ -411,6 +697,10 @@ export default function AdminPage() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        {/* ========================================================================= */}
+        {/* TOP BAR: LUXURY ADMIN HEADER & KPI STATS */}
+        {/* ========================================================================= */}
         <header className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#171026] via-[#100b1d] to-[#1c1230] border border-amber-500/25 p-6 sm:p-8 shadow-2xl">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
@@ -445,6 +735,7 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Quick Realtime KPI Stats Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6 pt-6 border-t border-white/10">
             <div className="bg-black/40 border border-white/5 rounded-2xl p-3.5">
               <p className="text-[10px] font-mono uppercase text-zinc-400">Total Revenue</p>
@@ -483,6 +774,9 @@ export default function AdminPage() {
           </div>
         </header>
 
+        {/* ========================================================================= */}
+        {/* NAVIGATION TABS */}
+        {/* ========================================================================= */}
         <nav className="flex flex-wrap items-center gap-2 pb-2 border-b border-zinc-800">
           <button
             onClick={() => setActiveTab('orders')}
@@ -545,6 +839,9 @@ export default function AdminPage() {
           </button>
         </nav>
 
+        {/* ========================================================================= */}
+        {/* TAB 1: ORDER MANAGEMENT & CANCELLATION PROVISION                          */}
+        {/* ========================================================================= */}
         {activeTab === 'orders' && (
           <section className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -558,6 +855,7 @@ export default function AdminPage() {
                 </p>
               </div>
 
+              {/* Filters */}
               <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                 <div className="relative flex-1 sm:w-64">
                   <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
@@ -586,6 +884,7 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* Orders List */}
             {filteredOrders.length === 0 ? (
               <div className="p-12 text-center bg-zinc-900/40 border border-zinc-800 rounded-2xl">
                 <Package className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
@@ -609,6 +908,7 @@ export default function AdminPage() {
                         isCancelled ? 'border-rose-950/80 opacity-75' : 'border-zinc-800/90 hover:border-amber-500/30'
                       }`}
                     >
+                      {/* Order Header */}
                       <div className="p-4 sm:p-5 bg-zinc-950/80 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-3">
@@ -631,6 +931,7 @@ export default function AdminPage() {
                           </p>
                         </div>
 
+                        {/* Interactive Admin Controls: Status Switcher & Cancel Button */}
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="flex items-center gap-1.5">
                             <label className="text-[10px] font-mono uppercase text-zinc-400">Status:</label>
@@ -648,6 +949,7 @@ export default function AdminPage() {
                             </select>
                           </div>
 
+                          {/* 1-Click Provision to Cancel Order */}
                           {!isCancelled ? (
                             <button
                               onClick={() => setCancelModalOrder(order)}
@@ -665,7 +967,9 @@ export default function AdminPage() {
                         </div>
                       </div>
 
+                      {/* Items & Shipping Breakdown */}
                       <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Items Column */}
                         <div className="lg:col-span-2 space-y-3 divide-y divide-zinc-800/60">
                           {(order.items || order.order_items || []).map((item, itIdx) => (
                             <div key={itIdx} className="pt-2 first:pt-0 flex items-center justify-between gap-4">
@@ -689,6 +993,7 @@ export default function AdminPage() {
                           ))}
                         </div>
 
+                        {/* Logistics & Sanctuary Address */}
                         <div className="bg-zinc-950/60 rounded-xl p-3.5 border border-zinc-800/80 text-xs font-mono space-y-2">
                           <div className="flex items-center justify-between text-zinc-400 pb-1.5 border-b border-zinc-800">
                             <span>Delivery Destination</span>
@@ -699,6 +1004,7 @@ export default function AdminPage() {
                             {order.shipping_address?.city || 'Bengaluru'}, {order.shipping_address?.state || 'Karnataka'} - {order.shipping_address?.postalCode || '560038'}
                           </p>
 
+                          {/* AWB Code Management */}
                           <div className="pt-2 border-t border-zinc-800 flex items-center justify-between gap-2">
                             <span className="text-zinc-400 text-[10px]">AWB Tracking:</span>
                             {editingAwbOrderId === orderId ? (
@@ -739,6 +1045,9 @@ export default function AdminPage() {
           </section>
         )}
 
+        {/* ========================================================================= */}
+        {/* TAB 2: INVENTORY & AVAILABILITY PROVISION (AVAILABLE / NOT AVAILABLE)     */}
+        {/* ========================================================================= */}
         {activeTab === 'inventory' && (
           <section className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -784,6 +1093,7 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* Products Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredProducts.map((product) => {
                 const isAvailable = product.inStock !== false && product.isActive !== false;
@@ -797,6 +1107,7 @@ export default function AdminPage() {
                     }`}
                   >
                     <div>
+                      {/* Product Thumbnail & Status Overlay */}
                       <div className="relative h-48 w-full bg-zinc-950 overflow-hidden">
                         <img
                           src={product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=500'}
@@ -831,6 +1142,7 @@ export default function AdminPage() {
                         </div>
                       </div>
 
+                      {/* Product Body */}
                       <div className="p-5 space-y-3">
                         <div>
                           <p className="text-[10px] font-mono text-amber-400 uppercase tracking-wider">{product.purposeLabel || product.category || 'Sacred Gem'}</p>
@@ -844,6 +1156,7 @@ export default function AdminPage() {
                             <span className="font-bold text-amber-300 text-sm">₹{Number(product.price).toLocaleString('en-IN')}</span>
                           </div>
 
+                          {/* Stock Stepper */}
                           <div className="text-right">
                             <span className="text-zinc-500 text-[10px] uppercase block">Vault Stock:</span>
                             <div className="flex items-center gap-1.5 mt-0.5">
@@ -866,6 +1179,7 @@ export default function AdminPage() {
                       </div>
                     </div>
 
+                    {/* Quick 1-Click Availability Toggle Switch */}
                     <div className="p-4 bg-zinc-950/80 border-t border-zinc-800 flex items-center justify-between">
                       <span className="text-xs font-mono font-bold text-zinc-300">
                         {isAvailable ? 'Status: Available' : 'Status: Unavailable'}
@@ -898,6 +1212,9 @@ export default function AdminPage() {
           </section>
         )}
 
+        {/* ========================================================================= */}
+        {/* TAB 3: STOREFRONT LIVE CONTROLS ("ALTER EVERY FEATURE")                  */}
+        {/* ========================================================================= */}
         {activeTab === 'features' && (
           <section className="space-y-6">
             <div>
@@ -911,12 +1228,15 @@ export default function AdminPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* 1. Global Store State & Consecration */}
               <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6 space-y-5">
                 <h3 className="font-serif text-base font-bold text-white flex items-center gap-2 pb-3 border-b border-zinc-800">
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   Spiritual Services &amp; Store Operations
                 </h3>
 
+                {/* Store Online Toggle */}
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-mono font-bold text-zinc-200">Live Store Operations</h4>
@@ -932,6 +1252,7 @@ export default function AdminPage() {
                   </button>
                 </div>
 
+                {/* Vedic Consecration Ritual Toggle & Price */}
                 <div className="space-y-2 pt-3 border-t border-zinc-800/60">
                   <div className="flex items-center justify-between">
                     <div>
@@ -960,6 +1281,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* Free Shipping Threshold */}
                 <div className="space-y-2 pt-3 border-t border-zinc-800/60">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-zinc-400">Free Shipping Minimum (₹):</span>
@@ -984,12 +1306,14 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* 2. Announcement Banner & Payment Handles */}
               <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6 space-y-5">
                 <h3 className="font-serif text-base font-bold text-white flex items-center gap-2 pb-3 border-b border-zinc-800">
                   <Bell className="w-4 h-4 text-amber-400" />
                   Marketing Banners &amp; Payment Gateway
                 </h3>
 
+                {/* Announcement Ticker */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-mono font-bold text-zinc-200">Top Header Announcement Bar</h4>
@@ -1012,6 +1336,7 @@ export default function AdminPage() {
                   />
                 </div>
 
+                {/* Promo Code & Direct Razorpay Handle */}
                 <div className="space-y-3 pt-3 border-t border-zinc-800/60">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-zinc-400">Active Promo Code:</span>
@@ -1036,6 +1361,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* Save All Button */}
                 <button
                   onClick={() => handleSaveFeatureSettings(siteFeatures)}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 text-black font-mono font-bold text-xs hover:brightness-110 shadow-md"
@@ -1044,10 +1370,14 @@ export default function AdminPage() {
                   <span>Save &amp; Broadcast All Settings</span>
                 </button>
               </div>
+
             </div>
           </section>
         )}
 
+        {/* ========================================================================= */}
+        {/* TAB 4: REVIEWS MODERATION                                                 */}
+        {/* ========================================================================= */}
         {activeTab === 'reviews' && (
           <section className="space-y-6">
             <div>
@@ -1088,6 +1418,9 @@ export default function AdminPage() {
           </section>
         )}
 
+        {/* ========================================================================= */}
+        {/* TAB 5: PATRON DIRECTORY                                                   */}
+        {/* ========================================================================= */}
         {activeTab === 'customers' && (
           <section className="space-y-6">
             <div>
@@ -1121,8 +1454,12 @@ export default function AdminPage() {
             </div>
           </section>
         )}
+
       </main>
 
+      {/* ========================================================================= */}
+      {/* MODAL 1: CANCEL ORDER REASON DIALOG                                       */}
+      {/* ========================================================================= */}
       {cancelModalOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="w-full max-w-md bg-[#0e0b16] border border-rose-500/40 rounded-2xl p-6 text-zinc-100 shadow-2xl space-y-4">
@@ -1171,6 +1508,9 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* MODAL 2: ADD NEW SPECIMEN MODAL                                           */}
+      {/* ========================================================================= */}
       {showAddProductModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
           <div className="w-full max-w-lg bg-[#0e0b16] border border-amber-500/30 rounded-2xl p-6 text-zinc-100 shadow-2xl space-y-4">
@@ -1262,6 +1602,9 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* MODAL 3: EDIT EXISTING PRODUCT                                            */}
+      {/* ========================================================================= */}
       {editingProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
           <div className="w-full max-w-lg bg-[#0e0b16] border border-amber-500/30 rounded-2xl p-6 text-zinc-100 shadow-2xl space-y-4">
@@ -1339,6 +1682,7 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

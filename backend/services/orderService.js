@@ -1,6 +1,3 @@
-const mongoose = require('mongoose');
-const Order = require('../models/Order');
-const Product = require('../models/Product');
 const AppError = require('../utils/AppError');
 const { ORDER_STATUS } = require('../utils/constants');
 const {
@@ -13,47 +10,53 @@ const {
   notifyWhatsAppOrderShipped,
   notifyWhatsAppOrderDelivered,
 } = require('./whatsappService');
-const { syncOrderToSupabase } = require('../utils/supabase');
+const { supabase, syncOrderToSupabase, getSupabaseOrders } = require('../utils/supabase');
 
 /**
  * Retrieves orders placed by a specific authenticated user
  */
 async function getUserOrders(userId, email) {
-  const filter = {
-    $or: [
-      { user: userId },
-      { buyerEmail: email?.toLowerCase().trim() },
-    ],
-  };
+  if (!supabase) return [];
+  const cleanEmail = email?.toLowerCase().trim();
 
-  return Order.find(filter)
-    .sort({ createdAt: -1 })
-    .populate('items.product', 'name images slug');
+  try {
+    let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+    if (cleanEmail) {
+      query = query.eq('buyer_email', cleanEmail);
+    }
+    const { data } = await query;
+    return data || [];
+  } catch (err) {
+    console.error('Error fetching user orders from Supabase:', err.message);
+    return [];
+  }
 }
 
 /**
  * Retrieves a single order by ID with ownership verification
  */
 async function getOrderById(orderId, requestingUser = null) {
-  let order = null;
+  if (!supabase) throw new AppError('Database unavailable', 500);
 
-  if (mongoose.Types.ObjectId.isValid(orderId)) {
-    order = await Order.findById(orderId).populate('items.product', 'name images slug description');
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+  let query = supabase.from('orders').select('*');
+  if (isUuid) {
+    query = query.eq('id', orderId);
+  } else {
+    query = query.or(`order_number.eq.${orderId},razorpay_order_id.eq.${orderId}`);
   }
 
-  if (!order) {
-    order = await Order.findOne({ razorpayOrderId: orderId }).populate('items.product', 'name images slug description');
-  }
+  const { data: order, error } = await query.single();
 
-  if (!order) {
+  if (error || !order) {
     throw new AppError('Order not found', 404);
   }
 
-  // Access check: allow admins or the matching customer
+  // Access check: allow admins or matching customer
   if (requestingUser && requestingUser.role !== 'admin') {
     const isOwner =
-      (order.user && order.user.toString() === requestingUser.id) ||
-      order.buyerEmail?.toLowerCase() === requestingUser.email?.toLowerCase();
+      order.buyer_email?.toLowerCase() === requestingUser.email?.toLowerCase() ||
+      order.user_id === requestingUser.id;
 
     if (!isOwner) {
       throw new AppError('Access Denied: You do not have permission to view this order.', 403);
@@ -69,65 +72,71 @@ async function getOrderById(orderId, requestingUser = null) {
 async function cancelOrder(orderId, requestingUser) {
   const order = await getOrderById(orderId, requestingUser);
 
-  const cancellableStatuses = [ORDER_STATUS.PENDING, ORDER_STATUS.PAID, ORDER_STATUS.CONFIRMED, 'created'];
+  const cancellableStatuses = [ORDER_STATUS.PENDING, ORDER_STATUS.PAID, ORDER_STATUS.CONFIRMED, 'created', 'pending', 'paid'];
   if (!cancellableStatuses.includes(order.status)) {
     throw new AppError(`Cannot cancel order in "${order.status}" status.`, 400);
   }
 
-  order.status = ORDER_STATUS.CANCELLED;
-  order.cancelledAt = new Date();
-  await order.save();
+  const { data: updated, error } = await supabase
+    .from('orders')
+    .update({
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', order.id)
+    .select()
+    .single();
 
-  // Rollback product stock if it was previously deducted
-  for (const item of order.items) {
-    if (item.product) {
-      await Product.updateOne(
-        { _id: item.product },
-        { $inc: { totalStock: item.quantity } }
-      ).catch(() => {});
-    }
+  if (error) {
+    throw new AppError(`Failed to cancel order: ${error.message}`, 400);
   }
 
-  syncOrderToSupabase(order).catch(() => {});
-  return order;
+  return updated;
 }
 
 /**
- * Admin: Updates order status (confirmed -> packed -> shipped -> delivered) and dispatches status emails & WhatsApp
+ * Admin: Updates order status and dispatches status notifications
  */
 async function updateOrderStatus(orderId, { status, trackingNumber, carrier }) {
-  const validStatuses = Object.values(ORDER_STATUS);
-  if (status && !validStatuses.includes(status)) {
-    throw new AppError(`Invalid order status: ${status}`, 400);
-  }
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+  const updateData = {
+    updated_at: new Date().toISOString(),
+  };
 
-  const updateData = { updatedAt: new Date() };
   if (status) updateData.status = status;
-  if (trackingNumber) updateData.trackingNumber = trackingNumber;
+  if (trackingNumber) updateData.tracking_number = trackingNumber;
   if (carrier) updateData.carrier = carrier;
 
-  if (status === ORDER_STATUS.PACKED) updateData.packedAt = new Date();
-  if (status === ORDER_STATUS.SHIPPED) updateData.shippedAt = new Date();
-  if (status === ORDER_STATUS.DELIVERED) updateData.deliveredAt = new Date();
+  if (status === ORDER_STATUS.PACKED || status === 'packed') updateData.packed_at = new Date().toISOString();
+  if (status === ORDER_STATUS.SHIPPED || status === 'shipped') updateData.shipped_at = new Date().toISOString();
+  if (status === ORDER_STATUS.DELIVERED || status === 'delivered') updateData.delivered_at = new Date().toISOString();
 
-  const order = await Order.findByIdAndUpdate(orderId, updateData, { new: true });
-  if (!order) {
-    throw new AppError('Order not found', 404);
+  let query = supabase.from('orders').update(updateData);
+  if (isUuid) {
+    query = query.eq('id', orderId);
+  } else {
+    query = query.or(`order_number.eq.${orderId},razorpay_order_id.eq.${orderId}`);
+  }
+
+  const { data: order, error } = await query.select().single();
+
+  if (error || !order) {
+    throw new AppError(`Order not found or update failed: ${error?.message}`, 404);
   }
 
   // Trigger status-specific emails & WhatsApp
-  if (status === ORDER_STATUS.PACKED) {
+  if (status === ORDER_STATUS.PACKED || status === 'packed') {
     sendOrderPackedNotification(order).catch((e) => console.warn('Packed email notice:', e.message));
     notifyWhatsAppOrderPacked(order).catch((e) => console.warn('Packed WhatsApp notice:', e.message));
-  } else if (status === ORDER_STATUS.SHIPPED) {
+  } else if (status === ORDER_STATUS.SHIPPED || status === 'shipped') {
     sendOrderShippedNotification(order).catch((e) => console.warn('Shipped email notice:', e.message));
     notifyWhatsAppOrderShipped(order).catch((e) => console.warn('Shipped WhatsApp notice:', e.message));
-  } else if (status === ORDER_STATUS.DELIVERED) {
+  } else if (status === ORDER_STATUS.DELIVERED || status === 'delivered') {
     sendOrderDeliveredNotification(order).catch((e) => console.warn('Delivered email notice:', e.message));
     notifyWhatsAppOrderDelivered(order).catch((e) => console.warn('Delivered WhatsApp notice:', e.message));
   }
 
-  syncOrderToSupabase(order).catch(() => {});
   return order;
 }
 
@@ -137,4 +146,3 @@ module.exports = {
   cancelOrder,
   updateOrderStatus,
 };
-
