@@ -1,0 +1,28 @@
+{
+  "name": "crystal-ecom",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sumuk Crystalz 5 - Luxury Crystal E-Commerce & 3D Interactive Storefront",
+  "scripts": {
+    "dev": "npm run dev --prefix customer-frontend",
+    "dev:customer": "npm run dev --prefix customer-frontend",
+    "dev:admin": "npm run dev --prefix admin-frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "build:customer": "npm run build --prefix customer-frontend",
+    "build:admin": "npm run build --prefix admin-frontend",
+    "build:all": "npm run build --prefix customer-frontend && npm run build --prefix admin-frontend",
+    "start:customer": "npm run start --prefix customer-frontend",
+    "start:admin": "npm run start --prefix admin-frontend",
+    "install:all": "npm install --prefix backend && npm install --prefix customer-frontend && npm install --prefix admin-frontend"
+  },
+  "keywords": [
+    "crystal",
+    "luxury",
+    "e-commerce",
+    "nextjs",
+    "threejs",
+    "r3f"
+  ],
+  "author": "SWAYAM A H <swayamh16@gmail.com>",
+  "license": "ISC"
+}

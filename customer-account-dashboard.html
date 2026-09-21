@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Account Dashboard & Product Review System | Sumuk Crystalz</title>
+  
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#fbbf24',
+              goldLight: '#fde68a',
+              dark: '#06050a',
+              card: '#0e0b16',
+            }
+          },
+          fontFamily: {
+            display: ['Cinzel', 'Playfair Display', 'serif'],
+            sans: ['Outfit', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase JS Client v2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      background-color: #06050a;
+      color: #f4f4f5;
+      font-family: 'Outfit', sans-serif;
+    }
+    .font-display {
+      font-family: 'Cinzel', serif;
+    }
+    .glass-card {
+      background: rgba(14, 11, 22, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(251, 191, 36, 0.15);
+    }
+    .glass-card:hover {
+      border-color: rgba(251, 191, 36, 0.3);
+    }
+    .star-glow {
+      filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #090710;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden selection:bg-amber-400 selection:text-black">
+
+  <!-- Ambient Glow Effects -->
+  <div class="fixed top-0 left-1/4 w-96 h-96 bg-purple-900/20 rounded-full blur-[120px] pointer-events-none"></div>
+  <div class="fixed bottom-10 right-1/4 w-96 h-96 bg-amber-900/15 rounded-full blur-[120px] pointer-events-none"></div>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 relative z-10">
+
+    <!-- Top Navigation Bar -->
+    <header class="flex items-center justify-between pb-6 border-b border-zinc-800/80">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 via-purple-500 to-amber-300 p-0.5 shadow-lg shadow-purple-950/60">
+          <div class="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center text-amber-400">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div>
+          <h1 class="font-display text-xl font-bold tracking-wider text-white">SUMUK CRYSTALZ</h1>
+          <p class="text-[11px] text-amber-400/80 tracking-widest uppercase">Sacred High-Vibrational Portal</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="btn-sync" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-300 transition-colors">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>Sync Supabase</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-banner" class="hidden p-4 rounded-2xl text-sm font-medium transition-all duration-300 flex items-center justify-between shadow-xl">
+      <div class="flex items-center gap-3">
+        <i id="toast-icon" class="w-5 h-5 flex-shrink-0"></i>
+        <span id="toast-message"></span>
+      </div>
+      <button onclick="hideToast()" class="text-zinc-400 hover:text-white p-1">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 1. USER PROFILE & ACCOUNT OVERVIEW BANNER -->
+    <!-- ========================================================================= -->
+    <section class="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        
+        <!-- User Info -->
+        <div class="flex items-center gap-5">
+          <div class="relative">
+            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl p-1 bg-gradient-to-tr from-amber-400 via-purple-500 to-amber-300 shadow-xl flex-shrink-0">
+              <img
+                id="user-avatar-img"
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"
+                alt="Collector Avatar"
+                class="w-full h-full object-cover rounded-xl"
+              />
+            </div>
+            <div class="absolute -bottom-1 -right-1 p-1 bg-zinc-950 rounded-full border border-amber-500/40">
+              <i data-lucide="crown" class="w-4 h-4 text-amber-400"></i>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-3">
+              <h2 id="user-full-name" class="font-display text-2xl sm:text-3xl font-bold text-white tracking-wide">
+                Dr. Soumya Sharma
+              </h2>
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                <i data-lucide="shield-check" class="w-3 h-3 text-amber-400"></i>
+                Verified Collector
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-zinc-400 mt-2">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="mail" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span id="user-email">soumya.sharma@sumukcrystalz.com</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span id="user-member-since" class="text-amber-300 font-medium">Member Since: 21 September, 2026</span>
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-zinc-400 mt-1.5">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="phone" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span id="user-phone">+91 98765 43210</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span id="user-address-preview" class="truncate max-w-xs">Indiranagar Sanctum, Bengaluru, Karnataka</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Metrics -->
+        <div class="grid grid-cols-3 gap-3 w-full lg:w-auto">
+          <div class="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-4 text-center min-w-[100px]">
+            <p class="text-[10px] uppercase font-semibold tracking-wider text-zinc-400">Orders Placed</p>
+            <p id="metric-orders-count" class="font-display text-2xl font-bold text-amber-400 mt-0.5">3</p>
+          </div>
+          <div class="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-4 text-center min-w-[100px]">
+            <p class="text-[10px] uppercase font-semibold tracking-wider text-zinc-400">Reviews Written</p>
+            <p id="metric-reviews-count" class="font-display text-2xl font-bold text-purple-400 mt-0.5">1</p>
+          </div>
+          <div class="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-4 text-center min-w-[110px]">
+            <p class="text-[10px] uppercase font-semibold tracking-wider text-zinc-400">Total Investment</p>
+            <p id="metric-total-amount" class="font-display text-xl font-bold text-emerald-400 mt-0.5">₹30,200</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Edit Profile Button -->
+      <div class="mt-6 pt-5 border-t border-zinc-800/80 flex items-center justify-between">
+        <p class="text-xs text-zinc-500">PostgreSQL / Supabase Authenticated Session: <span id="auth-status-tag" class="text-emerald-400 font-mono">active</span></p>
+        <button id="btn-edit-profile-modal" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-amber-400 hover:text-zinc-950 transition-colors text-zinc-200 shadow-md">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+          Edit Profile Details
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 2. ORDER HISTORY & TRACKING SECTION -->
+    <!-- ========================================================================= -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-display text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="package" class="w-5 h-5 text-amber-400"></i>
+            Order History & Crystal Verification
+          </h3>
+          <p class="text-xs text-zinc-400 mt-0.5">Querying <code class="text-amber-300">orders</code> joined with <code class="text-amber-300">order_items</code></p>
+        </div>
+      </div>
+
+      <!-- Orders List Container -->
+      <div id="orders-container" class="space-y-4">
+        <!-- Rendered via JavaScript -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- 3. EDIT PROFILE MODAL -->
+  <!-- ========================================================================= -->
+  <div id="edit-profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="w-full max-w-md bg-[#0e0b16] border border-amber-500/30 rounded-2xl p-6 text-zinc-100 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+        <h4 class="font-display text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="user" class="w-5 h-5 text-amber-400"></i>
+          Edit Collector Profile
+        </h4>
+        <button onclick="closeEditProfileModal()" class="text-zinc-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="profile-edit-form" class="mt-4 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">Full Name</label>
+          <input type="text" id="input-full-name" required class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-100 focus:outline-none focus:border-amber-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">Contact Phone</label>
+          <input type="tel" id="input-phone" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-100 focus:outline-none focus:border-amber-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">Avatar URL</label>
+          <input type="url" id="input-avatar-url" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-100 focus:outline-none focus:border-amber-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">Delivery Sanctuary Address</label>
+          <textarea id="input-address" rows="3" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-100 focus:outline-none focus:border-amber-400 resize-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
+          <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Cancel</button>
+          <button type="submit" id="btn-save-profile" class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-amber-400 text-zinc-950 hover:bg-amber-300">
+            Save Profile in Supabase
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 4. PRODUCT REVIEW, STAR RATING & PHOTO UPLOAD MODAL -->
+  <!-- ========================================================================= -->
+  <div id="review-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="w-full max-w-lg bg-[#0e0b16] border border-amber-500/30 rounded-2xl overflow-hidden text-zinc-100 shadow-2xl relative">
+      <!-- Top Accent Bar -->
+      <div class="h-1 bg-gradient-to-r from-amber-400 via-purple-500 to-amber-400"></div>
+
+      <!-- Header -->
+      <div class="flex items-center justify-between p-5 border-b border-zinc-800 bg-zinc-900/40">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
+          <h4 class="font-display text-lg font-semibold text-white">Write a Product Review</h4>
+        </div>
+        <button onclick="closeReviewModal()" class="text-zinc-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Selected Product Info -->
+      <div class="p-4 border-b border-zinc-800/80 bg-zinc-950/60 flex items-center gap-4">
+        <img id="modal-product-img" src="" alt="Product" class="w-16 h-16 rounded-xl object-cover border border-zinc-800 flex-shrink-0" />
+        <div class="min-w-0 flex-1">
+          <h5 id="modal-product-title" class="text-sm font-semibold text-zinc-100 truncate">Product Name</h5>
+          <p id="modal-product-price" class="text-xs text-amber-400/90 mt-0.5">₹0.00</p>
+        </div>
+      </div>
+
+      <!-- Review Form -->
+      <form id="review-form" class="p-5 space-y-4">
+        <div id="modal-error-box" class="hidden p-3 bg-rose-950/50 border border-rose-500/50 rounded-xl text-rose-300 text-xs flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 flex-shrink-0"></i>
+          <span id="modal-error-text"></span>
+        </div>
+
+        <!-- 1-5 Interactive Star Rating -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+            Energetic Resonance & Star Rating
+          </label>
+          <div class="flex items-center gap-1" id="star-container">
+            <!-- Rendered via JS -->
+          </div>
+          <p id="star-rating-label" class="text-xs text-amber-300/90 mt-1 font-medium">5 Stars — Transcendental Energy</p>
+        </div>
+
+        <!-- Review Comment -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Customer Review / Feedback</label>
+            <span id="comment-length" class="text-[10px] text-zinc-500">0 chars</span>
+          </div>
+          <textarea
+            id="review-comment-input"
+            rows="3"
+            required
+            placeholder="Share your experience regarding crystal clarity, vibration, craft, and shipment packaging..."
+            class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 resize-none"
+          ></textarea>
+        </div>
+
+        <!-- Photo Upload & Client-Side Preview -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+            Upload Crystal Photo <span class="text-zinc-500 font-normal">(Optional, max 5MB)</span>
+          </label>
+          
+          <div id="photo-preview-container" class="hidden relative w-28 h-28 rounded-xl overflow-hidden border border-amber-500/40 bg-zinc-950 mb-2">
+            <img id="photo-preview-img" src="" alt="Preview" class="w-full h-full object-cover" />
+            <button type="button" onclick="removeSelectedPhoto()" class="absolute top-1 right-1 p-1 bg-black/80 hover:bg-rose-600 text-white rounded-full transition-colors">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <div id="photo-dropzone">
+            <input type="file" id="review-photo-input" accept="image/jpeg,image/png,image/webp,image/jpg" class="hidden" />
+            <label for="review-photo-input" class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-zinc-700 hover:border-amber-400/60 rounded-xl bg-zinc-950/40 cursor-pointer transition-colors group">
+              <i data-lucide="upload" class="w-5 h-5 text-zinc-400 group-hover:text-amber-400 mb-1"></i>
+              <span class="text-xs text-zinc-300 font-medium">Click to select photo</span>
+              <span class="text-[10px] text-zinc-500">JPG, PNG, or WEBP up to 5MB</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
+          <button type="button" onclick="closeReviewModal()" class="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Cancel</button>
+          <button type="submit" id="btn-submit-review" class="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-400 to-amber-300 text-zinc-950 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-amber-500/20">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span id="btn-submit-review-text">Submit Verified Review</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT LOGIC & SUPABASE INTEGRATION -->
+  <!-- ========================================================================= -->
+  <script>
+    // 1. Supabase Initialization
+    const SUPABASE_URL = 'https://cmsiounkoqpwjccczebk.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_ylcqcDVWnCBJ9EhGPeEMKQ_P7-nnoVP';
+    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    // State Variables
+    let currentUserId = 'c7492c10-91ae-4bf1-b9d2-7c6d12345678';
+    let userProfile = {
+      full_name: 'Dr. Soumya Sharma',
+      email: 'soumya.sharma@sumukcrystalz.com',
+      phone: '+91 98765 43210',
+      address: '7th Harmonic Sanctum, Indiranagar, Bengaluru, Karnataka - 560038',
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      created_at: '2026-09-21T06:00:00Z',
+    };
+
+    let userOrders = [
+      {
+        id: 'ord_77492c10-91ae-4bf1-b9d2-7c6d1234abcd',
+        status: 'delivered',
+        total_amount: 14500.00,
+        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        order_items: [
+          {
+            id: 'item_01',
+            product_id: 'prod_amethyst_01',
+            product_name: 'Celestial Amethyst Geode Cathedral 1.8kg',
+            product_image: 'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=500&auto=format&fit=crop&q=80',
+            price: 8500.00,
+            quantity: 1,
+            is_reviewed: false,
+          },
+          {
+            id: 'item_02',
+            product_id: 'prod_rosequartz_02',
+            product_name: 'Madagascar Raw Rose Quartz Harmony Obelisk',
+            product_image: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=500&auto=format&fit=crop&q=80',
+            price: 6000.00,
+            quantity: 1,
+            is_reviewed: true,
+          }
+        ]
+      },
+      {
+        id: 'ord_88201a33-88bb-4bc3-a912-9988aabbccdd',
+        status: 'shipped',
+        total_amount: 11200.00,
+        created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        order_items: [
+          {
+            id: 'item_03',
+            product_id: 'prod_pyrite_03',
+            product_name: 'Golden Pyrite Abundance Sphere 80mm',
+            product_image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=80',
+            price: 11200.00,
+            quantity: 1,
+            is_reviewed: false,
+          }
+        ]
+      },
+      {
+        id: 'ord_99312f44-11cc-4dd5-b223-112233445566',
+        status: 'processing',
+        total_amount: 4500.00,
+        created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+        order_items: [
+          {
+            id: 'item_04',
+            product_id: 'prod_labradorite_04',
+            product_name: 'Spectral Aurora Labradorite Freeform',
+            product_image: 'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=500&auto=format&fit=crop&q=80',
+            price: 4500.00,
+            quantity: 1,
+            is_reviewed: false,
+          }
+        ]
+      }
+    ];
+
+    // Review Modal Active State
+    let activeReviewItem = null;
+    let activeOrderId = null;
+    let selectedRating = 5;
+    let selectedPhotoFile = null;
+
+    // 2. Initialize App
+    document.addEventListener('DOMContentLoaded', async () => {
+      lucide.createIcons();
+      await fetchSupabaseAccountData();
+      renderProfileUI();
+      renderOrdersUI();
+      setupEventListeners();
+      renderStarButtons(5);
+    });
+
+    // 3. Fetch Data from Supabase
+    async function fetchSupabaseAccountData() {
+      if (!supabase) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          currentUserId = user.id;
+          userProfile.email = user.email;
+          userProfile.created_at = user.created_at;
+
+          // Fetch Profiles Table
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (profileData) {
+            userProfile.full_name = profileData.full_name || userProfile.full_name;
+            userProfile.phone = profileData.phone || userProfile.phone;
+            userProfile.address = profileData.address || userProfile.address;
+            userProfile.avatar_url = profileData.avatar_url || userProfile.avatar_url;
+          }
+
+          // Fetch Orders joined with order_items
+          const { data: ordersData } = await supabase
+            .from('orders')
+            .select(`
+              id,
+              user_id,
+              status,
+              total_amount,
+              created_at,
+              order_items (
+                id,
+                order_id,
+                product_id,
+                product_name,
+                product_image,
+                price,
+                quantity,
+                is_reviewed
+              )
+            `)
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (ordersData && ordersData.length > 0) {
+            userOrders = ordersData;
+          }
+        }
+      } catch (e) {
+        console.warn('Supabase local sync note:', e.message);
+      }
+    }
+
+    // 4. Render Profile UI
+    function renderProfileUI() {
+      document.getElementById('user-full-name').textContent = userProfile.full_name || 'Valued Collector';
+      document.getElementById('user-email').textContent = userProfile.email || 'collector@sumukcrystalz.com';
+      document.getElementById('user-phone').textContent = userProfile.phone || 'Not configured';
+      document.getElementById('user-address-preview').textContent = userProfile.address || 'Sanctum not configured';
+      document.getElementById('user-avatar-img').src = userProfile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80';
+      
+      // Date formatting "Member Since: DD Month, YYYY"
+      const date = new Date(userProfile.created_at || '2026-09-21T06:00:00Z');
+      const day = date.getDate().toString().padStart(2, '0');
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      document.getElementById('user-member-since').textContent = `Member Since: ${day} ${monthNames[date.getMonth()]}, ${date.getFullYear()}`;
+
+      // Update Metrics
+      const totalOrders = userOrders.length;
+      const totalSpent = userOrders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
+      const totalReviews = userOrders.flatMap(o => o.order_items || []).filter(i => i.is_reviewed).length;
+
+      document.getElementById('metric-orders-count').textContent = totalOrders;
+      document.getElementById('metric-reviews-count').textContent = totalReviews;
+      document.getElementById('metric-total-amount').textContent = '₹' + totalSpent.toLocaleString('en-IN');
+    }
+
+    // 5. Render Orders UI
+    function renderOrdersUI() {
+      const container = document.getElementById('orders-container');
+      container.innerHTML = '';
+
+      if (userOrders.length === 0) {
+        container.innerHTML = `
+          <div class="glass-card rounded-2xl p-8 text-center text-zinc-400">
+            <i data-lucide="package" class="w-10 h-10 text-zinc-600 mx-auto mb-2"></i>
+            <p class="text-sm">No orders found.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      userOrders.forEach(order => {
+        const orderDate = new Date(order.created_at).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        });
+
+        const statusBadge = getStatusBadgeHTML(order.status);
+
+        const itemsHTML = (order.order_items || []).map(item => {
+          const isDelivered = order.status === 'delivered';
+          let reviewButtonHTML = '';
+
+          if (isDelivered) {
+            if (item.is_reviewed) {
+              reviewButtonHTML = `
+                <button disabled class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 cursor-default opacity-80">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+                  Reviewed
+                </button>
+              `;
+            } else {
+              reviewButtonHTML = `
+                <button onclick="openReviewModal('${order.id}', '${item.id}')" class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-amber-400 text-zinc-950 hover:bg-amber-300 active:scale-95 transition-all shadow-md shadow-amber-500/20">
+                  <i data-lucide="star" class="w-3.5 h-3.5 fill-zinc-950"></i>
+                  Write a Review
+                </button>
+              `;
+            }
+          } else {
+            reviewButtonHTML = `<span class="text-[11px] text-zinc-500 italic">Review unlocks on delivery</span>`;
+          }
+
+          return `
+            <div class="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-4 min-w-0">
+                <img src="${item.product_image || 'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?w=500'}" alt="${item.product_name}" class="w-16 h-16 rounded-xl object-cover border border-zinc-800 flex-shrink-0" />
+                <div class="min-w-0">
+                  <h5 class="text-sm font-semibold text-zinc-100 truncate">${item.product_name}</h5>
+                  <p class="text-xs text-zinc-400 mt-0.5">Qty: ${item.quantity} • ₹${Number(item.price).toLocaleString('en-IN')} each</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-end w-full sm:w-auto">
+                ${reviewButtonHTML}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        const cardHTML = `
+          <div class="glass-card rounded-2xl overflow-hidden shadow-xl">
+            <div class="p-4 sm:p-5 bg-zinc-950/70 border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-4">
+              <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                <div>
+                  <span class="text-zinc-500 block uppercase tracking-wider text-[10px]">Order ID</span>
+                  <span class="font-mono font-semibold text-zinc-200">${order.id}</span>
+                </div>
+                <div>
+                  <span class="text-zinc-500 block uppercase tracking-wider text-[10px]">Date</span>
+                  <span class="font-medium text-zinc-300">${orderDate}</span>
+                </div>
+                <div>
+                  <span class="text-zinc-500 block uppercase tracking-wider text-[10px]">Total</span>
+                  <span class="font-semibold text-amber-400">₹${Number(order.total_amount).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+              <div>${statusBadge}</div>
+            </div>
+            <div class="p-4 sm:p-6 divide-y divide-zinc-800/60">
+              ${itemsHTML}
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', cardHTML);
+      });
+
+      lucide.createIcons();
+    }
+
+    function getStatusBadgeHTML(status) {
+      switch (status?.toLowerCase()) {
+        case 'delivered':
+          return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/70 text-emerald-300 border border-emerald-500/40"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>Delivered</span>`;
+        case 'shipped':
+          return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-950/70 text-sky-300 border border-sky-500/40"><i data-lucide="truck" class="w-3.5 h-3.5 text-sky-400"></i>Shipped</span>`;
+        case 'processing':
+          return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/70 text-amber-300 border border-amber-500/40"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-amber-400"></i>Processing</span>`;
+        case 'cancelled':
+          return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-950/70 text-rose-300 border border-rose-500/40"><i data-lucide="x" class="w-3.5 h-3.5 text-rose-400"></i>Cancelled</span>`;
+        default:
+          return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-950/70 text-purple-300 border border-purple-500/40"><i data-lucide="clock" class="w-3.5 h-3.5 text-purple-400"></i>Pending</span>`;
+      }
+    }
+
+    // 6. Star Rating UI
+    function renderStarButtons(currentRating) {
+      selectedRating = currentRating;
+      const starContainer = document.getElementById('star-container');
+      starContainer.innerHTML = '';
+
+      for (let i = 1; i <= 5; i++) {
+        const isFilled = i <= currentRating;
+        const starBtn = document.createElement('button');
+        starBtn.type = 'button';
+        starBtn.className = 'p-1 hover:scale-110 transition-transform';
+        starBtn.innerHTML = `
+          <i data-lucide="star" class="w-7 h-7 ${isFilled ? 'text-amber-400 fill-amber-400 star-glow' : 'text-zinc-600 fill-transparent'}"></i>
+        `;
+        starBtn.onclick = () => renderStarButtons(i);
+        starContainer.appendChild(starBtn);
+      }
+
+      const labels = {
+        5: '5 Stars — Transcendental Energy & Quality',
+        4: '4 Stars — Highly Resonant & Beautiful',
+        3: '3 Stars — Average Vibration',
+        2: '2 Stars — Below Expectation',
+        1: '1 Star — Disappointing Experience'
+      };
+      document.getElementById('star-rating-label').textContent = labels[currentRating] || `${currentRating} Stars`;
+      lucide.createIcons();
+    }
+
+    // 7. Modal Handlers
+    function openReviewModal(orderId, itemId) {
+      activeOrderId = orderId;
+      const order = userOrders.find(o => o.id === orderId);
+      if (!order) return;
+      activeReviewItem = order.order_items.find(i => i.id === itemId);
+      if (!activeReviewItem) return;
+
+      document.getElementById('modal-product-img').src = activeReviewItem.product_image;
+      document.getElementById('modal-product-title').textContent = activeReviewItem.product_name;
+      document.getElementById('modal-product-price').textContent = `Verified Purchase • ₹${Number(activeReviewItem.price).toLocaleString('en-IN')}`;
+
+      // Reset form fields
+      document.getElementById('review-comment-input').value = '';
+      document.getElementById('comment-length').textContent = '0 chars';
+      removeSelectedPhoto();
+      document.getElementById('modal-error-box').classList.add('hidden');
+      renderStarButtons(5);
+
+      const modal = document.getElementById('review-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeReviewModal() {
+      const modal = document.getElementById('review-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openEditProfileModal() {
+      document.getElementById('input-full-name').value = userProfile.full_name || '';
+      document.getElementById('input-phone').value = userProfile.phone || '';
+      document.getElementById('input-avatar-url').value = userProfile.avatar_url || '';
+      document.getElementById('input-address').value = userProfile.address || '';
+
+      const modal = document.getElementById('edit-profile-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEditProfileModal() {
+      const modal = document.getElementById('edit-profile-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function removeSelectedPhoto() {
+      selectedPhotoFile = null;
+      document.getElementById('review-photo-input').value = '';
+      document.getElementById('photo-preview-container').classList.add('hidden');
+      document.getElementById('photo-dropzone').classList.remove('hidden');
+    }
+
+    // 8. Event Listeners & Review Workflow Execution
+    function setupEventListeners() {
+      document.getElementById('btn-sync').onclick = async () => {
+        showToast('Synchronizing with Supabase PostgreSQL Database...', 'info');
+        await fetchSupabaseAccountData();
+        renderProfileUI();
+        renderOrdersUI();
+        showToast('Synchronized with Supabase successfully.', 'success');
+      };
+
+      document.getElementById('btn-edit-profile-modal').onclick = openEditProfileModal;
+
+      // Comment input char counter
+      document.getElementById('review-comment-input').addEventListener('input', (e) => {
+        document.getElementById('comment-length').textContent = `${e.target.value.length} chars`;
+      });
+
+      // Photo upload change
+      document.getElementById('review-photo-input').addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+          showModalError('Image size must be under 5MB.');
+          return;
+        }
+
+        selectedPhotoFile = file;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          document.getElementById('photo-preview-img').src = event.target.result;
+          document.getElementById('photo-preview-container').classList.remove('hidden');
+          document.getElementById('photo-dropzone').classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Edit Profile Submit
+      document.getElementById('profile-edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const full_name = document.getElementById('input-full-name').value;
+        const phone = document.getElementById('input-phone').value;
+        const avatar_url = document.getElementById('input-avatar-url').value;
+        const address = document.getElementById('input-address').value;
+
+        userProfile.full_name = full_name;
+        userProfile.phone = phone;
+        userProfile.avatar_url = avatar_url;
+        userProfile.address = address;
+
+        if (supabase) {
+          try {
+            await supabase.from('profiles').upsert({
+              id: currentUserId,
+              full_name,
+              phone,
+              avatar_url,
+              address,
+            });
+          } catch (err) {
+            console.warn('Supabase upsert:', err);
+          }
+        }
+
+        renderProfileUI();
+        closeEditProfileModal();
+        showToast('Profile updated in Supabase successfully.', 'success');
+      });
+
+      // Review Form Submission Workflow
+      document.getElementById('review-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const comment = document.getElementById('review-comment-input').value.trim();
+        if (comment.length < 5) {
+          showModalError('Please enter at least 5 characters for your review.');
+          return;
+        }
+
+        const submitBtn = document.getElementById('btn-submit-review');
+        const submitText = document.getElementById('btn-submit-review-text');
+        submitBtn.disabled = true;
+        submitText.textContent = 'Uploading to Supabase...';
+
+        try {
+          let photoUrl = null;
+
+          // 1. Supabase Storage Upload if image provided
+          if (selectedPhotoFile && supabase) {
+            const cleanName = selectedPhotoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const filePath = `${currentUserId}/${Date.now()}_${cleanName}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('review-images')
+              .upload(filePath, selectedPhotoFile, { cacheControl: '3600', upsert: false });
+
+            if (!uploadError) {
+              const { data } = supabase.storage.from('review-images').getPublicUrl(filePath);
+              photoUrl = data?.publicUrl;
+            }
+          }
+
+          // 2. Insert row into 'reviews' table
+          if (supabase) {
+            await supabase.from('reviews').insert([{
+              user_id: currentUserId,
+              product_id: activeReviewItem.product_id,
+              order_id: activeOrderId,
+              rating: selectedRating,
+              comment: comment,
+              photo_url: photoUrl,
+              created_at: new Date().toISOString(),
+            }]);
+
+            // 3. Update order_items is_reviewed = true
+            await supabase.from('order_items')
+              .update({ is_reviewed: true })
+              .eq('id', activeReviewItem.id);
+          }
+
+          // Update local state
+          activeReviewItem.is_reviewed = true;
+          renderOrdersUI();
+          renderProfileUI();
+          closeReviewModal();
+          showToast('Thank you! Your verified crystal review has been published.', 'success');
+        } catch (err) {
+          showModalError(err.message || 'Failed to submit review.');
+        } finally {
+          submitBtn.disabled = false;
+          submitText.textContent = 'Submit Verified Review';
+        }
+      });
+    }
+
+    function showModalError(msg) {
+      const box = document.getElementById('modal-error-box');
+      document.getElementById('modal-error-text').textContent = msg;
+      box.classList.remove('hidden');
+    }
+
+    function showToast(msg, type = 'success') {
+      const banner = document.getElementById('toast-banner');
+      const text = document.getElementById('toast-message');
+      const icon = document.getElementById('toast-icon');
+
+      text.textContent = msg;
+      banner.className = `p-4 rounded-2xl text-sm font-medium flex items-center justify-between shadow-xl fixed bottom-6 right-6 z-50 max-w-md ${
+        type === 'success'
+          ? 'bg-emerald-950/90 border border-emerald-500/50 text-emerald-200'
+          : 'bg-zinc-900/90 border border-amber-500/50 text-amber-200'
+      }`;
+      icon.setAttribute('data-lucide', type === 'success' ? 'check-circle-2' : 'info');
+      banner.classList.remove('hidden');
+      lucide.createIcons();
+
+      setTimeout(() => hideToast(), 4500);
+    }
+
+    function hideToast() {
+      document.getElementById('toast-banner').classList.add('hidden');
+    }
+  </script>
+
+  <!-- Footer Attribution -->
+  <footer class="text-center py-6 border-t border-zinc-800 text-xs sm:text-sm font-mono text-amber-300 font-semibold tracking-wider relative z-10 bg-[#06050a]">
+    createdby : SWAYAM A H work at:<a href="mailto:swayamh16@gmail.com" class="underline hover:text-white transition ml-1">swayamh16@gmail.com</a>
+  </footer>
+</body>
+</html>

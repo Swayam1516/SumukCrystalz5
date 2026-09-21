@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Order Has Been Packed</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #07060A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #E5E0D8;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #07060A; padding: 30px 10px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; background-color: #0E0D14; border: 1px solid rgba(212,175,55,0.35); border-radius: 16px; padding: 32px 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.9);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding-bottom: 20px; border-bottom: 1px solid rgba(212,175,55,0.25);">
+              <table width="100%">
+                <tr>
+                  <td>
+                    <div style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #D4AF37; letter-spacing: 1.5px; text-transform: uppercase;">
+                      SUMUK CRYSTALZ
+                    </div>
+                    <div style="font-size: 11px; color: #C5BBAF; margin-top: 3px;">
+                      Sacred Energy Specimens &amp; Spiritual Elegance
+                    </div>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 24px;">📦</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 24px 0 20px;">
+              <h2 style="margin: 0 0 10px; font-size: 20px; color: #FFFFFF; font-weight: bold;">
+                📦 Your Specimens Have Been Packed &amp; Consecrated
+              </h2>
+              <p style="margin: 0 0 18px; font-size: 13px; color: #C5BBAF; line-height: 1.6;">
+                Dear <strong style="color: #FFFFFF;">{{customer_name}}</strong>, your order <strong style="color: #D4AF37;">#{{order_id}}</strong> has been carefully energized with 528Hz Solfeggio sound attunement, certified, and packed into armored tamper-proof packaging.
+              </p>
+
+              <!-- Meta Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #15141E; border: 1px solid rgba(212,175,55,0.3); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 4px 0; font-size: 12px; color: #8E877D;">Order ID:</td>
+                  <td align="right" style="padding: 4px 0; font-size: 12px; font-weight: bold; color: #FFFFFF; font-family: monospace;">#{{order_id}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; font-size: 12px; color: #8E877D;">Current Status:</td>
+                  <td align="right" style="padding: 4px 0; font-size: 12px; font-weight: bold; color: #60A5FA;">📦 Packed &amp; Ready for Courier Dispatch</td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <div style="text-align: center; padding: 10px 0 10px;">
+                <a href="{{order_tracking_url}}" style="display: inline-block; background: linear-gradient(135deg, #D4AF37 0%, #E8C97C 50%, #B8860B 100%); color: #07060A; font-weight: bold; font-size: 13px; text-decoration: none; padding: 12px 32px; border-radius: 999px; text-transform: uppercase; letter-spacing: 1px;">
+                  Track Order
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding-top: 20px; border-top: 1px solid rgba(212,175,55,0.2); text-align: center; font-size: 11px; color: #777777;">
+              &copy; 2026 Sumuk Crystalz &bull; Crafted with metaphysical integrity.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

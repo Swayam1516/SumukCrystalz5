@@ -1,0 +1,603 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-main: #06050a;
+    --bg-card: rgba(18, 15, 27, 0.7);
+    --crystal-glow: rgba(155, 89, 182, 0.5);
+    --crystal-accent: #c084fc;
+    --crystal-border: rgba(192, 132, 252, 0.4);
+    --crystal-shadow: rgba(168, 85, 247, 0.35);
+    --pointer-x: 50%;
+    --pointer-y: 50%;
+
+    /* Light Spiritual Store Tokens */
+    --store-bg: #fcfaf6;
+    --store-card-bg: #ffffff;
+    --store-border: #ede6da;
+    --store-text-main: #1f1a15;
+    --store-text-muted: #6b6357;
+    --store-accent-red: #ba3c2a;
+    --store-accent-gold: #d4af37;
+  }
+
+  body {
+    background-color: #06050a;
+    color: #f3f2fa;
+    font-family: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+    letter-spacing: 0.01em;
+  }
+
+  ::selection {
+    background-color: #f59e0b;
+    color: #000000;
+  }
+}
+
+/* ==========================================================================
+   1. IMPRESSIVE TYPOGRAPHY SYSTEM
+   ========================================================================== */
+.font-display {
+  font-family: 'Playfair Display', 'Cinzel', serif;
+  letter-spacing: 0.02em;
+}
+
+.font-editorial {
+  font-family: 'Cinzel', 'Playfair Display', serif;
+  letter-spacing: 0.08em;
+}
+
+.font-sans-ui {
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Specially crafted font styles for high-converting Options & Controls */
+.font-option {
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.035em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-option-title {
+  font-family: 'Cinzel', 'Playfair Display', serif;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.font-option-badge {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* 3D Text Depth Effects */
+.text-3d-title {
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.9), 0 0 30px rgba(245, 158, 11, 0.25);
+}
+
+.text-3d-title-light {
+  text-shadow: 0 2px 8px rgba(62, 39, 24, 0.12), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.text-3d-subtle {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* Luxury Gradient Text */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fffdf5 0%, #fde047 35%, #eab308 70%, #ca8a04 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-gradient-text-light {
+  background: linear-gradient(135deg, #8c6208 0%, #b8860b 40%, #d4af37 80%, #785004 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.terracotta-gradient-text {
+  background: linear-gradient(135deg, #ba3c2a 0%, #d95338 50%, #8c2517 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==========================================================================
+   2. 3D TACTILE OPTIONS (LIGHT THEME - STORE / PDP)
+   ========================================================================== */
+.option-3d-light {
+  background: linear-gradient(145deg, #ffffff 0%, #f7f3eb 100%);
+  color: #2c251e;
+  border: 1px solid #e5dfd3;
+  box-shadow: 
+    0 4px 12px rgba(62, 39, 24, 0.07),
+    0 1px 3px rgba(0, 0, 0, 0.03),
+    inset 0 1px 1.5px #ffffff,
+    inset 0 -2px 3px rgba(62, 39, 24, 0.05);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transform: translateZ(0);
+}
+
+.option-3d-light:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: #d4af37;
+  color: #1a1510;
+  box-shadow: 
+    0 8px 20px rgba(212, 175, 55, 0.22),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 1px 2px #ffffff;
+}
+
+.option-3d-light:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 
+    0 2px 6px rgba(62, 39, 24, 0.08),
+    inset 0 2px 4px rgba(62, 39, 24, 0.1);
+}
+
+/* Active / Selected States for Light 3D Options */
+.option-3d-light-active-red {
+  background: linear-gradient(135deg, #ba3c2a 0%, #a63120 50%, #8c2517 100%) !important;
+  color: #ffffff !important;
+  border-color: #ba3c2a !important;
+  font-weight: 700 !important;
+  box-shadow: 
+    0 6px 20px rgba(186, 60, 42, 0.4),
+    0 2px 5px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.45),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.option-3d-light-active-gold {
+  background: linear-gradient(135deg, #d4af37 0%, #c49925 50%, #9e750f 100%) !important;
+  color: #ffffff !important;
+  border-color: #d4af37 !important;
+  font-weight: 700 !important;
+  box-shadow: 
+    0 6px 20px rgba(212, 175, 55, 0.45),
+    0 2px 5px rgba(0, 0, 0, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.25) !important;
+}
+
+.option-3d-light-active-dark {
+  background: linear-gradient(135deg, #2b221a 0%, #1a140e 100%) !important;
+  color: #ffffff !important;
+  border-color: #3e2718 !important;
+  font-weight: 700 !important;
+  box-shadow: 
+    0 6px 20px rgba(34, 25, 18, 0.35),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 3D Chip for Filters / Bead Types in Light Store */
+.chip-3d-light {
+  background: linear-gradient(145deg, #ffffff 0%, #f6f2ea 100%);
+  border: 1px solid #e8e2d6;
+  color: #3e362c;
+  box-shadow: 
+    0 3px 8px rgba(62, 39, 24, 0.05),
+    inset 0 1px 1px #ffffff;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+}
+
+.chip-3d-light:hover {
+  transform: translateY(-1px);
+  border-color: #d4af37;
+  color: #1a1510;
+  box-shadow: 0 6px 14px rgba(212, 175, 55, 0.18);
+}
+
+.chip-3d-light-selected {
+  background: linear-gradient(135deg, #fdf4e2 0%, #fae8c3 100%);
+  border-color: #d4af37 !important;
+  color: #785004 !important;
+  font-weight: 700 !important;
+  box-shadow: 
+    0 4px 12px rgba(212, 175, 55, 0.25),
+    inset 0 1px 1px #ffffff;
+}
+
+/* ==========================================================================
+   3. 3D TACTILE OPTIONS (DARK THEME - ADMIN DASHBOARD & HERO)
+   ========================================================================== */
+.option-btn-3d {
+  background: linear-gradient(145deg, rgba(34, 28, 44, 0.95) 0%, rgba(16, 13, 22, 0.98) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.18);
+  color: #e5dfd3;
+  box-shadow: 
+    0 6px 18px -2px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.18),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transform: translateZ(0);
+}
+
+.option-btn-3d:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: rgba(245, 158, 11, 0.6);
+  color: #ffffff;
+  box-shadow: 
+    0 10px 25px -3px rgba(245, 158, 11, 0.35),
+    0 4px 10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.option-btn-3d-active {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.32) 0%, rgba(217, 119, 6, 0.42) 100%) !important;
+  border: 1px solid #f59e0b !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 
+    0 0 25px rgba(245, 158, 11, 0.45),
+    0 8px 20px rgba(0, 0, 0, 0.8),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Radiant Gold 3D Master Button */
+.gold-3d-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+  color: #000000;
+  font-family: 'Outfit', 'Plus Jakarta Sans', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 235, 150, 0.6);
+  box-shadow: 
+    0 8px 25px -4px rgba(245, 158, 11, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateZ(0);
+}
+
+.gold-3d-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 12px 32px 0 rgba(245, 158, 11, 0.65),
+    0 4px 12px rgba(0, 0, 0, 0.7),
+    inset 0 1px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.06);
+}
+
+.gold-3d-btn:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 
+    0 2px 10px rgba(245, 158, 11, 0.4),
+    inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ==========================================================================
+   IMAGE 1 UNIFIED PILL BUTTON DESIGN SYSTEM
+   ========================================================================== */
+.btn-pill-primary {
+  background: linear-gradient(135deg, #f59e0b 0%, #f5a623 30%, #d97706 70%, #b45309 100%);
+  color: #000000;
+  font-family: 'Outfit', 'Plus Jakarta Sans', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 0.875rem 2rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 240, 160, 0.7);
+  box-shadow: 
+    0 4px 25px rgba(245, 158, 11, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2.5px rgba(255, 255, 255, 0.85),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transform: translateZ(0);
+}
+
+.btn-pill-primary:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 
+    0 10px 32px rgba(245, 158, 11, 0.65),
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 3px rgba(255, 255, 255, 0.95);
+  filter: brightness(1.08);
+}
+
+.btn-pill-primary:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 
+    0 2px 10px rgba(245, 158, 11, 0.35),
+    inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.btn-pill-secondary {
+  background: rgba(9, 8, 18, 0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #ffffff;
+  font-family: 'Outfit', 'Plus Jakarta Sans', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 0.875rem 2rem;
+  border-radius: 9999px;
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transform: translateZ(0);
+}
+
+.btn-pill-secondary:hover {
+  transform: translateY(-2px) scale(1.03);
+  border-color: rgba(245, 158, 11, 0.85);
+  color: #fde68a;
+  box-shadow: 
+    0 8px 25px rgba(245, 158, 11, 0.3),
+    0 0 15px rgba(245, 158, 11, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.25);
+  background: rgba(22, 17, 36, 0.92);
+}
+
+.btn-pill-secondary:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* ==========================================================================
+   IMAGE 3 PROVENANCE TRUST CARDS
+   ========================================================================== */
+.provenance-card {
+  background: linear-gradient(145deg, rgba(26, 20, 36, 0.85) 0%, rgba(12, 10, 18, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 
+    0 12px 30px -8px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.provenance-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 
+    0 18px 40px -8px rgba(0, 0, 0, 0.85),
+    0 0 20px rgba(245, 158, 11, 0.15),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.2);
+}
+
+/* High-Intent Terracotta Red 3D Button */
+.cta-3d-red {
+  background: linear-gradient(135deg, #ba3c2a 0%, #a63120 50%, #822214 100%);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  border: 1px solid rgba(255, 200, 180, 0.35);
+  box-shadow: 
+    0 8px 24px -4px rgba(186, 60, 42, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.45),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateZ(0);
+}
+
+.cta-3d-red:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 14px 32px -2px rgba(186, 60, 42, 0.6),
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6);
+  filter: brightness(1.05);
+}
+
+.cta-3d-red:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 
+    0 2px 8px rgba(186, 60, 42, 0.4),
+    inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Secondary Antique Gold 3D Button */
+.cta-3d-gold {
+  background: linear-gradient(135deg, #d4af37 0%, #b8860b 50%, #8c6208 100%);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  border: 1px solid rgba(255, 245, 200, 0.5);
+  box-shadow: 
+    0 8px 24px -4px rgba(212, 175, 55, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cta-3d-gold:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 12px 30px rgba(212, 175, 55, 0.55),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  filter: brightness(1.05);
+}
+
+/* ==========================================================================
+   4. LIGHT SPIRITUAL STORE CONTAINER & CARDS
+   ========================================================================== */
+.store-canvas-light {
+  background-color: #fcfaf6;
+  color: #1f1a15;
+}
+
+.store-card-light {
+  background-color: #ffffff;
+  border: 1px solid #ede6dc;
+  border-radius: 1.25rem;
+  box-shadow: 
+    0 8px 24px -4px rgba(62, 39, 24, 0.06),
+    0 2px 6px rgba(0, 0, 0, 0.02),
+    inset 0 1px 1px #ffffff;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateZ(0);
+}
+
+.store-card-light:hover {
+  transform: translateY(-4px) scale(1.01);
+  border-color: #d4af37;
+  box-shadow: 
+    0 20px 40px -8px rgba(62, 39, 24, 0.12),
+    0 0 20px -5px rgba(212, 175, 55, 0.2),
+    inset 0 1px 2px #ffffff;
+}
+
+.store-sidebar-light {
+  background: #ffffff;
+  border: 1px solid #ece5d8;
+  border-radius: 1.25rem;
+  box-shadow: 
+    0 10px 30px -5px rgba(62, 39, 24, 0.06),
+    inset 0 1px 1px #ffffff;
+}
+
+/* ==========================================================================
+   5. 3D GLASS CARDS & PANELS (OBSIDIAN DARK THEME)
+   ========================================================================== */
+.glass-panel-3d {
+  background: radial-gradient(
+    circle at var(--pointer-x) var(--pointer-y),
+    rgba(32, 26, 44, 0.88) 0%,
+    rgba(14, 11, 20, 0.96) 100%
+  );
+  backdrop-filter: blur(22px) saturate(190%);
+  -webkit-backdrop-filter: blur(22px) saturate(190%);
+  border: 1px solid rgba(255, 215, 0, 0.16);
+  box-shadow: 
+    0 24px 60px -10px rgba(0, 0, 0, 0.85),
+    0 0 30px -10px rgba(245, 158, 11, 0.18),
+    inset 0 1px 2px rgba(255, 255, 255, 0.18),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.6);
+  border-radius: 1.25rem;
+}
+
+.glass-card-3d {
+  background: linear-gradient(145deg, rgba(28, 22, 38, 0.85) 0%, rgba(13, 10, 18, 0.96) 100%);
+  backdrop-filter: blur(18px) saturate(190%);
+  -webkit-backdrop-filter: blur(18px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 16px 36px -10px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.15),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-3d:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 
+    0 22px 50px -10px rgba(245, 158, 11, 0.25),
+    0 8px 20px rgba(0, 0, 0, 0.8),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* 3D Floating Badges */
+.badge-3d {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.12) 0%, rgba(20, 16, 32, 0.85) 100%);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.5);
+  border-radius: 9999px;
+}
+
+.badge-3d-light {
+  background: linear-gradient(145deg, #ffffff 0%, #f7f3eb 100%);
+  border: 1px solid #e5dfd3;
+  color: #785004;
+  box-shadow: 
+    0 4px 12px rgba(62, 39, 24, 0.08),
+    inset 0 1px 1px #ffffff;
+  border-radius: 9999px;
+}
+
+/* Smooth Card Animatic Transition */
+.card-3d-animatic {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateZ(0);
+}
+
+.card-3d-animatic:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
+/* ==========================================================================
+   DUAL-TIER HORIZONTAL TICKER REGISTER & MARQUEE ANIMATIONS
+   ========================================================================== */
+
+.vertical-label-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 0.2em;
+  text-transform: lowercase;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+@keyframes tickerMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker-marquee {
+  display: flex;
+  width: max-content;
+  animation: tickerMarquee 45s linear infinite;
+}
+
+.animate-ticker-marquee:hover {
+  animation-play-state: paused;
+}
