@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { saveOrderToSupabase } from '../../../../lib/supabase';
+import { supabase, saveOrderToSupabase } from '../../../../lib/supabase';
 import {
   sendOrderConfirmationEmail,
   sendLuxuryEmail,
@@ -33,18 +33,38 @@ export async function POST(request) {
       );
     }
 
-    // 1. Replay Attack & Duplicate Payment Prevention
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
+
+    // 1. Forward verification to Backend if available
+    if (backendUrl) {
+      try {
+        const res = await fetch(`${backendUrl}/api/payment/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (res.status < 500) {
+          return NextResponse.json(data, { status: res.status });
+        }
+      } catch (err) {
+        console.warn('Backend proxy verify notice, using local verification engine:', err.message);
+      }
+    }
+
+    // 2. Replay Attack & Duplicate Payment Prevention
     if (processedPayments.has(razorpay_payment_id)) {
       return NextResponse.json({
         success: true,
         orderId: orderId || `ORD-${razorpay_payment_id.slice(-8)}`,
+        razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
         status: 'paid',
         message: 'Order was already verified and confirmed.',
       });
     }
 
-    // 2. Cryptographic HMAC SHA-256 Signature Verification
+    // 3. Cryptographic HMAC SHA-256 Signature Verification
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     let isSignatureValid = false;
 
@@ -85,14 +105,6 @@ export async function POST(request) {
         razorpay_payment_id,
       });
 
-      // Update order status as failed
-      saveOrderToSupabase({
-        orderId: orderId || `ORD-${Date.now()}`,
-        razorpayOrderId: razorpay_order_id,
-        razorpayPaymentId: razorpay_payment_id,
-        status: 'failed',
-      }).catch(() => {});
-
       return NextResponse.json(
         {
           error:
@@ -102,7 +114,7 @@ export async function POST(request) {
       );
     }
 
-    // 3. Mark payment as processed to lock against replay
+    // 4. Mark payment as processed to lock against replay
     processedPayments.add(razorpay_payment_id);
     const confirmedOrderId = orderId || `ORD-${Date.now()}`;
 
@@ -123,12 +135,12 @@ export async function POST(request) {
       paidAt: new Date().toISOString(),
     };
 
-    // 4. Persist verified order into Supabase ONLY AFTER signature verification
+    // 5. Persist verified order into Supabase ONLY AFTER signature verification
     saveOrderToSupabase(orderRecord).catch((e) =>
       console.warn('Supabase paid sync notice:', e.message)
     );
 
-    // 5. Trigger automated notifications via Brevo SMTP / Nodemailer
+    // 6. Trigger automated notifications via Brevo SMTP / Nodemailer
     try {
       sendOrderConfirmationEmail(orderRecord).catch((e) =>
         console.warn('Customer order confirmation email notice:', e.message)
@@ -161,3 +173,4 @@ export async function POST(request) {
     );
   }
 }
+

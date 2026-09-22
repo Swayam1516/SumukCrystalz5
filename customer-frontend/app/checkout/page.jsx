@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCartStore } from '../../store/useCart';
 import { useAuthStore } from '../../store/useAuth';
-import { saveCustomerToSupabase, saveOrderToSupabase, getSupabaseDeliverySettings } from '../../lib/supabase';
+import { getSupabaseDeliverySettings } from '../../lib/supabase';
 import { calculateDeliveryFee, DEFAULT_DELIVERY_SETTINGS } from '../../lib/shippingEngine';
 import InsuredDeliveryDetails from '../../components/InsuredDeliveryDetails';
 import {
@@ -18,27 +18,19 @@ import {
   CheckCircle2,
   ArrowRight,
   AlertCircle,
-  ExternalLink,
-  Smartphone,
   Banknote,
   Ban,
-  Copy,
-  Check,
+  Loader2,
 } from 'lucide-react';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || '';
-const RAZORPAY_ME_URL =
-  process.env.NEXT_PUBLIC_RAZORPAY_ME_URL || 'https://razorpay.me/@soumyaanaveenkumarkaradimath';
-const RAZORPAY_ME_HANDLE =
-  process.env.NEXT_PUBLIC_RAZORPAY_ME_HANDLE || 'soumyaanaveenkumarkaradimath';
 
 function loadRazorpayScript() {
   return new Promise((resolve, reject) => {
     if (typeof window !== 'undefined' && window.Razorpay) return resolve(true);
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
     script.onload = () => resolve(true);
-    script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
+    script.onerror = () => reject(new Error('Failed to load official Razorpay SDK'));
     document.body.appendChild(script);
   });
 }
@@ -96,12 +88,8 @@ export default function CheckoutPage() {
     };
   }, []);
 
-  const [paymentMode, setPaymentMode] = useState('razorpay'); // 'razorpay' | 'razorpay_direct' | 'instant_sandbox'
-  const [status, setStatus] = useState('idle'); // idle | processing | link_pending | error
+  const [status, setStatus] = useState('idle'); // 'idle' | 'processing' | 'verifying' | 'error'
   const [errorMessage, setErrorMessage] = useState('');
-  const [copiedLink, setCopiedLink] = useState(false);
-  const [pendingOrder, setPendingOrder] = useState(null);
-  const [utrNumber, setUtrNumber] = useState('');
 
   const subtotal =
     items && items.length > 0
@@ -173,74 +161,6 @@ export default function CheckoutPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(RAZORPAY_ME_URL);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
-  const handleConfirmLinkPayment = async (orderIdToConfirm) => {
-    const targetId = orderIdToConfirm || pendingOrder?._id;
-    if (!targetId) return;
-
-    setStatus('processing');
-    try {
-      if (API_BASE) {
-        try {
-          const authHeaders = {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          };
-
-          const confirmRes = await fetch(`${API_BASE}/api/payment/verify-link-payment`, {
-            method: 'POST',
-            headers: authHeaders,
-            body: JSON.stringify({
-              orderId: targetId,
-              paymentRef: utrNumber.trim(),
-              buyerName: formData.fullName,
-              buyerEmail: formData.email,
-              shippingAddress: formData,
-              items,
-              subtotal,
-              shippingFee,
-              total,
-            }),
-          });
-          if (!confirmRes.ok) {
-            const confirmData = await confirmRes.json();
-            console.warn('Backend link payment verify note:', confirmData.error);
-          }
-        } catch (apiErr) {
-          console.warn('Backend link verify endpoint note:', apiErr.message);
-        }
-      }
-
-      await saveOrderToSupabase({
-        orderId: targetId,
-        userId: user?.id || user?._id || null,
-        buyerName: formData.fullName,
-        buyerEmail: formData.email,
-        buyerPhone: formData.phone,
-        shippingAddress: formData,
-        items,
-        subtotal,
-        shippingFee,
-        total,
-        razorpayOrderId: pendingOrder?.razorpayOrderId || `rzp_me_${Date.now()}`,
-        status: 'paid',
-        paymentMethod: 'razorpay_link',
-      });
-
-      clearCart();
-      router.push(`/order-success/${targetId}`);
-    } catch (err) {
-      console.error('Confirm link error:', err);
-      setStatus('error');
-      setErrorMessage(err.message || 'Payment confirmation failed');
-    }
-  };
-
   const handleCheckout = async (e) => {
     if (e) e.preventDefault();
     if (items.length === 0) {
@@ -249,13 +169,13 @@ export default function CheckoutPage() {
     }
 
     if (
-      !formData.fullName ||
-      !formData.email ||
-      !formData.phone ||
-      !formData.line1 ||
-      !formData.city ||
-      !formData.state ||
-      !formData.postalCode
+      !formData.fullName?.trim() ||
+      !formData.email?.trim() ||
+      !formData.phone?.trim() ||
+      !formData.line1?.trim() ||
+      !formData.city?.trim() ||
+      !formData.state?.trim() ||
+      !formData.postalCode?.trim()
     ) {
       setErrorMessage('Please fill in all required delivery details marked with *.');
       return;
@@ -265,206 +185,144 @@ export default function CheckoutPage() {
     setErrorMessage('');
 
     try {
-      let finalOrderId = `ORD-${Date.now()}`;
-      let finalRazorpayOrderId = `rzp_order_${Date.now()}`;
-      let isSimulated = false;
-      let orderData = null;
+      // 1. Create Verified Razorpay Order from server-side engine
+      const authHeaders = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
 
-      // 1. Attempt backend order creation
-      if (API_BASE) {
-        try {
-          const authHeaders = {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          };
+      const orderPayload = {
+        amount: Math.round(total * 100),
+        currency: 'INR',
+        items: items.map((i) => ({
+          productId: i.productId || i.id,
+          name: i.name,
+          unitPrice: i.unitPrice || i.price,
+          variantLabel: i.variantLabel || undefined,
+          quantity: i.quantity || 1,
+        })),
+        buyerName: formData.fullName.trim(),
+        buyerEmail: formData.email.trim(),
+        shippingAddress: {
+          fullName: formData.fullName.trim(),
+          phone: formData.phone.trim(),
+          line1: formData.line1.trim(),
+          line2: formData.line2 ? formData.line2.trim() : '',
+          city: formData.city.trim(),
+          state: formData.state.trim(),
+          postalCode: formData.postalCode.trim(),
+          country: formData.country || 'India',
+        },
+      };
 
-          const createRes = await fetch(`${API_BASE}/api/payment/create-order`, {
-            method: 'POST',
-            headers: authHeaders,
-            body: JSON.stringify({
-              amount: Math.round(total * 100),
-              currency: 'INR',
-              items: items.map((i) => ({
-                productId: i.productId || i.id,
-                name: i.name,
-                unitPrice: i.unitPrice || i.price,
-                variantLabel: i.variantLabel || undefined,
-                quantity: i.quantity,
-              })),
-              buyerName: formData.fullName,
-              buyerEmail: formData.email,
-              shippingAddress: {
-                fullName: formData.fullName,
-                phone: formData.phone,
-                line1: formData.line1,
-                line2: formData.line2,
-                city: formData.city,
-                state: formData.state,
-                postalCode: formData.postalCode,
-                country: formData.country,
-              },
-            }),
-          });
-
-          if (createRes.ok) {
-            orderData = await createRes.json();
-            finalOrderId = orderData.orderId || finalOrderId;
-            finalRazorpayOrderId = orderData.razorpayOrderId || orderData.id || finalRazorpayOrderId;
-            isSimulated = Boolean(orderData.isSimulated);
-          } else {
-            const errData = await createRes.json().catch(() => ({}));
-            console.warn('Backend order creation returned error:', errData.error || createRes.statusText);
-          }
-        } catch (apiErr) {
-          console.warn('Backend order endpoint unreachable, falling back:', apiErr.message);
-        }
-      }
-
-      // Sync customer directly to Supabase
-      saveCustomerToSupabase({
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        shippingAddress: formData,
-        totalOrders: 1,
-        totalSpent: total,
+      const createRes = await fetch('/api/checkout/create-order', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(orderPayload),
       });
 
-      // 2A. Direct Razorpay.me Payment Link Mode
-      if (paymentMode === 'razorpay_direct') {
-        await saveOrderToSupabase({
-          orderId: finalOrderId,
-          userId: user?.id || user?._id || null,
-          buyerName: formData.fullName,
-          buyerEmail: formData.email,
-          buyerPhone: formData.phone,
-          shippingAddress: formData,
-          items,
-          subtotal,
-          shippingFee,
-          total,
-          razorpayOrderId: finalRazorpayOrderId,
-          status: 'pending',
-          paymentMethod: 'razorpay_link',
-        });
+      const orderData = await createRes.json();
 
-        setPendingOrder({ _id: finalOrderId, razorpayOrderId: finalRazorpayOrderId });
-        setStatus('link_pending');
-        window.open(RAZORPAY_ME_URL, '_blank', 'noopener,noreferrer');
-        return;
+      if (!createRes.ok || (!orderData.id && !orderData.razorpayOrderId)) {
+        throw new Error(orderData.error || 'Failed to initialize encrypted payment order.');
       }
 
-      // 2B. Instant Sandbox / Fallback mode
-      if (paymentMode === 'instant_sandbox' || isSimulated) {
-        await saveOrderToSupabase({
-          orderId: finalOrderId,
-          userId: user?.id || user?._id || null,
-          buyerName: formData.fullName,
-          buyerEmail: formData.email,
-          buyerPhone: formData.phone,
-          shippingAddress: formData,
-          items,
-          subtotal,
-          shippingFee,
-          total,
-          razorpayOrderId: finalRazorpayOrderId,
-          status: 'paid',
-          paymentMethod: paymentMode || 'sandbox',
-        });
+      const finalOrderId = orderData.orderId || `ORD-${Date.now()}`;
+      const finalRazorpayOrderId = orderData.razorpayOrderId || orderData.id;
+      const razorpayKey =
+        orderData.keyId ||
+        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+        'rzp_test_TdpRP2dJ2kJRLp';
 
-        clearCart();
-        router.push(`/order-success/${finalOrderId}`);
-        return;
-      }
-
-      // 2C. Live Razorpay Modal SDK
+      // 2. Load Official Razorpay Checkout Modal
       await loadRazorpayScript();
 
-      const rzp = new window.Razorpay({
-        key: orderData?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
-        amount: orderData?.amount || Math.round(total * 100),
-        currency: orderData?.currency || 'INR',
+      const rzpOptions = {
+        key: razorpayKey,
+        amount: orderData.amount || Math.round(total * 100),
+        currency: orderData.currency || 'INR',
         name: 'Sumuk Crystalz 5',
-        description: `Order ${finalOrderId}`,
+        description: `Order ${finalOrderId} • Sacred Specimen Acquisition`,
+        image: 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=200&q=80',
         order_id: finalRazorpayOrderId,
         prefill: {
-          name: formData.fullName,
-          email: formData.email,
-          contact: formData.phone,
+          name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          contact: formData.phone.trim(),
         },
-        theme: { color: '#eab308' },
+        theme: {
+          color: '#d4af37',
+          backdrop_color: 'rgba(5, 3, 10, 0.88)',
+        },
         handler: async (response) => {
-          let verifiedSuccessfully = true;
-
-          if (API_BASE) {
-            try {
-              const authHeaders = {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-              };
-
-              const verifyRes = await fetch(`${API_BASE}/api/payment/verify`, {
-                method: 'POST',
-                headers: authHeaders,
-                body: JSON.stringify({
-                  ...response,
-                  orderId: finalOrderId,
-                  buyerName: formData.fullName,
-                  buyerEmail: formData.email,
-                  shippingAddress: formData,
-                  items,
-                  subtotal,
-                  shippingFee,
-                  total,
-                }),
-              });
-
-              if (!verifyRes.ok) {
-                const verifyData = await verifyRes.json();
-                setStatus('error');
-                setErrorMessage(verifyData.error || 'Payment signature verification failed');
-                verifiedSuccessfully = false;
-                return;
-              }
-            } catch (err) {
-              console.warn('Backend payment verification fallback:', err.message);
-            }
-          }
-
-          if (verifiedSuccessfully) {
-            await saveOrderToSupabase({
-              orderId: finalOrderId,
-              userId: user?.id || user?._id || null,
-              buyerName: formData.fullName,
-              buyerEmail: formData.email,
-              buyerPhone: formData.phone,
-              shippingAddress: formData,
-              items,
-              subtotal,
-              shippingFee,
-              total,
-              razorpayOrderId: finalRazorpayOrderId,
-              razorpayPaymentId: response.razorpay_payment_id,
-              status: 'paid',
+          setStatus('verifying');
+          try {
+            // 3. Cryptographic Signature Verification & Order Confirmation
+            const verifyRes = await fetch('/api/checkout/verify', {
+              method: 'POST',
+              headers: authHeaders,
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: finalOrderId,
+                buyerName: formData.fullName.trim(),
+                buyerEmail: formData.email.trim(),
+                shippingAddress: {
+                  ...formData,
+                  phone: formData.phone.trim(),
+                },
+                items,
+                subtotal,
+                shippingFee,
+                total,
+              }),
             });
 
+            const verifyData = await verifyRes.json();
+
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(
+                verifyData.error ||
+                  'Payment verification could not be confirmed. If funds were deducted, our team will automatically reconcile your order.'
+              );
+            }
+
+            // 4. Clear cart on verified acquisition and navigate to success page
             clearCart();
-            router.push(`/order-success/${finalOrderId}`);
+            router.push(`/order-success/${verifyData.orderId || finalOrderId}`);
+          } catch (verifyErr) {
+            console.error('Payment verification failed:', verifyErr);
+            setStatus('error');
+            setErrorMessage(
+              verifyErr.message ||
+                `Verification failed. Payment Reference: ${response.razorpay_payment_id}. Please contact support.`
+            );
           }
         },
         modal: {
-          ondismiss: () => setStatus('idle'),
+          ondismiss: () => {
+            setStatus('idle');
+          },
+          escape: true,
+          backdropclose: false,
         },
-      });
+      };
+
+      const rzp = new window.Razorpay(rzpOptions);
 
       rzp.on('payment.failed', (resp) => {
+        console.error('Razorpay payment failed:', resp.error);
         setStatus('error');
-        setErrorMessage(resp.error?.description || 'Payment was declined by gateway');
+        setErrorMessage(
+          resp.error?.description ||
+            'Payment was declined by your bank or payment app. Please retry or choose another payment method in Razorpay.'
+        );
       });
 
       rzp.open();
     } catch (err) {
-      console.error('Checkout error:', err);
+      console.error('Checkout initiation error:', err);
       setStatus('error');
       setErrorMessage(err.message || 'Payment initiation failed. Please try again.');
     }
@@ -524,14 +382,9 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode('razorpay')}
-                  className={`w-full p-4 rounded-2xl border text-left transition flex flex-col justify-between cursor-pointer ${
-                    paymentMode === 'razorpay'
-                      ? 'bg-amber-500/20 border-amber-400 text-white shadow-[0_0_25px_rgba(212,175,55,0.25)]'
-                      : 'bg-white/[0.03] border-white/10 text-luxe-400 hover:border-white/20'
-                  }`}
+                {/* 1. Official Razorpay Gateway (Active) */}
+                <div
+                  className="w-full p-4 rounded-2xl border text-left flex flex-col justify-between bg-amber-500/15 border-amber-400 text-white shadow-[0_0_25px_rgba(212,175,55,0.2)] ring-1 ring-amber-400/40"
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
@@ -547,33 +400,9 @@ export default function CheckoutPage() {
                   <p className="text-[11px] text-luxe-300 mt-2 leading-relaxed">
                     Official 256-bit encrypted Razorpay modal. Accepts Google Pay, PhonePe, Paytm, all Credit/Debit cards &amp; NetBanking.
                   </p>
-                </button>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode('razorpay_direct')}
-                  className={`w-full p-4 rounded-2xl border text-left transition flex flex-col justify-between cursor-pointer ${
-                    paymentMode === 'razorpay_direct'
-                      ? 'bg-amber-500/20 border-amber-400 text-white shadow-[0_0_25px_rgba(212,175,55,0.25)]'
-                      : 'bg-white/[0.03] border-white/10 text-luxe-400 hover:border-white/20'
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <Smartphone className="w-4 h-4 text-amber-400" />
-                      <span className="font-semibold text-xs text-white">
-                        Razorpay.me Direct UPI / Handle
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-mono text-[#e8c97c] font-bold">
-                      @{RAZORPAY_ME_HANDLE}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-luxe-300 mt-2 leading-relaxed">
-                    Direct transfer to verified merchant handle. Supports GPay, PhonePe, Paytm &amp; all UPI apps.
-                  </p>
-                </button>
-
+                {/* 2. Cash on Delivery (Disabled) */}
                 <div
                   className="w-full p-4 rounded-2xl border border-white/5 bg-white/[0.02] text-luxe-500 opacity-60 cursor-not-allowed select-none transition flex flex-col justify-between"
                   aria-disabled="true"
@@ -596,34 +425,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-amber-500/[0.06] border border-amber-500/20 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span className="text-[11px] font-mono text-amber-200">Official Merchant Account</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCopyLink}
-                    className="flex items-center gap-1 text-[10px] font-mono text-[#e8c97c] hover:underline cursor-pointer"
-                  >
-                    {copiedLink ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
-                  </button>
-                </div>
-                <div className="flex items-center justify-between text-xs text-white">
-                  <span className="font-mono text-amber-400 font-semibold">{RAZORPAY_ME_URL}</span>
-                  <a
-                    href={RAZORPAY_ME_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-amber-400 hover:text-amber-300"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-              </div>
-
               <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center gap-3">
                 <ShieldCheck className="w-5 h-5 text-emerald-400 flex-shrink-0" />
                 <p className="text-xs text-luxe-300">
@@ -631,55 +432,6 @@ export default function CheckoutPage() {
                 </p>
               </div>
             </div>
-
-            {status === 'link_pending' && (
-              <div className="p-6 rounded-[28px] bg-gradient-to-b from-[#181126] to-[#0c0817] border border-amber-500/40 shadow-2xl space-y-4 animate-in fade-in duration-300">
-                <div className="flex items-center gap-3 text-amber-400">
-                  <Smartphone className="w-6 h-6" />
-                  <div>
-                    <h4 className="font-serif font-bold text-white text-base">Complete Payment on Razorpay</h4>
-                    <p className="text-[11px] text-luxe-300">A new tab opened to {RAZORPAY_ME_URL}</p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-black/40 border border-amber-500/20 text-xs text-luxe-300 space-y-2">
-                  <p>
-                    1. Complete the transfer of <strong className="text-white">₹{Number(total).toLocaleString('en-IN')}</strong> on the opened Razorpay page.
-                  </p>
-                  <p>
-                    2. (Optional) Enter the UPI Ref / UTR number below for instant reconciliation:
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Enter UPI Ref / UTR Number (Optional)"
-                    value={utrNumber}
-                    onChange={(e) => setUtrNumber(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-lg bg-white/5 border border-white/15 text-white text-xs placeholder:text-neutral-500 focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <a
-                    href={RAZORPAY_ME_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 py-3 px-4 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-300 text-center font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 hover:bg-amber-500/30"
-                  >
-                    <span>Reopen Razorpay.me</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={() => handleConfirmLinkPayment()}
-                    className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-lg hover:brightness-110 cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>I Have Completed Payment</span>
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="lg:col-span-6 space-y-4">
@@ -689,7 +441,7 @@ export default function CheckoutPage() {
               <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                 {items.map((item) => (
                   <div
-                    key={`${item.productId}-${item.variantLabel || 'def'}`}
+                    key={`${item.productId || item.id}-${item.variantLabel || 'def'}`}
                     className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/10"
                   >
                     <div className="flex items-center gap-3">
@@ -707,7 +459,7 @@ export default function CheckoutPage() {
                       <div>
                         <p className="text-xs font-semibold text-white line-clamp-1">{item.name}</p>
                         <p className="text-[10px] font-mono text-luxe-400">
-                          Qty: {item.quantity} {item.variantLabel && `• ${item.variantLabel}`}
+                          Qty: {item.quantity || 1} {item.variantLabel && `• ${item.variantLabel}`}
                         </p>
                       </div>
                     </div>
@@ -759,26 +511,28 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {status !== 'link_pending' && (
-                <button
-                  type="submit"
-                  disabled={status === 'processing'}
-                  className="w-full py-4 rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-black font-bold uppercase tracking-[0.16em] text-xs shadow-[0_4px_25px_rgba(212,175,55,0.35)] hover:scale-[1.01] hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {status === 'processing' ? (
+              <button
+                type="submit"
+                disabled={status === 'processing' || status === 'verifying'}
+                className="w-full py-4 rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-black font-bold uppercase tracking-[0.16em] text-xs shadow-[0_4px_25px_rgba(212,175,55,0.35)] hover:scale-[1.01] hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {status === 'processing' ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-black" />
                     <span>Securing Transaction…</span>
-                  ) : (
-                    <>
-                      <span>
-                        {paymentMode === 'razorpay_direct'
-                          ? `Pay ₹${Number(total || 0).toLocaleString('en-IN')} via Razorpay.me`
-                          : `Confirm & Pay ₹${Number(total || 0).toLocaleString('en-IN')}`}
-                      </span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              )}
+                  </span>
+                ) : status === 'verifying' ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-black" />
+                    <span>Verifying Signature &amp; Reserving Specimen…</span>
+                  </span>
+                ) : (
+                  <>
+                    <span>Confirm &amp; Pay ₹{Number(total || 0).toLocaleString('en-IN')}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

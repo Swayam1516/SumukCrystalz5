@@ -54,9 +54,13 @@ export const useAuthStore = create(
                 break;
               } else {
                 lastError = data.error || data.message || 'Invalid email or password';
+                // If server responded with a definitive auth failure, do not overwrite
+                if (res.status === 401 || res.status === 400) {
+                  break;
+                }
               }
             } catch (err) {
-              lastError = err.message;
+              if (!lastError) lastError = err.message;
             }
           }
 
@@ -128,9 +132,13 @@ export const useAuthStore = create(
                 break;
               } else {
                 lastError = data.error || data.message || 'Registration failed';
+                // If server responded with duplicate conflict or validation error, preserve and break immediately
+                if (res.status === 409 || res.status === 400) {
+                  break;
+                }
               }
             } catch (e) {
-              lastError = e.message;
+              if (!lastError) lastError = e.message;
             }
           }
 

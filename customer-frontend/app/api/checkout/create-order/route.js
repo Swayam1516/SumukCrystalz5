@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server';
-import { saveCustomerToSupabase, saveOrderToSupabase } from '../../../../lib/supabase';
 
 const KEY_ID = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
-const RAZORPAY_ME_URL =
-  process.env.NEXT_PUBLIC_RAZORPAY_ME_URL ||
-  'https://razorpay.me/@soumyaanaveenkumarkaradimath';
-const RAZORPAY_ME_HANDLE =
-  process.env.NEXT_PUBLIC_RAZORPAY_ME_HANDLE || 'soumyaanaveenkumarkaradimath';
 
 export async function POST(request) {
   try {
@@ -16,7 +10,7 @@ export async function POST(request) {
 
     // Strict input validation
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: 'Cart is empty. Please select crystals.' }, { status: 400 });
+      return NextResponse.json({ error: 'Cart is empty. Please select crystal specimens.' }, { status: 400 });
     }
 
     if (
@@ -25,8 +19,7 @@ export async function POST(request) {
       !shippingAddress?.line1?.trim() ||
       !shippingAddress?.city?.trim() ||
       !shippingAddress?.state?.trim() ||
-      !shippingAddress?.postalCode?.trim() ||
-      !shippingAddress?.phone?.trim()
+      !shippingAddress?.postalCode?.trim()
     ) {
       return NextResponse.json(
         { error: 'All delivery address fields marked with * are required.' },
@@ -34,7 +27,26 @@ export async function POST(request) {
       );
     }
 
-    // Strict price computation & item consolidation
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
+
+    // 1. Forward to Backend Payment Engine if available
+    if (backendUrl) {
+      try {
+        const res = await fetch(`${backendUrl}/api/payment/create-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (res.status < 500) {
+          return NextResponse.json(data, { status: res.status });
+        }
+      } catch (err) {
+        console.warn('Backend proxy create-order notice, using local Razorpay creator:', err.message);
+      }
+    }
+
+    // 2. Standalone Zero-Trust Price Computation
     let subtotal = 0;
     const orderItems = items.map((line) => {
       const unitPrice = Math.max(1, Number(line.unitPrice || line.price) || 699);
@@ -50,20 +62,15 @@ export async function POST(request) {
       };
     });
 
-    // Insured shipping threshold: Free shipping above ₹5000, else ₹150
     const shippingFee = subtotal >= 5000 || subtotal === 0 ? 0 : 150;
     const total = subtotal + shippingFee;
     const amountInPaise = Math.round(total * 100);
 
-    const orderNumber = `ORD-${Date.now().toString().slice(-8)}-${Math.random()
-      .toString(36)
-      .substring(2, 6)
-      .toUpperCase()}`;
-
+    const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
     let razorpayOrderId = `order_sim_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     let isSimulated = true;
 
-    // Call Official Razorpay Orders API if live or test keys are present in environment variables
+    // Call Official Razorpay Orders API
     if (KEY_ID && KEY_SECRET && !KEY_ID.includes('xxxx') && !KEY_SECRET.includes('xxxx')) {
       try {
         const authHeader = `Basic ${Buffer.from(`${KEY_ID}:${KEY_SECRET}`).toString('base64')}`;
@@ -82,7 +89,7 @@ export async function POST(request) {
               orderNumber,
               buyerName: buyerName.trim(),
               buyerEmail: buyerEmail.trim().toLowerCase(),
-              buyerPhone: shippingAddress.phone.trim(),
+              buyerPhone: (shippingAddress.phone || '').trim(),
             },
           }),
         });
@@ -93,53 +100,31 @@ export async function POST(request) {
           isSimulated = false;
         } else {
           const errData = await rzpRes.json().catch(() => ({}));
-          console.warn('Razorpay API creation warning, fallback enabled:', errData);
+          console.warn('Razorpay Gateway API notice:', errData);
         }
       } catch (err) {
-        console.warn('Razorpay Gateway unreachable, fallback enabled:', err.message);
+        console.warn('Razorpay Gateway unreachable:', err.message);
       }
     }
 
-    // Persist pending order with status='created' (NEVER mark as paid at creation)
-    saveOrderToSupabase({
-      orderId: orderNumber,
-      buyerName: buyerName.trim(),
-      buyerEmail: buyerEmail.trim().toLowerCase(),
-      shippingAddress,
-      items: orderItems,
-      subtotal,
-      shippingFee,
-      total,
-      currency: 'INR',
-      razorpayOrderId,
-      status: 'created',
-    }).catch((e) => console.warn('Supabase pending order sync notice:', e.message));
-
-    // Save/update customer profile
-    saveCustomerToSupabase({
-      fullName: buyerName.trim(),
-      email: buyerEmail.trim().toLowerCase(),
-      phone: shippingAddress.phone?.trim() || '',
-      shippingAddress,
-      totalOrders: 1,
-      totalSpent: total,
-    }).catch((e) => console.warn('Supabase customer profile sync notice:', e.message));
-
     return NextResponse.json({
+      success: true,
       orderId: orderNumber,
       razorpayOrderId,
       amount: amountInPaise,
+      amountInRupees: total,
       currency: 'INR',
-      keyId: KEY_ID,
+      keyId: KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
       isSimulated,
       subtotal,
       shippingFee,
       total,
-      razorpayMeUrl: RAZORPAY_ME_URL,
-      razorpayMeHandle: RAZORPAY_ME_HANDLE,
+      buyerName: buyerName.trim(),
+      buyerEmail: buyerEmail.trim().toLowerCase(),
     });
   } catch (err) {
     console.error('Create-order API Exception:', err);
     return NextResponse.json({ error: 'Failed to initialize order: ' + err.message }, { status: 500 });
   }
 }
+

@@ -266,9 +266,27 @@ export default function AuthModal() {
 
           {/* Feedback Alerts */}
           {(validationError || authError) && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-500" />
-              <span>{validationError || authError}</span>
+            <div className="mb-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium space-y-1.5 animate-fade-in">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-500 mt-0.5" />
+                <span className="leading-relaxed">{validationError || authError}</span>
+              </div>
+              {(authError?.toLowerCase().includes('already registered') ||
+                authError?.toLowerCase().includes('already in use') ||
+                validationError?.toLowerCase().includes('already registered')) && (
+                <div className="pl-6 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setValidationError('');
+                      setAuthModalMode('login');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#641b94] hover:bg-[#7b24b5] text-white text-[11px] font-bold transition shadow-sm"
+                  >
+                    <span>Sign In to Your Account &rarr;</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

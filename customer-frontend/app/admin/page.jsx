@@ -102,7 +102,7 @@ export default function AdminPage() {
     freeShippingThreshold: 5000,
     shippingFee: 150,
     directPaymentEnabled: true,
-    razorpayMeHandle: 'soumyaanaveenkumarkaradimath',
+    razorpayKeyId: 'rzp_test_TdpRP2dJ2kJRLp',
     autoApproveReviews: true,
   });
 
@@ -1349,11 +1349,11 @@ export default function AdminPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-zinc-400">Razorpay.me Handle:</span>
+                    <span className="text-xs font-mono text-zinc-400">Razorpay Key ID:</span>
                     <input
                       type="text"
-                      value={siteFeatures.razorpayMeHandle}
-                      onChange={(e) => setSiteFeatures({ ...siteFeatures, razorpayMeHandle: e.target.value })}
+                      value={siteFeatures.razorpayKeyId || ''}
+                      onChange={(e) => setSiteFeatures({ ...siteFeatures, razorpayKeyId: e.target.value })}
                       onBlur={() => handleSaveFeatureSettings(siteFeatures)}
                       className="w-48 px-3 py-1 bg-black border border-zinc-700 rounded-lg text-[11px] font-mono text-purple-300 text-right"
                     />
