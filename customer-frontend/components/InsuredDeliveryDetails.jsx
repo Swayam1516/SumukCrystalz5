@@ -24,6 +24,7 @@ export default function InsuredDeliveryDetails({
   onChange,
   onSubmit,
   onClose,
+  shippingCalculation = null,
   isSubmitting = false,
   submitLabel = 'Submit Delivery Details',
   showClose = false,
@@ -246,22 +247,48 @@ export default function InsuredDeliveryDetails({
                   <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9e95ab] pointer-events-none" />
                 </div>
               </div>
+
+              {/* Dynamic Pincode Delivery Badge */}
+              {shippingCalculation?.valid && (
+                <div className="sm:col-span-2 p-3 rounded-xl bg-gradient-to-r from-purple-50 via-purple-100/60 to-purple-50 border border-purple-200 text-xs text-[#2b174f] flex items-center justify-between gap-3 animate-in fade-in">
+                  <div className="flex items-center gap-2.5">
+                    <Truck className="w-4 h-4 text-[#7c3aed] flex-shrink-0" />
+                    <div>
+                      <div className="font-semibold text-[#1e142c] flex items-center gap-1.5">
+                        <span>{shippingCalculation.city ? `${shippingCalculation.city}, ${shippingCalculation.state}` : shippingCalculation.state}</span>
+                        {shippingCalculation.distanceKm ? (
+                          <span className="text-[10px] font-mono text-[#6b5c82]">({shippingCalculation.distanceKm} km)</span>
+                        ) : null}
+                      </div>
+                      <span className="text-[#6b5c82] text-[10px] font-mono">{shippingCalculation.tierName}</span>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className="font-bold font-mono text-xs text-[#7c3aed]">
+                      {shippingCalculation.isFree ? 'FREE DELIVERY' : `₹${shippingCalculation.fee}`}
+                    </span>
+                    <span className="block text-[10px] text-[#6b5c82] font-mono">{shippingCalculation.estimatedDays}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Submit Button matching Image 1 */}
-            <div className="pt-1">
-              <button
-                type={onSubmit ? 'button' : 'submit'}
-                onClick={onSubmit || undefined}
-                disabled={isSubmitting}
-                className="w-full py-3.5 px-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#181124] via-[#221535] to-[#181124] hover:from-[#251538] hover:to-[#301c48] text-white font-bold text-xs uppercase tracking-[0.16em] flex items-center justify-center gap-2.5 shadow-lg active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
-              >
-                <span>{isSubmitting ? 'Securing Transaction…' : submitLabel}</span>
-                <div className="w-5 h-5 rounded-full border border-white/25 flex items-center justify-center">
-                  <ArrowRight className="w-3 h-3 text-white" />
-                </div>
-              </button>
-            </div>
+            {/* Submit Button if onSubmit handler is provided */}
+            {onSubmit && (
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={onSubmit}
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 px-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#181124] via-[#221535] to-[#181124] hover:from-[#251538] hover:to-[#301c48] text-white font-bold text-xs uppercase tracking-[0.16em] flex items-center justify-center gap-2.5 shadow-lg active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <span>{isSubmitting ? 'Securing Transaction…' : submitLabel}</span>
+                  <div className="w-5 h-5 rounded-full border border-white/25 flex items-center justify-center">
+                    <ArrowRight className="w-3 h-3 text-[#d4af37]" />
+                  </div>
+                </button>
+              </div>
+            )}
 
             {/* Bottom Reassurance Badges matching Image 1 */}
             <div className="pt-4 border-t border-purple-100/80 flex flex-wrap items-center justify-between gap-3 text-[11px] font-medium text-[#6b5887]">

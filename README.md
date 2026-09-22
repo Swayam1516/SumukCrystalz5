@@ -21,23 +21,28 @@ backend/
   utils/         notify.js (admin email + WhatsApp on paid order)
   server.js      Express app wiring — note the webhook raw-body ordering
   .env.example
-frontend/
-  components/
-    CrystalShowcase.jsx   R3F viewer: MeshTransmissionMaterial for refraction/caustics
-    Checkout.jsx           Loads Razorpay SDK, creates order, verifies payment
+customer-frontend/
+  app/           Customer Next.js Storefront (Shop, Product Detail, 3D Engine, Vault, Checkout)
+  components/    Luxury UI components (CrystalShowcase, DynamicOptionSelector, Header, Cart)
+admin-frontend/
+  app/           Founder & Admin Sanctuary Portal (Specimen Catalog, Media, CRM, Orders)
 ```
 
 ## Setup
 
 ```bash
-# backend
+# Backend
 cd backend && npm install
 cp .env.example .env   # fill in Mongo URI, Razorpay keys, SMTP creds
 npm run dev
 
-# frontend (inside your existing Next.js app)
-cd frontend && npm install
-# copy components/ into your app, set NEXT_PUBLIC_API_BASE in .env.local
+# Customer Storefront
+cd customer-frontend && npm install
+npm run dev
+
+# Admin Portal
+cd admin-frontend && npm install
+npm run dev
 ```
 
 Create your first admin user via a one-off script or a seed route (not

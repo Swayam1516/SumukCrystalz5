@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getSupabaseServices } from '@/lib/supabase';
 import {
   Sparkles,
   Zap,
@@ -29,6 +30,8 @@ import {
   CornerDownRight,
   ExternalLink,
   MapPin,
+  AlertTriangle,
+  Info,
 } from 'lucide-react';
 
 export const SOUMYA_SERVICES = [
@@ -271,6 +274,30 @@ export default function ServicesBySoumya({ showHeader = true, activeFilter = 'al
   const [activeServiceModal, setActiveServiceModal] = useState(null);
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [copiedChannel, setCopiedChannel] = useState(null);
+  const [servicesStatusMap, setServicesStatusMap] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStatuses = async () => {
+      try {
+        const list = await getSupabaseServices();
+        if (isMounted && list && list.length > 0) {
+          const map = {};
+          list.forEach((s) => {
+            map[s.id] = s.status || 'available';
+          });
+          setServicesStatusMap(map);
+        }
+      } catch (err) {
+        console.warn('Live service status fetch notice:', err.message);
+      }
+    };
+
+    fetchStatuses();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [bookingFormData, setBookingFormData] = useState({
     name: '',
@@ -304,16 +331,28 @@ export default function ServicesBySoumya({ showHeader = true, activeFilter = 'al
   };
 
   const getWhatsAppLink = (service) => {
+    const status = servicesStatusMap[service?.id] || 'available';
+    const isWaitlist = status !== 'available';
     const text = encodeURIComponent(
-      `Hello Soumyaa! ✨ I am reaching out from Sumuk Crystalz 5 regarding: *${service?.title || 'Metaphysical Consultation'}*.\n\nI would love to learn more and book a consultation/session.`
+      isWaitlist
+        ? `Hello Soumyaa! ✨ I am reaching out from Sumuk Crystalz 5 to inquire about the priority waitlist for: *${service?.title || 'Metaphysical Consultation'}*. Please notify me when appointments reopen.`
+        : `Hello Soumyaa! ✨ I am reaching out from Sumuk Crystalz 5 regarding: *${service?.title || 'Metaphysical Consultation'}*.\n\nI would love to learn more and book a consultation/session.`
     );
     return `https://wa.me/919111716355?text=${text}`;
   };
 
   const getEmailLink = (service) => {
-    const subject = encodeURIComponent(`Inquiry: ${service?.title || 'Metaphysical Consultation'} - Sumuk Crystalz 5`);
+    const status = servicesStatusMap[service?.id] || 'available';
+    const isWaitlist = status !== 'available';
+    const subject = encodeURIComponent(
+      isWaitlist
+        ? `Waitlist Inquiry: ${service?.title || 'Metaphysical Consultation'} - Sumuk Crystalz 5`
+        : `Inquiry: ${service?.title || 'Metaphysical Consultation'} - Sumuk Crystalz 5`
+    );
     const body = encodeURIComponent(
-      `Hello Soumyaa,\n\nI would like to inquire about the ${service?.title || 'session'}.\n\nPlease share the available appointment slots, format details, and investment exchange.\n\nThank you!`
+      isWaitlist
+        ? `Hello Soumyaa,\n\nI would like to be added to the priority waitlist for the ${service?.title || 'session'}.\n\nPlease notify me when booking slots become available.\n\nThank you!`
+        : `Hello Soumyaa,\n\nI would like to inquire about the ${service?.title || 'session'}.\n\nPlease share the available appointment slots, format details, and investment exchange.\n\nThank you!`
     );
     return `mailto:sumukcrystalz5@gmail.com?subject=${subject}&body=${body}`;
   };
@@ -321,8 +360,10 @@ export default function ServicesBySoumya({ showHeader = true, activeFilter = 'al
   const handleSubmitInquiry = (e) => {
     e.preventDefault();
     setBookingSuccess(true);
+    const status = servicesStatusMap[activeServiceModal?.id] || 'available';
+    const isWaitlist = status !== 'available';
     const message = encodeURIComponent(
-      `*New Service Consultation Request* ✨\n\n*Service:* ${activeServiceModal?.title}\n*Name:* ${bookingFormData.name}\n*Gender:* ${bookingFormData.gender}\n*Date of Birth:* ${bookingFormData.dob || 'Not specified'}\n*Contact:* ${bookingFormData.contact}\n*Session Preference:* ${bookingFormData.sessionType}\n*Preferred Date/Time:* ${bookingFormData.preferredDate || 'Flexible'}\n*Note:* ${bookingFormData.message || 'Looking forward to the session!'}`
+      `*${isWaitlist ? 'Service Waitlist Request' : 'New Service Consultation Request'}* ✨\n\n*Service:* ${activeServiceModal?.title}\n*Status:* ${status.toUpperCase()}\n*Name:* ${bookingFormData.name}\n*Gender:* ${bookingFormData.gender}\n*Date of Birth:* ${bookingFormData.dob || 'Not specified'}\n*Contact:* ${bookingFormData.contact}\n*Session Preference:* ${bookingFormData.sessionType}\n*Preferred Date/Time:* ${bookingFormData.preferredDate || 'Flexible'}\n*Note:* ${bookingFormData.message || 'Looking forward to connecting!'}`
     );
     setTimeout(() => {
       window.open(`https://wa.me/919111716355?text=${message}`, '_blank');
@@ -355,7 +396,7 @@ export default function ServicesBySoumya({ showHeader = true, activeFilter = 'al
         </div>
       )}
 
-      {/* Filter Tabs - Extracted Style & Font from Image 1 (Translucent Glass with Gold Accents & Uppercase Tracking) */}
+      {/* Filter Tabs */}
       <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 px-4 relative z-10">
         {CATEGORIES.map((cat) => {
           const isActive = selectedCategory === cat.id;
@@ -376,23 +417,52 @@ export default function ServicesBySoumya({ showHeader = true, activeFilter = 'al
         })}
       </div>
 
-      {/* Services Grid - Editorial Minimal Card Design (Extracted Layout from Image 2) */}
+      {/* Services Grid with Live Availability Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 relative z-10">
         {filteredServices.map((service) => {
+          const currentStatus = servicesStatusMap[service.id] || 'available';
+          const isAvailable = currentStatus === 'available';
+          const isUnavailable = currentStatus === 'currently unavailable';
+          const isComingSoon = currentStatus === 'coming soon';
+
           return (
             <div
               key={service.id}
               onClick={() => handleOpenCommunication(service)}
-              className="rounded-[28px] bg-[#dedad2] hover:bg-[#e7e3db] border border-[#c6c1b6] p-7 sm:p-9 min-h-[420px] sm:min-h-[450px] flex flex-col justify-between group shadow-[0_12px_35px_rgba(0,0,0,0.35)] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)] hover:-translate-y-1.5 transition-all duration-300 cursor-pointer relative overflow-hidden select-none"
+              className={`rounded-[28px] bg-[#dedad2] hover:bg-[#e7e3db] border border-[#c6c1b6] p-7 sm:p-9 min-h-[420px] sm:min-h-[450px] flex flex-col justify-between group shadow-[0_12px_35px_rgba(0,0,0,0.35)] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)] hover:-translate-y-1.5 transition-all duration-300 cursor-pointer relative overflow-hidden select-none ${
+                !isAvailable ? 'opacity-90 hover:opacity-100' : ''
+              }`}
             >
-              {/* Top Section: Narrative Description Text (Matching Image 2 Top Layout) */}
-              <div className="relative z-10">
+              {/* Top Section: Status Pill + Narrative Description Text */}
+              <div className="relative z-10 space-y-4">
+                <div className="flex items-center justify-between gap-2">
+                  {/* Status Indicator Pill */}
+                  {isAvailable && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-900/15 text-emerald-800 border border-emerald-600/30">
+                      <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                      Available for Booking
+                    </span>
+                  )}
+                  {isUnavailable && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-rose-900/15 text-rose-800 border border-rose-600/30">
+                      <span className="w-2 h-2 rounded-full bg-rose-600" />
+                      Currently Unavailable
+                    </span>
+                  )}
+                  {isComingSoon && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-purple-900/15 text-purple-800 border border-purple-600/30">
+                      <span className="w-2 h-2 rounded-full bg-purple-600 animate-ping" />
+                      Coming Soon
+                    </span>
+                  )}
+                </div>
+
                 <p className="text-[13.5px] sm:text-[14.5px] leading-relaxed text-[#22201e] font-sans-ui font-normal">
                   {service.description}
                 </p>
               </div>
 
-              {/* Lower Section: Large Bold Editorial Title + Bottom Metadata Row (Matching Image 2 Lower Layout) */}
+              {/* Lower Section: Large Bold Editorial Title + Bottom Metadata Row */}
               <div className="relative z-10 pt-10">
                 <h3 className="text-2xl sm:text-[28px] lg:text-[31px] font-bold text-[#11100e] tracking-tight leading-[1.08] font-sans-ui mb-7 group-hover:text-black transition-colors">
                   {service.title}
@@ -407,7 +477,11 @@ export default function ServicesBySoumya({ showHeader = true, activeFilter = 'al
                   {/* Bottom Right: Circular Action Button with Arrow */}
                   <div
                     aria-label={`Inquire about ${service.title}`}
-                    className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#11100e] text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-[#d4af37] group-hover:text-black transition-all duration-300 shadow-md flex-shrink-0"
+                    className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-md flex-shrink-0 ${
+                      isAvailable
+                        ? 'bg-[#11100e] text-white group-hover:scale-110 group-hover:bg-[#d4af37] group-hover:text-black'
+                        : 'bg-[#4b5563] text-stone-200 group-hover:scale-110 group-hover:bg-[#11100e]'
+                    }`}
                   >
                     <CornerDownRight className="w-5 h-5 stroke-[2.2]" />
                   </div>
@@ -517,11 +591,40 @@ export default function ServicesBySoumya({ showHeader = true, activeFilter = 'al
                 {/* LEFT COLUMN: Header, Description, Communication Options */}
                 <div className="lg:col-span-7 xl:col-span-7 space-y-5">
                   
-                  {/* Badge & Title & Subtitle */}
+                  {/* Badge, Status & Title */}
                   <div className="space-y-2.5 pr-6">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-purple-200/80 text-[10.5px] sm:text-[11px] font-mono text-[#5b21b6] uppercase tracking-[0.2em] font-bold shadow-sm">
-                      <Sparkles className="w-3.5 h-3.5 text-[#a855f7]" />
-                      <span>SUMUK CRYSTALZ 5 &bull; {activeServiceModal.badge}</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-purple-200/80 text-[10.5px] sm:text-[11px] font-mono text-[#5b21b6] uppercase tracking-[0.2em] font-bold shadow-sm">
+                        <Sparkles className="w-3.5 h-3.5 text-[#a855f7]" />
+                        <span>SUMUK CRYSTALZ 5 &bull; {activeServiceModal.badge}</span>
+                      </div>
+
+                      {/* Modal Live Status Indicator */}
+                      {(() => {
+                        const status = servicesStatusMap[activeServiceModal.id] || 'available';
+                        if (status === 'available') {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-mono font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-800 border border-emerald-500/30">
+                              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                              Available for Booking
+                            </span>
+                          );
+                        }
+                        if (status === 'currently unavailable') {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-mono font-bold uppercase tracking-wider bg-rose-500/15 text-rose-800 border border-rose-500/30">
+                              <span className="w-2 h-2 rounded-full bg-rose-600" />
+                              Currently Unavailable
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-mono font-bold uppercase tracking-wider bg-purple-500/15 text-purple-800 border border-purple-500/30">
+                            <span className="w-2 h-2 rounded-full bg-purple-600 animate-ping" />
+                            Coming Soon
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <h3 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-bold leading-[1.15] tracking-tight text-[#151022]">
@@ -543,6 +646,38 @@ export default function ServicesBySoumya({ showHeader = true, activeFilter = 'al
                       {activeServiceModal.tagline}
                     </p>
                   </div>
+
+                  {/* Unavailable / Coming Soon Notice Banner */}
+                  {(() => {
+                    const status = servicesStatusMap[activeServiceModal.id] || 'available';
+                    if (status === 'currently unavailable') {
+                      return (
+                        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-[#92400e] text-xs space-y-1">
+                          <div className="font-bold flex items-center gap-1.5">
+                            <AlertTriangle className="w-4 h-4 text-amber-600" />
+                            <span>Appointments Temporarily Paused</span>
+                          </div>
+                          <p className="text-[11.5px] text-[#78350f] leading-relaxed">
+                            Soumyaa Naveen is currently fulfilling ongoing patron sessions. Reach out via WhatsApp or Instagram to join the priority waitlist and get notified the moment slots reopen.
+                          </p>
+                        </div>
+                      );
+                    }
+                    if (status === 'coming soon') {
+                      return (
+                        <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-[#581c87] text-xs space-y-1">
+                          <div className="font-bold flex items-center gap-1.5">
+                            <Info className="w-4 h-4 text-purple-600" />
+                            <span>New Modality Launching Soon</span>
+                          </div>
+                          <p className="text-[11.5px] text-[#6b21a8] leading-relaxed">
+                            This metaphysical offering is currently in preparation. Connect on WhatsApp or Instagram to be among the first consecrated participants.
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
 
                   {/* Service Description Box with Format & Duration */}
                   <div className="p-5 rounded-2xl bg-white/75 backdrop-blur-md border border-purple-100/90 shadow-[0_4px_20px_rgba(124,58,237,0.04)] space-y-3.5">

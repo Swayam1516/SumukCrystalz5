@@ -31,10 +31,10 @@ import {
 import LuxuryImageUploader from './LuxuryImageUploader';
 import LuxuryVariantBuilder from './LuxuryVariantBuilder';
 import ProductPreviewModal from './ProductPreviewModal';
-import { supabase } from '../lib/supabase';
+import { supabase, saveProductToSupabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
 const CRYSTAL_CATEGORIES = [
   'Energy Bands',
@@ -121,38 +121,7 @@ export default function LuxuryProductModal({
     images: [
       'https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?auto=format&fit=crop&w=1000&q=80',
     ],
-    variants: [
-      {
-        id: 'var_1',
-        name: '6mm Delicate Beads',
-        sizeOrWeight: '6mm',
-        price: 499,
-        originalPrice: 999,
-        stock: 20,
-        sku: 'CRYS-6MM',
-        isAvailable: true,
-      },
-      {
-        id: 'var_2',
-        name: '8mm Classic Regular',
-        sizeOrWeight: '8mm',
-        price: 699,
-        originalPrice: 1299,
-        stock: 18,
-        sku: 'CRYS-8MM',
-        isAvailable: true,
-      },
-      {
-        id: 'var_3',
-        name: '10mm Masterwork Heavier',
-        sizeOrWeight: '10mm',
-        price: 999,
-        originalPrice: 1699,
-        stock: 12,
-        sku: 'CRYS-10MM',
-        isAvailable: true,
-      },
-    ],
+    variants: [],
   });
 
   const [validationError, setValidationError] = useState('');
@@ -163,9 +132,35 @@ export default function LuxuryProductModal({
   useEffect(() => {
     if (initialProduct) {
       setProductData({
-        ...initialProduct,
-        images: initialProduct.images || (initialProduct.image ? [initialProduct.image] : []),
-        variants: initialProduct.variants || [],
+        name: initialProduct.name || initialProduct.title || '',
+        subtitle: initialProduct.subtitle || initialProduct.short_description || initialProduct.shortDescription || '',
+        category: initialProduct.category || 'Energy Bands',
+        collection: initialProduct.collection || 'Masterworks Collection',
+        crystalType: initialProduct.crystalType || initialProduct.crystal_type || 'Pyrite',
+        zodiac: initialProduct.zodiac || 'Leo, Sagittarius, Aries',
+        chakra: initialProduct.chakra || 'Solar Plexus & Sacral',
+        element: initialProduct.element || 'Earth & Fire',
+        shortDescription: initialProduct.shortDescription || initialProduct.short_description || '',
+        description: initialProduct.description || '',
+        healingBenefits: initialProduct.healingBenefits || initialProduct.healing_benefits || '',
+        spiritualProperties: initialProduct.spiritualProperties || initialProduct.spiritual_properties || '',
+        careInstructions: initialProduct.careInstructions || initialProduct.care_instructions || '',
+        authenticityNote: initialProduct.authenticityNote || initialProduct.authenticity_info || '100% Earth-mined authentic natural crystal specimen, cleansed and consecrated with Vedic mantras by Founder Soumyaa Naveen.',
+        price: Number(initialProduct.price || initialProduct.selling_price || 699),
+        originalPrice: Number(initialProduct.originalPrice || initialProduct.original_price || 1299),
+        energizedPrice: Number(initialProduct.energizedPrice || 100),
+        stockCount: initialProduct.stockCount !== undefined ? Number(initialProduct.stockCount) : 20,
+        sku: initialProduct.sku || `SKU-CRYS-${Math.floor(1000 + Math.random() * 9000)}`,
+        isActive: initialProduct.isActive !== undefined ? Boolean(initialProduct.isActive) : (initialProduct.active !== undefined ? Boolean(initialProduct.active) : true),
+        isNewArrival: Boolean(initialProduct.isNewArrival || initialProduct.new_arrival),
+        isBestSeller: Boolean(initialProduct.isBestSeller || initialProduct.bestseller),
+        isLimitedEdition: Boolean(initialProduct.isLimitedEdition || initialProduct.limited_edition),
+        isPremiumCollection: Boolean(initialProduct.isPremiumCollection || initialProduct.premium_collection),
+        isFeatured: Boolean(initialProduct.isFeatured || initialProduct.featured),
+        images: Array.isArray(initialProduct.images) && initialProduct.images.length > 0
+          ? initialProduct.images
+          : (initialProduct.image || initialProduct.hero_image ? [initialProduct.image || initialProduct.hero_image] : []),
+        variants: initialProduct.variants || initialProduct.product_variants || [],
       });
     }
   }, [initialProduct]);
@@ -287,62 +282,31 @@ export default function LuxuryProductModal({
         updated_at: new Date().toISOString(),
       };
 
-      // 1. Send to Backend REST API (Permanent DB Storage)
-      const endpoint = isEditing
-        ? `${API_BASE}/api/admin/products/${targetId}`
-        : `${API_BASE}/api/admin/products`;
-      const method = isEditing ? 'PUT' : 'POST';
-
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       let savedProduct = null;
-      try {
-        const response = await fetch(endpoint, {
-          method,
-          headers,
-          body: JSON.stringify(productPayload),
-        });
 
-        if (response.ok) {
-          const resJson = await response.json();
-          savedProduct = resJson.product || resJson;
-        } else {
-          const errData = await response.json().catch(() => ({}));
-          console.warn('Backend save response note:', errData);
-        }
-      } catch (apiErr) {
-        console.warn('Backend product API fetch note:', apiErr.message);
+      // 1. Direct and guaranteed Supabase PostgreSQL persistence
+      const supabaseResult = await saveProductToSupabase(productPayload);
+      if (!supabaseResult.success) {
+        throw new Error(supabaseResult.error || 'Failed to save product to Supabase.');
       }
+      savedProduct = supabaseResult.product;
 
-      // 2. Direct Supabase fallback if backend server is unreachable
-      if (!savedProduct) {
+      // 2. Also sync to Backend REST API if online and configured
+      if (API_BASE) {
         try {
-          const { data, error } = await supabase.from('products').upsert(
-            {
-              id: typeof productPayload.id === 'string' && productPayload.id.includes('-') ? productPayload.id : undefined,
-              title: productPayload.name,
-              slug: productPayload.slug,
-              description: productPayload.description || productPayload.shortDescription || '',
-              base_price: productPayload.price,
-              images: productPayload.images,
-              total_stock: productPayload.stockCount,
-              is_active: productPayload.isActive,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'slug' }
-          ).select().single();
+          const endpoint = isEditing
+            ? `${API_BASE}/api/admin/products/${targetId}`
+            : `${API_BASE}/api/admin/products`;
+          const method = isEditing ? 'PUT' : 'POST';
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
 
-          if (!error && data) {
-            savedProduct = { ...productPayload, id: data.id };
-          }
-        } catch (sbErr) {
-          console.warn('Supabase DB sync note:', sbErr.message);
-        }
+          await fetch(endpoint, {
+            method,
+            headers,
+            body: JSON.stringify(productPayload),
+          }).catch(() => {});
+        } catch (e) {}
       }
 
       const finalSaved = savedProduct || productPayload;

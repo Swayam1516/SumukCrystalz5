@@ -12,7 +12,6 @@ import {
   updateOrderStatusInSupabase,
   updateProductAvailabilityInSupabase,
 } from '@/lib/supabase';
-import { ENERGY_STONES_CATALOG } from '@/data/energyStones';
 import {
   ShieldCheck,
   Lock,

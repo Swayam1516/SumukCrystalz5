@@ -11,6 +11,7 @@ import VideoPreloader from '../components/VideoPreloader';
 import DualTierFilterTicker from '../components/DualTierFilterTicker';
 import ProvenanceTrustCards from '../components/ProvenanceTrustCards';
 import { CRYSTAL_CATALOG } from '../data/crystals';
+import { getSupabaseProducts } from '../lib/supabase';
 import { crystalAudio } from '../utils/harmonicResonance';
 import {
   Sparkles,
@@ -42,7 +43,7 @@ const VAULT_CATEGORIES = [
   'Sacred Energy Crystals',
 ];
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
 export default function HomePage() {
   const router = useRouter();
@@ -60,22 +61,37 @@ export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  // Fetch live products from backend Supabase API
+  // Fetch live products directly from Supabase database
   useEffect(() => {
     let isMounted = true;
     const fetchLiveProducts = async () => {
       setLoadingProducts(true);
       try {
-        const res = await fetch(`${API_BASE}/api/products`);
-        if (res.ok) {
-          const data = await res.json();
-          const items = Array.isArray(data) ? data : (data.products || []);
-          if (isMounted) {
-            setFeaturedProducts(items);
+        // 1. Fetch live products from Supabase (Source of Truth)
+        const supaItems = await getSupabaseProducts(true);
+        if (supaItems && supaItems.length > 0 && isMounted) {
+          setFeaturedProducts(supaItems);
+          return;
+        }
+
+        // 2. Fetch from Backend API if configured
+        if (API_BASE) {
+          const res = await fetch(`${API_BASE}/api/products`);
+          if (res.ok && isMounted) {
+            const data = await res.json();
+            const items = Array.isArray(data) ? data : (data.products || []);
+            if (items.length > 0) {
+              setFeaturedProducts(items);
+              return;
+            }
           }
         }
+
+        if (isMounted) {
+          setFeaturedProducts(supaItems || []);
+        }
       } catch (err) {
-        console.warn('Customer storefront live products fetch notice:', err.message);
+        console.error('Customer storefront live products fetch error:', err);
       } finally {
         if (isMounted) setLoadingProducts(false);
       }

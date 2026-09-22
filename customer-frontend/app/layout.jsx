@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CartDrawer from '../components/CartDrawer';
 import ServiceWorkerCleaner from '../components/ServiceWorkerCleaner';
+import AnnouncementBanner from '../components/AnnouncementBanner';
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sumukcrystalz.com'),
@@ -131,6 +132,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-screen flex flex-col bg-[#06050a] text-[#f3f2fa] antialiased">
         <ServiceWorkerCleaner />
+        <AnnouncementBanner />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

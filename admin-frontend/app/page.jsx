@@ -4,8 +4,22 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuth';
-import { ENERGY_STONES_CATALOG } from '@/data/energyStones';
-import { getSupabaseCustomers, getSupabaseOrders } from '@/lib/supabase';
+import {
+  getSupabaseCustomers,
+  getSupabaseOrders,
+  getSupabaseProducts,
+  saveProductToSupabase,
+  deleteProductFromSupabase,
+  toggleProductStatusInSupabase,
+  getSupabaseAnnouncement,
+  updateSupabaseAnnouncement,
+  getSupabaseServices,
+  updateServiceStatusInSupabase,
+  CANONICAL_SERVICES_DEFAULT,
+  getSupabaseDeliverySettings,
+  updateSupabaseDeliverySettings,
+  DEFAULT_DELIVERY_SETTINGS,
+} from '@/lib/supabase';
 import LuxuryProductModal from '@/components/LuxuryProductModal';
 import ProductPreviewModal from '@/components/ProductPreviewModal';
 import {
@@ -48,7 +62,17 @@ import {
   SlidersHorizontal,
   Flame,
   ArrowUpDown,
-  ShoppingBag
+  ShoppingBag,
+  Megaphone,
+  Radio,
+  Power,
+  ToggleLeft,
+  ToggleRight,
+  Info,
+  Calendar,
+  AlertTriangle,
+  MapPin,
+  Compass,
 } from 'lucide-react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
@@ -66,13 +90,28 @@ export default function AdminDashboardPage() {
   const [loadingAuth, setLoadingAuth] = useState(false);
 
   // Active Navigation Tab
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'orders' | 'customers' | 'supabase'
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'orders' | 'customers' | 'services' | 'shipping'
 
   // Data Collections
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
+
+  // Delivery & Shipping Settings State
+  const [deliverySettings, setDeliverySettings] = useState(DEFAULT_DELIVERY_SETTINGS);
+  const [savingDeliverySettings, setSavingDeliverySettings] = useState(false);
+  const [testPincode, setTestPincode] = useState('');
+  const [testResult, setTestResult] = useState(null);
+
+  // Broadcast Announcement & Services State
+  const [announcementMessage, setAnnouncementMessage] = useState(
+    '✨ Sacred Consecration: Every crystal specimen is cleansed with 528Hz Solfeggio sound bowls & consecrated by Usui Reiki Master Soumyaa Naveen.'
+  );
+  const [announcementActive, setAnnouncementActive] = useState(false);
+  const [savingAnnouncement, setSavingAnnouncement] = useState(false);
+  const [servicesList, setServicesList] = useState(CANONICAL_SERVICES_DEFAULT);
+  const [updatingServiceId, setUpdatingServiceId] = useState(null);
 
   // Toast System
   const [toasts, setToasts] = useState([]);
@@ -105,22 +144,30 @@ export default function AdminDashboardPage() {
     initAuth();
   }, [initAuth]);
 
-  // Load products from Backend API on mount
+  // Load products from Supabase / Backend API on mount
   useEffect(() => {
     let isMounted = true;
     const loadProducts = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/products`);
-        if (res.ok) {
-          const data = await res.json();
-          const list = Array.isArray(data) ? data : (data.products || []);
-          if (isMounted) {
-            setProducts(list);
-            return;
+        const supaProducts = await getSupabaseProducts();
+        if (supaProducts && supaProducts.length > 0 && isMounted) {
+          setProducts(supaProducts);
+          return;
+        }
+
+        if (API_BASE) {
+          const res = await fetch(`${API_BASE}/api/products`).catch(() => null);
+          if (res && res.ok && isMounted) {
+            const data = await res.json();
+            const list = Array.isArray(data) ? data : (data.products || []);
+            if (list.length > 0) {
+              setProducts(list);
+              return;
+            }
           }
         }
       } catch (e) {
-        console.warn('Initial product load note:', e.message);
+        // Fallback gracefully
       }
       if (isMounted) {
         setProducts([]);
@@ -136,46 +183,69 @@ export default function AdminDashboardPage() {
     setLoadingData(true);
     try {
       // 1. Orders
-      const ordersRes = await fetch(`${API_BASE}/api/admin/orders`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      if (ordersRes.ok) {
-        const ordersData = await ordersRes.json();
-        setOrders(ordersData.orders || (Array.isArray(ordersData) ? ordersData : []));
+      let ordersList = [];
+      const supaOrders = await getSupabaseOrders();
+      if (supaOrders && supaOrders.length > 0) {
+        ordersList = supaOrders;
       } else {
-        const supaOrders = await getSupabaseOrders();
-        if (supaOrders?.length) setOrders(supaOrders);
+        const ordersRes = await fetch(`${API_BASE}/api/admin/orders`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }).catch(() => null);
+        if (ordersRes && ordersRes.ok) {
+          const ordersData = await ordersRes.json();
+          ordersList = ordersData.orders || (Array.isArray(ordersData) ? ordersData : []);
+        }
       }
+      setOrders(ordersList);
 
       // 2. Customers
-      const customersRes = await fetch(`${API_BASE}/api/admin/customers`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      if (customersRes.ok) {
-        const custData = await customersRes.json();
-        setCustomers(custData.customers || (Array.isArray(custData) ? custData : []));
+      let custList = [];
+      const supaCust = await getSupabaseCustomers();
+      if (supaCust && supaCust.length > 0) {
+        custList = supaCust;
       } else {
-        const supaCust = await getSupabaseCustomers();
-        if (supaCust?.length) setCustomers(supaCust);
+        const customersRes = await fetch(`${API_BASE}/api/admin/customers`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }).catch(() => null);
+        if (customersRes && customersRes.ok) {
+          const custData = await customersRes.json();
+          custList = custData.customers || (Array.isArray(custData) ? custData : []);
+        }
       }
+      setCustomers(custList);
 
       // 3. Products
-      const prodsRes = await fetch(`${API_BASE}/api/admin/products`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      if (prodsRes.ok) {
-        const prodsData = await prodsRes.json();
-        const list = Array.isArray(prodsData) ? prodsData : (prodsData.products || []);
-        if (list?.length) {
-          setProducts(list);
-        }
+      const supaProducts = await getSupabaseProducts();
+      if (supaProducts && supaProducts.length > 0) {
+        setProducts(supaProducts);
       } else {
-        const pubRes = await fetch(`${API_BASE}/api/products`);
-        if (pubRes.ok) {
-          const pubData = await pubRes.json();
-          const list = Array.isArray(pubData) ? pubData : (pubData.products || []);
+        const prodsRes = await fetch(`${API_BASE}/api/admin/products`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }).catch(() => null);
+        if (prodsRes && prodsRes.ok) {
+          const prodsData = await prodsRes.json();
+          const list = Array.isArray(prodsData) ? prodsData : (prodsData.products || []);
           if (list?.length) setProducts(list);
         }
+      }
+
+      // 4. Global Broadcast Announcement
+      const supaAnnouncement = await getSupabaseAnnouncement();
+      if (supaAnnouncement) {
+        if (supaAnnouncement.message !== undefined) setAnnouncementMessage(supaAnnouncement.message);
+        if (supaAnnouncement.is_active !== undefined) setAnnouncementActive(Boolean(supaAnnouncement.is_active));
+      }
+
+      // 5. Service Availability
+      const supaServices = await getSupabaseServices();
+      if (supaServices && supaServices.length > 0) {
+        setServicesList(supaServices);
+      }
+
+      // 6. Delivery & Distance Shipping Settings
+      const supaShipping = await getSupabaseDeliverySettings();
+      if (supaShipping) {
+        setDeliverySettings(supaShipping);
       }
 
       addToast('✨ Sanctuary Database synchronized successfully!');
@@ -192,6 +262,124 @@ export default function AdminDashboardPage() {
       fetchLiveAdminData(token);
     }
   }, [isAdmin, token]);
+
+  // Save Delivery & Shipping Settings Handler
+  const handleSaveDeliverySettings = async (e) => {
+    if (e) e.preventDefault();
+    setSavingDeliverySettings(true);
+    try {
+      const res = await updateSupabaseDeliverySettings(deliverySettings);
+      if (res.success) {
+        setDeliverySettings(res.settings);
+        addToast('✨ Delivery fee tiers & shipping rules synchronized with Supabase!');
+      } else {
+        throw new Error(res.error || 'Failed to save shipping settings');
+      }
+    } catch (err) {
+      console.error('Error saving shipping settings:', err);
+      addToast(`Error saving shipping rules: ${err.message}`, 'error');
+    } finally {
+      setSavingDeliverySettings(false);
+    }
+  };
+
+  // Test Pincode Simulator Helper
+  const handleTestPincode = (e) => {
+    if (e) e.preventDefault();
+    const pin = testPincode.replace(/\D/g, '').slice(0, 6);
+    if (pin.length !== 6) {
+      setTestResult({ error: 'Please enter a valid 6-digit Indian PIN code' });
+      return;
+    }
+
+    const isPune = pin.startsWith('411') || pin.startsWith('412');
+    const isMaha = ['40', '41', '42', '43', '44'].includes(pin.slice(0, 2));
+
+    let tier = 'Interstate';
+    let fee = Number(deliverySettings.interstate_fee || 150);
+    let dist = isPune ? 18 : isMaha ? (pin.startsWith('400') ? 120 : 210) : 750;
+
+    if (isPune) {
+      tier = 'Tier 1: Pune Local';
+      fee = Number(deliverySettings.tier_1_fee || 50);
+    } else if (isMaha && dist <= Number(deliverySettings.tier_2_max_km || 150)) {
+      tier = 'Tier 2: Maharashtra Regional';
+      fee = Number(deliverySettings.tier_2_fee || 100);
+    }
+
+    setTestResult({
+      pincode: pin,
+      region: isPune ? 'Pune Metro' : isMaha ? 'Maharashtra State' : 'Interstate Destination',
+      distanceKm: dist,
+      tier,
+      calculatedFee: fee,
+      freeOverThreshold: Number(deliverySettings.free_shipping_threshold || 5000),
+    });
+  };
+
+  // Save Broadcast Announcement Handler
+  const handleSaveAnnouncement = async () => {
+    setSavingAnnouncement(true);
+    try {
+      const res = await updateSupabaseAnnouncement({
+        message: announcementMessage,
+        is_active: announcementActive,
+      });
+      if (res.success) {
+        addToast(
+          announcementActive
+            ? '📢 Global Broadcast Banner is now LIVE on customer storefront!'
+            : '⏸️ Broadcast Banner deactivated and hidden from storefront.',
+          'success'
+        );
+      } else {
+        addToast(res.error || 'Failed to update announcement', 'error');
+      }
+    } catch (err) {
+      console.error('Error saving announcement:', err);
+      addToast('Error saving announcement: ' + err.message, 'error');
+    } finally {
+      setSavingAnnouncement(false);
+    }
+  };
+
+  // Update Individual Service Status Handler
+  const handleUpdateServiceStatus = async (serviceId, newStatus) => {
+    setUpdatingServiceId(serviceId);
+    setServicesList((prev) =>
+      prev.map((s) => (s.id === serviceId ? { ...s, status: newStatus } : s))
+    );
+
+    try {
+      const res = await updateServiceStatusInSupabase(serviceId, newStatus);
+      if (res.success) {
+        const readableStatus =
+          newStatus === 'available'
+            ? 'Available for Booking'
+            : newStatus === 'currently unavailable'
+            ? 'Currently Unavailable'
+            : 'Coming Soon';
+        addToast(`✨ Modality status updated to "${readableStatus}"!`);
+      } else {
+        addToast(res.error || 'Failed to update service status', 'error');
+      }
+    } catch (err) {
+      console.error('Error updating service status:', err);
+      addToast('Error updating service: ' + err.message, 'error');
+    } finally {
+      setUpdatingServiceId(null);
+    }
+  };
+
+  // Batch update all services
+  const handleBatchUpdateServices = async (targetStatus) => {
+    setServicesList((prev) => prev.map((s) => ({ ...s, status: targetStatus })));
+    for (const s of servicesList) {
+      await updateServiceStatusInSupabase(s.id, targetStatus);
+    }
+    const label = targetStatus === 'available' ? 'All Modalities Marked Available' : 'All Modalities Paused';
+    addToast(`⚡ ${label} in database!`);
+  };
 
   // Admin Login Handler
   const handleAdminLogin = async (e) => {
@@ -229,7 +417,7 @@ export default function AdminDashboardPage() {
         return [savedProduct, ...prev];
       }
     });
-    addToast(`✨ Specimen "${savedProduct.name}" synchronized to live sanctuary!`);
+    addToast(`✨ Specimen "${savedProduct.name}" saved to Supabase & live sanctuary!`);
     setEditingProduct(null);
   };
 
@@ -247,23 +435,14 @@ export default function AdminDashboardPage() {
     };
 
     try {
-      const res = await fetch(`${API_BASE}/api/admin/products`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(clone),
-      });
-      if (res.ok) {
-        const resData = await res.json();
-        const saved = resData.product || clone;
-        setProducts((prev) => [saved, ...prev]);
-        addToast(`📄 Duplicated "${product.name}" in database!`);
+      const supaRes = await saveProductToSupabase(clone);
+      if (supaRes.success) {
+        setProducts((prev) => [supaRes.product, ...prev]);
+        addToast(`📄 Duplicated "${product.name}" in Supabase!`);
         return;
       }
     } catch (e) {
-      console.warn('Duplicate product fetch warning:', e);
+      console.warn('Duplicate product error:', e);
     }
 
     setProducts((prev) => [clone, ...prev]);
@@ -272,28 +451,21 @@ export default function AdminDashboardPage() {
 
   // Toggle Active Status
   const handleToggleProductStatus = async (product) => {
-    const nextStatus = !product.isActive;
-    const targetId = product.id || product.slug;
+    const nextStatus = !product.isActive && product.active !== false;
+    const targetId = product.id;
 
     setProducts((prev) =>
       prev.map((p) => {
         if (p.id === product.id || p.slug === product.slug) {
-          return { ...p, isActive: nextStatus };
+          return { ...p, isActive: nextStatus, active: nextStatus };
         }
         return p;
       })
     );
 
-    try {
-      await fetch(`${API_BASE}/api/admin/products/${targetId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ ...product, isActive: nextStatus }),
-      });
-    } catch (e) {}
+    if (targetId) {
+      await toggleProductStatusInSupabase(targetId, nextStatus);
+    }
 
     addToast(`Visibility set to ${nextStatus ? 'Active' : 'Draft'} for "${product.name}"`);
   };
@@ -304,16 +476,11 @@ export default function AdminDashboardPage() {
     const targetId = deletingProduct.id || deletingProduct.slug;
     setProducts((prev) => prev.filter((p) => p.id !== targetId && p.slug !== targetId));
 
-    try {
-      await fetch(`${API_BASE}/api/admin/products/${targetId}`, {
-        method: 'DELETE',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-    } catch (e) {}
+    if (deletingProduct.id) {
+      await deleteProductFromSupabase(deletingProduct.id);
+    }
 
-    addToast(`🗑️ "${deletingProduct.name}" removed from sanctuary vault.`, 'info');
+    addToast(`🗑️ "${deletingProduct.name}" removed from Supabase and vault.`, 'info');
     setDeletingProduct(null);
   };
 
@@ -640,6 +807,35 @@ export default function AdminDashboardPage() {
             >
               <Users className="w-3.5 h-3.5" />
               Patrons Directory ({customers.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('services')}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                activeTab === 'services'
+                  ? 'bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20'
+                  : 'bg-stone-900/60 text-stone-400 hover:text-stone-200 border border-stone-800'
+              }`}
+            >
+              <Megaphone className="w-3.5 h-3.5" />
+              Broadcast &amp; Services
+              {announcementActive && (
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('shipping')}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                activeTab === 'shipping'
+                  ? 'bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20'
+                  : 'bg-stone-900/60 text-stone-400 hover:text-stone-200 border border-stone-800'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5" />
+              Delivery &amp; Shipping Rules
             </button>
           </div>
 
@@ -1127,6 +1323,606 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB: BROADCAST & SERVICES */}
+        {activeTab === 'services' && (
+          <div className="space-y-8 animate-in fade-in duration-300">
+            {/* MODULE 1: GLOBAL BROADCAST ANNOUNCEMENT */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-stone-950/70 border border-[#D4AF37]/30 backdrop-blur-xl space-y-6 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-800 pb-5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30">
+                      <Megaphone className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-serif font-bold text-[#E5D5BA]">
+                      Top-Level Global Broadcast Announcement
+                    </h3>
+                  </div>
+                  <p className="text-xs text-stone-400">
+                    Publish an instant luxury announcement ribbon at the very top of the customer storefront across all pages.
+                  </p>
+                </div>
+
+                {/* Active Toggle Switch */}
+                <div className="flex items-center gap-3 self-start sm:self-auto bg-stone-900/90 border border-stone-800 rounded-2xl px-4 py-2.5">
+                  <div className="text-right">
+                    <div className="text-xs font-semibold text-stone-200">
+                      {announcementActive ? (
+                        <span className="text-emerald-400 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          BROADCAST LIVE
+                        </span>
+                      ) : (
+                        <span className="text-stone-400">BANNER HIDDEN</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-stone-500">
+                      {announcementActive ? 'Visible to all customers' : 'Draft / Off'}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setAnnouncementActive(!announcementActive)}
+                    className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
+                      announcementActive ? 'bg-emerald-600' : 'bg-stone-700'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full bg-white transition-transform duration-200 absolute top-0.5 ${
+                        announcementActive ? 'left-6.5' : 'left-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Broadcast Message Input */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-semibold text-stone-300">
+                    Broadcast Message Content
+                  </label>
+                  <span className="text-stone-500 font-mono text-[11px]">
+                    {announcementMessage.length} characters
+                  </span>
+                </div>
+                <textarea
+                  rows={2}
+                  value={announcementMessage}
+                  onChange={(e) => setAnnouncementMessage(e.target.value)}
+                  placeholder="e.g. ✨ Sacred Consecration: Every crystal specimen is cleansed with 528Hz Solfeggio sound bowls & consecrated by Usui Reiki Master Soumyaa Naveen."
+                  className="w-full bg-stone-900/90 border border-stone-800 rounded-2xl p-4 text-xs sm:text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:border-[#D4AF37] transition-all resize-none shadow-inner"
+                />
+              </div>
+
+              {/* Quick Preset Templates */}
+              <div className="space-y-2.5">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-stone-400 block font-semibold">
+                  Quick Broadcast Presets (Click to apply):
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    '✨ Sacred Consecration: Every crystal specimen is cleansed with 528Hz Solfeggio sound bowls & consecrated by Usui Reiki Master Soumyaa Naveen.',
+                    '🌙 Spiritual Retreat Notice: Soumyaa Naveen is currently on a sacred energy retreat. New session bookings resume next Monday.',
+                    '🎉 Festive Privilege: Complimentary consecrated Selenite charging plate included with all masterwork orders above ₹2,999.',
+                    '⚡ Full Moon Alignment: Channeled 7-Chakra & Pranic Energy Attunements available for booking this weekend.',
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setAnnouncementMessage(preset);
+                        setAnnouncementActive(true);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-stone-900 border border-stone-800 hover:border-[#D4AF37]/50 text-stone-300 hover:text-[#D4AF37] text-[11px] transition-all text-left truncate max-w-md cursor-pointer"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Preview Simulator Box */}
+              <div className="space-y-2 pt-2">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#D4AF37] block font-semibold">
+                  Live Customer Storefront Preview:
+                </span>
+                <div className="rounded-2xl border border-[#D4AF37]/30 bg-gradient-to-r from-[#171207] via-[#2a1d08] to-[#171207] p-3.5 flex items-center justify-between gap-4 text-xs text-[#f6e6be] shadow-inner">
+                  <div className="flex items-center gap-2.5 flex-1 justify-center text-center">
+                    <Sparkles className="w-3.5 h-3.5 text-[#ffd978] animate-pulse flex-shrink-0" />
+                    <span className="font-medium tracking-wide">
+                      {announcementMessage.trim() || 'Your announcement message will appear here...'}
+                    </span>
+                  </div>
+                  <span className="p-1 rounded bg-black/40 text-stone-400 text-[10px] font-mono">
+                    [X]
+                  </span>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSaveAnnouncement}
+                  disabled={savingAnnouncement}
+                  className="px-6 py-3 bg-gradient-to-r from-[#D4AF37] via-[#C59B27] to-[#B8860B] text-black font-bold text-xs uppercase tracking-widest rounded-xl hover:brightness-110 shadow-lg shadow-[#D4AF37]/20 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  {savingAnnouncement ? (
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" /> Save &amp; Publish Announcement
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* MODULE 2: 9 SACRED SERVICES & MODALITIES AVAILABILITY */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-stone-950/70 border border-stone-800 backdrop-blur-xl space-y-6 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-800 pb-5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-serif font-bold text-[#E5D5BA]">
+                      Metaphysical Services &amp; Healing Modalities Availability
+                    </h3>
+                  </div>
+                  <p className="text-xs text-stone-400">
+                    Control live availability badges and booking guards for all 9 sacred modalities offered by Soumyaa Naveen.
+                  </p>
+                </div>
+
+                {/* Batch Helper Actions */}
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => handleBatchUpdateServices('available')}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-800/50 text-emerald-400 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    Set All Available
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBatchUpdateServices('currently unavailable')}
+                    className="px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-400 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    Pause All Bookings
+                  </button>
+                </div>
+              </div>
+
+              {/* Service Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {servicesList.map((service) => {
+                  const currentStatus = service.status || 'available';
+                  const isUpdating = updatingServiceId === service.id;
+
+                  return (
+                    <div
+                      key={service.id}
+                      className={`p-5 rounded-2xl border transition-all duration-300 flex flex-col justify-between space-y-4 ${
+                        currentStatus === 'available'
+                          ? 'bg-stone-900/50 border-emerald-500/30'
+                          : currentStatus === 'currently unavailable'
+                          ? 'bg-stone-900/30 border-rose-500/30'
+                          : 'bg-stone-900/30 border-purple-500/30'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37] font-semibold">
+                            {service.id}
+                          </span>
+                          {isUpdating && (
+                            <div className="w-3.5 h-3.5 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                          )}
+                        </div>
+                        <h4 className="text-sm font-serif font-bold text-stone-100 leading-snug">
+                          {service.name || service.title}
+                        </h4>
+                      </div>
+
+                      {/* 3-State Segmented Control */}
+                      <div className="space-y-1.5 pt-2 border-t border-stone-800/80">
+                        <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider block">
+                          Current Availability:
+                        </span>
+                        <div className="grid grid-cols-3 gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800">
+                          {/* Available */}
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateServiceStatus(service.id, 'available')}
+                            className={`py-1.5 px-2 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                              currentStatus === 'available'
+                                ? 'bg-emerald-600 text-white shadow-sm'
+                                : 'text-stone-400 hover:text-stone-200'
+                            }`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                            Active
+                          </button>
+
+                          {/* Unavailable */}
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateServiceStatus(service.id, 'currently unavailable')}
+                            className={`py-1.5 px-2 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                              currentStatus === 'currently unavailable'
+                                ? 'bg-rose-600 text-white shadow-sm'
+                                : 'text-stone-400 hover:text-stone-200'
+                            }`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                            Paused
+                          </button>
+
+                          {/* Coming Soon */}
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateServiceStatus(service.id, 'coming soon')}
+                            className={`py-1.5 px-2 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                              currentStatus === 'coming soon'
+                                ? 'bg-purple-600 text-white shadow-sm'
+                                : 'text-stone-400 hover:text-stone-200'
+                            }`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                            Soon
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: DELIVERY & SHIPPING SETTINGS */}
+        {activeTab === 'shipping' && (
+          <div className="space-y-6">
+            <div className="p-6 rounded-3xl bg-stone-950/80 border border-[#D4AF37]/30 backdrop-blur-xl shadow-2xl space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-800">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-mono font-bold border border-[#D4AF37]/30">
+                    <Truck className="w-3.5 h-3.5" />
+                    <span>Dynamic Logistics Architecture</span>
+                  </div>
+                  <h2 className="text-xl font-serif font-bold text-[#E5D5BA]">
+                    Delivery Tiers &amp; Distance Calculation Rules
+                  </h2>
+                  <p className="text-xs text-stone-400">
+                    Configure radial distance thresholds originating from Pune for automatic real-time delivery fee computation.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveDeliverySettings}
+                  disabled={savingDeliverySettings}
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#D4AF37] via-[#C59B27] to-[#B8860B] text-black font-semibold text-xs uppercase tracking-wider rounded-xl hover:brightness-110 shadow-lg shadow-[#D4AF37]/20 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {savingDeliverySettings ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      <span>Synchronizing Rules...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Save &amp; Publish Tiers</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Tiers Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* 1. Origin Hub Info */}
+                <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase tracking-wider text-[#D4AF37] font-bold flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4" /> Origin Dispatch Hub
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 text-[10px] font-mono text-emerald-400 font-bold">
+                      ACTIVE
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="text-[11px] text-stone-400 block mb-1">Origin City</label>
+                      <input
+                        type="text"
+                        value={deliverySettings.origin_city || 'Pune'}
+                        onChange={(e) =>
+                          setDeliverySettings((prev) => ({ ...prev, origin_city: e.target.value }))
+                        }
+                        className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 font-medium focus:outline-none focus:border-[#D4AF37]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] text-stone-400 block mb-1">Origin State</label>
+                      <input
+                        type="text"
+                        value={deliverySettings.origin_state || 'Maharashtra'}
+                        onChange={(e) =>
+                          setDeliverySettings((prev) => ({ ...prev, origin_state: e.target.value }))
+                        }
+                        className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 font-medium focus:outline-none focus:border-[#D4AF37]"
+                      />
+                    </div>
+
+                    <div className="pt-2 text-[11px] font-mono text-stone-500 flex items-center gap-1">
+                      <Compass className="w-3.5 h-3.5" />
+                      <span>Coordinates: 18.5204° N, 73.8567° E</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Tier 1 (Pune Local) */}
+                <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold flex items-center gap-1.5">
+                      <Zap className="w-4 h-4" /> Tier 1: Local Metro
+                    </span>
+                    <span className="text-[10px] font-mono text-stone-400">1-2 Days</span>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="text-[11px] text-stone-400 block mb-1">Max Distance Limit (km)</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={deliverySettings.tier_1_max_km || 50}
+                          onChange={(e) =>
+                            setDeliverySettings((prev) => ({
+                              ...prev,
+                              tier_1_max_km: Number(e.target.value),
+                            }))
+                          }
+                          className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 font-mono font-bold focus:outline-none focus:border-[#D4AF37]"
+                        />
+                        <span className="absolute right-3 top-2 text-stone-500 font-mono text-xs">km</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] text-stone-400 block mb-1">Delivery Fee (₹)</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={deliverySettings.tier_1_fee !== undefined ? deliverySettings.tier_1_fee : 50}
+                          onChange={(e) =>
+                            setDeliverySettings((prev) => ({
+                              ...prev,
+                              tier_1_fee: Number(e.target.value),
+                            }))
+                          }
+                          className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-[#D4AF37] font-mono font-bold focus:outline-none focus:border-[#D4AF37]"
+                        />
+                        <span className="absolute right-3 top-2 text-stone-500 font-mono text-xs">₹ INR</span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-stone-500">
+                      Applies to Pune city &amp; immediate suburbs within 50 km.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3. Tier 2 (Maharashtra Regional) */}
+                <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase tracking-wider text-purple-400 font-bold flex items-center gap-1.5">
+                      <Layers className="w-4 h-4" /> Tier 2: State Regional
+                    </span>
+                    <span className="text-[10px] font-mono text-stone-400">2-3 Days</span>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="text-[11px] text-stone-400 block mb-1">Max Distance Limit (km)</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={deliverySettings.tier_2_max_km || 150}
+                          onChange={(e) =>
+                            setDeliverySettings((prev) => ({
+                              ...prev,
+                              tier_2_max_km: Number(e.target.value),
+                            }))
+                          }
+                          className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 font-mono font-bold focus:outline-none focus:border-[#D4AF37]"
+                        />
+                        <span className="absolute right-3 top-2 text-stone-500 font-mono text-xs">km</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] text-stone-400 block mb-1">Delivery Fee (₹)</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={deliverySettings.tier_2_fee !== undefined ? deliverySettings.tier_2_fee : 100}
+                          onChange={(e) =>
+                            setDeliverySettings((prev) => ({
+                              ...prev,
+                              tier_2_fee: Number(e.target.value),
+                            }))
+                          }
+                          className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-[#D4AF37] font-mono font-bold focus:outline-none focus:border-[#D4AF37]"
+                        />
+                        <span className="absolute right-3 top-2 text-stone-500 font-mono text-xs">₹ INR</span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-stone-500">
+                      Applies to Mumbai, Thane, Satara, Ahmednagar (51–150 km).
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Interstate & Free Shipping Policy */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                {/* Interstate / Other States */}
+                <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase tracking-wider text-rose-400 font-bold flex items-center gap-1.5">
+                      <Truck className="w-4 h-4" /> Interstate / Other States Flat Fee
+                    </span>
+                    <span className="text-[10px] font-mono text-stone-400">3-5 Days</span>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <label className="text-[11px] text-stone-400 block">Flat Rate for Interstate Destinations (₹)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={deliverySettings.interstate_fee !== undefined ? deliverySettings.interstate_fee : 150}
+                        onChange={(e) =>
+                          setDeliverySettings((prev) => ({
+                            ...prev,
+                            interstate_fee: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-[#D4AF37] font-mono font-bold focus:outline-none focus:border-[#D4AF37]"
+                      />
+                      <span className="absolute right-3 top-2 text-stone-500 font-mono text-xs">₹ INR</span>
+                    </div>
+                    <p className="text-[11px] text-stone-500">
+                      Applies automatically when delivery state is outside Maharashtra or distance exceeds Tier 2 limit.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Free Shipping Policy */}
+                <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4" /> Free Insured Delivery Policy
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDeliverySettings((prev) => ({
+                          ...prev,
+                          is_free_shipping_enabled: !prev.is_free_shipping_enabled,
+                        }))
+                      }
+                      className="text-stone-400 hover:text-white"
+                    >
+                      {deliverySettings.is_free_shipping_enabled ? (
+                        <ToggleRight className="w-6 h-6 text-emerald-400" />
+                      ) : (
+                        <ToggleLeft className="w-6 h-6 text-stone-600" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <label className="text-[11px] text-stone-400 block">
+                      Free Shipping Cart Threshold (₹ INR)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        disabled={!deliverySettings.is_free_shipping_enabled}
+                        value={deliverySettings.free_shipping_threshold || 5000}
+                        onChange={(e) =>
+                          setDeliverySettings((prev) => ({
+                            ...prev,
+                            free_shipping_threshold: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-emerald-400 font-mono font-bold focus:outline-none focus:border-[#D4AF37] disabled:opacity-40"
+                      />
+                      <span className="absolute right-3 top-2 text-stone-500 font-mono text-xs">₹ INR</span>
+                    </div>
+                    <p className="text-[11px] text-stone-500">
+                      When cart total reaches ₹{(deliverySettings.free_shipping_threshold || 5000).toLocaleString('en-IN')}, shipping fee is automatically ₹0.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Real-Time Pincode Simulator */}
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-stone-900/90 via-[#1a1712]/90 to-stone-900/90 border border-[#D4AF37]/30 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#D4AF37] font-bold flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" /> Live Pincode Tier Verification Simulator
+                  </span>
+                  <span className="text-[10px] font-mono text-stone-400">Interactive Test</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter Indian PIN Code (e.g., 411001, 400001, 560001)..."
+                    value={testPincode}
+                    onChange={(e) => setTestPincode(e.target.value)}
+                    className="flex-1 w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-[#D4AF37] font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTestPincode}
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-xs font-mono font-bold text-stone-200 transition-colors"
+                  >
+                    Simulate Tier Fee
+                  </button>
+                </div>
+
+                {testResult && (
+                  <div className="p-4 rounded-xl bg-stone-950 border border-stone-800 flex flex-wrap items-center justify-between gap-4 animate-fade-in text-xs">
+                    {testResult.error ? (
+                      <span className="text-rose-400 flex items-center gap-1.5 font-mono">
+                        <AlertCircle className="w-4 h-4" />
+                        {testResult.error}
+                      </span>
+                    ) : (
+                      <>
+                        <div className="space-y-1">
+                          <div className="font-bold text-stone-100 flex items-center gap-2">
+                            <span>PIN {testResult.pincode}</span>
+                            <span className="px-2 py-0.5 rounded-md bg-stone-800 text-[10px] font-mono text-[#D4AF37]">
+                              {testResult.region}
+                            </span>
+                          </div>
+                          <div className="text-stone-400 font-mono text-[11px]">
+                            {testResult.tier} • Approx. {testResult.distanceKm} km from Pune
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <div className="text-lg font-mono font-bold text-[#D4AF37]">
+                            ₹{testResult.calculatedFee} Delivery
+                          </div>
+                          <div className="text-[10px] font-mono text-emerald-400">
+                            FREE on orders &ge; ₹{testResult.freeOverThreshold}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </main>

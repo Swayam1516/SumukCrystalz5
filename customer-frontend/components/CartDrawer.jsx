@@ -1,21 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCartStore } from '../store/useCart';
 import { useAuthStore } from '../store/useAuth';
+import { getSupabaseDeliverySettings } from '../lib/supabase';
+import { DEFAULT_DELIVERY_SETTINGS } from '../lib/shippingEngine';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, ShieldCheck, Sparkles, Check, User, LogOut } from 'lucide-react';
 
 export default function CartDrawer() {
   const { items, isDrawerOpen, closeDrawer, removeItem, updateQuantity, getTotalPrice } =
     useCartStore();
   const { user, logout, openAuthModal } = useAuthStore();
+  const [deliverySettings, setDeliverySettings] = useState(DEFAULT_DELIVERY_SETTINGS);
+
+  useEffect(() => {
+    let isMounted = true;
+    getSupabaseDeliverySettings()
+      .then((settings) => {
+        if (isMounted && settings) setDeliverySettings(settings);
+      })
+      .catch((err) => console.warn('CartDrawer delivery settings note:', err.message));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (!isDrawerOpen) return null;
 
   const subtotal = getTotalPrice();
-  const freeShippingThreshold = 5000;
+  const freeShippingThreshold = Number(deliverySettings?.free_shipping_threshold || 5000);
   const progressToFreeShipping = Math.min(100, (subtotal / freeShippingThreshold) * 100);
   const remainingForFree = Math.max(0, freeShippingThreshold - subtotal);
 

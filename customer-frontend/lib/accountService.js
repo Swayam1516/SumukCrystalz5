@@ -78,7 +78,11 @@ export async function getUserOrdersWithItems(userId) {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return { orders: data || [], error: null };
+    const formattedOrders = (data || []).map((order) => ({
+      ...order,
+      order_items: order.order_items || [],
+    }));
+    return { orders: formattedOrders, error: null };
   } catch (err) {
     return { orders: [], error: err };
   }
@@ -103,18 +107,20 @@ export async function getUserAccountMetrics(userId) {
 
     const totalOrders = orders?.length || 0;
     const totalSpent = orders?.reduce((sum, ord) => sum + Number(ord.total_amount || 0), 0) || 0;
+    const activeOrders = orders?.filter(o => ['pending', 'processing', 'shipped'].includes(o.status))?.length || 0;
 
     return {
       metrics: {
         totalOrders,
         totalSpent,
         totalReviews: reviewCount || 0,
+        activeOrders,
       },
       error: null,
     };
   } catch (err) {
     return {
-      metrics: { totalOrders: 0, totalSpent: 0, totalReviews: 0 },
+      metrics: { totalOrders: 0, totalSpent: 0, totalReviews: 0, activeOrders: 0 },
       error: err,
     };
   }

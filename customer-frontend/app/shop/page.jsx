@@ -10,8 +10,8 @@ import {
   PURPOSES,
   BEAD_TYPES,
   BRACELET_SIZES,
-  ENERGY_STONES_CATALOG,
 } from '../../data/energyStones';
+import { getSupabaseProducts } from '../../lib/supabase';
 import {
   Filter,
   Search,
@@ -86,7 +86,7 @@ function MasterworksShopContent() {
     setSearchQuery('');
   };
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
   const [catalog, setCatalog] = useState([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
 
@@ -95,16 +95,41 @@ function MasterworksShopContent() {
     const fetchCatalog = async () => {
       setLoadingCatalog(true);
       try {
-        const res = await fetch(`${API_BASE}/api/products`);
-        if (res.ok) {
-          const data = await res.json();
-          const items = Array.isArray(data) ? data : (data.products || []);
+        // 1. Fetch live products from Supabase (Source of Truth)
+        const supaItems = await getSupabaseProducts(true);
+
+        if (supaItems && supaItems.length > 0) {
           if (isMounted) {
-            setCatalog(items);
+            setCatalog(supaItems);
+          }
+          return;
+        }
+
+        // 2. Fallback to Backend REST API if configured and Supabase returned 0 items
+        if (API_BASE) {
+          try {
+            const res = await fetch(`${API_BASE}/api/products`);
+            if (res.ok) {
+              const data = await res.json();
+              const backendItems = Array.isArray(data) ? data : (data.products || []);
+              if (backendItems.length > 0 && isMounted) {
+                setCatalog(backendItems);
+                return;
+              }
+            }
+          } catch (apiErr) {
+            console.warn('Backend products endpoint unreachable:', apiErr.message);
           }
         }
+
+        if (isMounted) {
+          setCatalog(supaItems || []);
+        }
       } catch (err) {
-        console.warn('Storefront live catalog fetch notice:', err.message);
+        console.error('Storefront live catalog fetch error:', err);
+        if (isMounted) {
+          setCatalog([]);
+        }
       } finally {
         if (isMounted) setLoadingCatalog(false);
       }
@@ -205,6 +230,22 @@ function MasterworksShopContent() {
 
     return list;
   }, [catalog, selectedPurpose, selectedModality, selectedBeads, selectedSizes, minPrice, maxPrice, searchQuery, sortBy]);
+
+  // Dynamically compute count of live products per purpose category
+  const purposeCounts = useMemo(() => {
+    const counts = { all: catalog.length };
+    PURPOSES.forEach((p) => {
+      if (p.id === 'all') return;
+      const pLow = p.id.toLowerCase();
+      counts[p.id] = catalog.filter((prod) =>
+        (prod.purpose && prod.purpose.toLowerCase().includes(pLow)) ||
+        (prod.category && prod.category.toLowerCase().includes(pLow)) ||
+        (prod.collection && prod.collection.toLowerCase().includes(pLow)) ||
+        (prod.chakra && (Array.isArray(prod.chakra) ? prod.chakra.some((c) => c.toLowerCase().includes(pLow)) : String(prod.chakra).toLowerCase().includes(pLow)))
+      ).length;
+    });
+    return counts;
+  }, [catalog]);
 
   const handleQuickAdd = (product, e) => {
     e?.preventDefault();
@@ -433,28 +474,31 @@ function MasterworksShopContent() {
 
                 {openSections.purpose && (
                   <div className="space-y-2 pt-1">
-                    {PURPOSES.map((p) => (
-                      <label
-                        key={p.id}
-                        className="flex items-center justify-between text-xs font-sans-ui text-[#4A4237] hover:text-[#1F1A15] cursor-pointer group py-1"
-                      >
-                        <span className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="purpose-radio"
-                            checked={selectedPurpose === p.id}
-                            onChange={() => setSelectedPurpose(p.id)}
-                            className="accent-[#B8860B] w-3.5 h-3.5"
-                          />
-                          <span className={selectedPurpose === p.id ? 'text-[#8C6208] font-bold' : 'font-medium'}>
-                            {p.label}
+                    {PURPOSES.map((p) => {
+                      const count = purposeCounts[p.id] ?? 0;
+                      return (
+                        <label
+                          key={p.id}
+                          className="flex items-center justify-between text-xs font-sans-ui text-[#4A4237] hover:text-[#1F1A15] cursor-pointer group py-1"
+                        >
+                          <span className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="purpose-radio"
+                              checked={selectedPurpose === p.id}
+                              onChange={() => setSelectedPurpose(p.id)}
+                              className="accent-[#B8860B] w-3.5 h-3.5"
+                            />
+                            <span className={selectedPurpose === p.id ? 'text-[#8C6208] font-bold' : 'font-medium'}>
+                              {p.label}
+                            </span>
                           </span>
-                        </span>
-                        <span className="text-[10px] font-mono text-[#9E9589] group-hover:text-[#6B6357]">
-                          ({p.count})
-                        </span>
-                      </label>
-                    ))}
+                          <span className="text-[10px] font-mono text-[#9E9589] group-hover:text-[#6B6357]">
+                            ({count})
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -563,20 +607,46 @@ function MasterworksShopContent() {
 
           {/* MAIN PRODUCT GRID (3D LIGHT CARDS) */}
           <div className={`${sidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'} space-y-8`}>
-            {filteredProducts.length === 0 ? (
+            {loadingCatalog ? (
+              <div
+                className={`grid grid-cols-2 ${
+                  gridCols === 4 && !sidebarOpen
+                    ? 'sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                    : gridCols === 4
+                    ? 'sm:grid-cols-2 md:grid-cols-3'
+                    : 'sm:grid-cols-2'
+                } gap-4 sm:gap-6`}
+              >
+                {[1, 2, 3, 4, 5, 6].map((idx) => (
+                  <div key={idx} className="store-card-light p-4 space-y-3 animate-pulse bg-white rounded-2xl border border-[#EAE3D5]">
+                    <div className="aspect-square w-full rounded-xl bg-[#F4EFE6]" />
+                    <div className="h-4 w-3/4 bg-[#EDE5D6] rounded-full" />
+                    <div className="h-3 w-1/2 bg-[#EDE5D6] rounded-full" />
+                    <div className="pt-2 border-t border-[#EAE3D5] flex justify-between items-center">
+                      <div className="h-5 w-20 bg-[#EDE5D6] rounded-full" />
+                      <div className="h-7 w-20 bg-[#D4AF37]/20 rounded-xl" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <div className="p-12 text-center store-card-light space-y-4">
                 <Sparkles className="w-10 h-10 text-[#D4AF37] mx-auto animate-bounce" />
-                <h3 className="font-editorial text-2xl font-bold text-[#1F1A15]">No Specimens Found</h3>
+                <h3 className="font-editorial text-2xl font-bold text-[#1F1A15]">No Specimens Found in Vault</h3>
                 <p className="text-xs text-[#6B6357] max-w-md mx-auto">
-                  Try adjusting your purpose or price filters to explore other consecrated gemstones in our vault.
+                  {catalog.length === 0
+                    ? 'The vault is currently preparing consecrated masterworks. Please check back shortly.'
+                    : 'Try adjusting your purpose or price filters to explore other consecrated gemstones in our vault.'}
                 </p>
-                <button
-                  type="button"
-                  onClick={clearAllFilters}
-                  className="cta-3d-gold px-6 py-2.5 rounded-full text-xs font-bold"
-                >
-                  Reset All Filters
-                </button>
+                {catalog.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="cta-3d-gold px-6 py-2.5 rounded-full text-xs font-bold"
+                  >
+                    Reset All Filters
+                  </button>
+                )}
               </div>
             ) : (
               <div
@@ -747,18 +817,21 @@ function MasterworksShopContent() {
             {/* Mobile Purpose Filter */}
             <div className="space-y-2">
               <span className="text-xs font-option uppercase text-[#8C6208] font-bold block">Purpose</span>
-              {PURPOSES.map((p) => (
-                <label key={p.id} className="flex items-center justify-between text-xs text-[#4A4237] py-1.5">
-                  <span className="font-medium">{p.label}</span>
-                  <input
-                    type="radio"
-                    name="mobile-purpose"
-                    checked={selectedPurpose === p.id}
-                    onChange={() => setSelectedPurpose(p.id)}
-                    className="accent-[#B8860B]"
-                  />
-                </label>
-              ))}
+              {PURPOSES.map((p) => {
+                const count = purposeCounts[p.id] ?? 0;
+                return (
+                  <label key={p.id} className="flex items-center justify-between text-xs text-[#4A4237] py-1.5">
+                    <span className="font-medium">{p.label} ({count})</span>
+                    <input
+                      type="radio"
+                      name="mobile-purpose"
+                      checked={selectedPurpose === p.id}
+                      onChange={() => setSelectedPurpose(p.id)}
+                      className="accent-[#B8860B]"
+                    />
+                  </label>
+                );
+              })}
             </div>
 
             {/* Mobile Bead Types */}

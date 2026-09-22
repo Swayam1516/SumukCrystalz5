@@ -18,8 +18,8 @@ const VIDEO_CONFIG = {
     subtitle: 'SACRED ENERGY & INTENTIONAL HEALING STONES',
     // Local video asset paths (supports Next.js public & relative file paths):
     sources: [
-      '../frontend/public/videos/video1.mp4',
-      '../frontend/Videos/Video 1.mp4',
+      '../customer-frontend/public/videos/video1.mp4',
+      '../customer-frontend/Videos/Video 1.mp4',
       '/videos/video1.mp4',
       '/videos/Video 1.mp4',
       '/videos/intro.mp4'
@@ -43,8 +43,8 @@ const VIDEO_CONFIG = {
       colorAccent: '#c084fc',
       colorGlow: 'rgba(168, 85, 247, 0.55)',
       sources: [
-        '../frontend/public/videos/video2.mp4',
-        '../frontend/Videos/video 2.mp4',
+        '../customer-frontend/public/videos/video2.mp4',
+        '../customer-frontend/Videos/video 2.mp4',
         '/videos/video2.mp4',
         '/videos/video 2.mp4'
       ],
@@ -66,8 +66,8 @@ const VIDEO_CONFIG = {
       colorAccent: '#f5d47a',
       colorGlow: 'rgba(245, 212, 122, 0.55)',
       sources: [
-        '../frontend/public/videos/video3.mp4',
-        '../frontend/Videos/Video 3.mp4',
+        '../customer-frontend/public/videos/video3.mp4',
+        '../customer-frontend/Videos/Video 3.mp4',
         '/videos/video3.mp4',
         '/videos/Video 3.mp4'
       ],
@@ -89,8 +89,8 @@ const VIDEO_CONFIG = {
       colorAccent: '#34d399',
       colorGlow: 'rgba(52, 211, 153, 0.55)',
       sources: [
-        '../frontend/public/videos/video4.mp4',
-        '../frontend/Videos/video 4.mp4',
+        '../customer-frontend/public/videos/video4.mp4',
+        '../customer-frontend/Videos/video 4.mp4',
         '/videos/video4.mp4',
         '/videos/video 4.mp4'
       ],
@@ -112,8 +112,8 @@ const VIDEO_CONFIG = {
       colorAccent: '#38bdf8',
       colorGlow: 'rgba(56, 189, 248, 0.55)',
       sources: [
-        '../frontend/public/videos/video5.mp4',
-        '../frontend/Videos/video 5.mp4',
+        '../customer-frontend/public/videos/video5.mp4',
+        '../customer-frontend/Videos/video 5.mp4',
         '/videos/video5.mp4',
         '/videos/video 5.mp4'
       ],
@@ -135,8 +135,8 @@ const VIDEO_CONFIG = {
       colorAccent: '#f472b6',
       colorGlow: 'rgba(244, 114, 182, 0.55)',
       sources: [
-        '../frontend/public/videos/video6.mp4',
-        '../frontend/Videos/video 6.mp4',
+        '../customer-frontend/public/videos/video6.mp4',
+        '../customer-frontend/Videos/video 6.mp4',
         '/videos/video6.mp4',
         '/videos/video 6.mp4'
       ],

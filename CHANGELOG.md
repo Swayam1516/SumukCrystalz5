@@ -1,9 +1,16 @@
 # 💎 Sumuk Crystalz — Enterprise Production Hardening & Architecture Refactoring CHANGELOG
 
-**Version**: 2.0.0-Enterprise  
-**Date**: September 20, 2026  
-**Architect**: Senior Full Stack Software Architect, DevOps & Security Engineer  
-**Standard**: Apple, Dior, Cartier luxury tier  
+**Version**: 2.1.0-Consolidated  
+**Date**: September 22, 2026  
+**Architect**: Principal Frontend Engineer & DevOps Architect  
+
+---
+
+### 🚀 Frontend Consolidation Milestone (Two Clean Deployable Roots)
+* **Consolidation**: Fully merged and eliminated legacy `frontend/` directory into `customer-frontend/`.
+* **Clean Dual Roots**: Repository architecture standardized into exactly two production frontend roots: `customer-frontend/` (Customer Storefront) and `admin-frontend/` (Founder Admin Portal).
+* **Component & Asset Parity**: Preserved and migrated `CustomerAccountDashboard.jsx`, profile assets, active orders metric calculation, and resilient catalog fallback handling.
+* **Build Integrity**: Verified with `npm run build:all` (25 customer routes, 4 admin routes) with zero functional regression.
 
 ---
 

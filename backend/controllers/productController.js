@@ -141,7 +141,7 @@ async function getProducts(req, res, next) {
       sort = 'newest',
     } = req.query;
 
-    let products = await getSupabaseAllProducts({
+    const products = await getSupabaseAllProducts({
       q,
       category,
       collection,
@@ -151,10 +151,6 @@ async function getProducts(req, res, next) {
       sort,
       includeInactive: false,
     });
-
-    if (!products || products.length === 0) {
-      products = SEED_CATALOG;
-    }
 
     res.json({
       success: true,
@@ -174,11 +170,7 @@ async function getProducts(req, res, next) {
 async function getProductById(req, res, next) {
   try {
     const { id } = req.params;
-    let product = await getSupabaseProductBySlugOrId(id);
-
-    if (!product) {
-      product = SEED_CATALOG.find((p) => p.slug === id || p.id === id);
-    }
+    const product = await getSupabaseProductBySlugOrId(id);
 
     if (!product) {
       return next(new AppError('Product not found in the treasury.', 404));

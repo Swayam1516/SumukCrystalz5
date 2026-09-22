@@ -11,6 +11,295 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 /**
+ * Normalizes a raw Supabase product record into a unified object
+ */
+export function normalizeProduct(raw) {
+  if (!raw) return null;
+
+  // Extract images from joined table or hero_image
+  const joinedImages = (raw.product_images || [])
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+    .map((img) => img.image_url)
+    .filter(Boolean);
+
+  const imagesList = joinedImages.length > 0
+    ? joinedImages
+    : (raw.hero_image ? [raw.hero_image] : ['https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=1000&q=80']);
+
+  // Extract variants
+  const variantsList = (raw.product_variants || []).map((v) => ({
+    id: v.id,
+    name: v.variant_name || v.name || 'Standard',
+    variant_name: v.variant_name || v.name || 'Standard',
+    beadSize: v.bead_size || '',
+    bead_size: v.bead_size || '',
+    braceletSize: v.bracelet_size || '',
+    bracelet_size: v.bracelet_size || '',
+    price: Number(v.selling_price || 0),
+    selling_price: Number(v.selling_price || 0),
+    originalPrice: Number(v.original_price || 0),
+    original_price: Number(v.original_price || 0),
+    stock: Number(v.stock || 0),
+    sku: v.sku || '',
+    available: v.available !== false,
+  }));
+
+  const sellingPrice = Number(raw.selling_price || raw.price || raw.base_price || 0);
+  const originalPrice = Number(raw.original_price || raw.originalPrice || (sellingPrice * 1.5));
+  const discountPercent = originalPrice > sellingPrice
+    ? Math.round(((originalPrice - sellingPrice) / originalPrice) * 100)
+    : Number(raw.discount_percentage || 0);
+
+  return {
+    ...raw,
+    id: raw.id,
+    slug: raw.slug || (raw.name ? raw.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : `specimen-${raw.id}`),
+    name: raw.name || raw.title || 'Sacred Crystal Specimen',
+    title: raw.name || raw.title || 'Sacred Crystal Specimen',
+    subtitle: raw.short_description || raw.subtitle || '',
+    shortDescription: raw.short_description || raw.subtitle || '',
+    short_description: raw.short_description || raw.subtitle || '',
+    description: raw.description || '',
+    category: raw.category || 'Energy Bands',
+    collection: raw.collection || 'Masterworks Collection',
+    crystalType: raw.crystal_type || 'Pyrite',
+    crystal_type: raw.crystal_type || 'Pyrite',
+    zodiac: raw.zodiac || '',
+    chakra: raw.chakra || 'Crown & Third Eye',
+    healingBenefits: raw.healing_benefits || '',
+    healing_benefits: raw.healing_benefits || '',
+    careInstructions: raw.care_instructions || '',
+    care_instructions: raw.care_instructions || '',
+    authenticityInfo: raw.authenticity_info || '100% Certified Authentic Natural Crystal & Consecrated at 528Hz',
+    authenticity_info: raw.authenticity_info || '100% Certified Authentic Natural Crystal & Consecrated at 528Hz',
+    price: sellingPrice,
+    sellingPrice,
+    selling_price: sellingPrice,
+    originalPrice,
+    original_price: originalPrice,
+    discountPercent,
+    discount_percentage: discountPercent,
+    badge: raw.bestseller ? 'BESTSELLER' : (raw.new_arrival ? 'NEW' : (raw.limited_edition ? 'LIMITED' : 'MASTERWORK')),
+    badgeColor: raw.bestseller ? 'bg-[#B8860B] text-white' : 'bg-purple-900 text-white',
+    rating: 5.0,
+    reviewsCount: 108,
+    active: raw.active !== false,
+    isActive: raw.active !== false,
+    inStock: raw.active !== false,
+    heroImage: imagesList[0],
+    hero_image: imagesList[0],
+    image: imagesList[0],
+    images: imagesList,
+    variants: variantsList,
+    product_variants: variantsList,
+    product_images: imagesList.map((url, idx) => ({ image_url: url, display_order: idx + 1 })),
+    stockCount: variantsList.length > 0 ? variantsList.reduce((sum, v) => sum + (v.stock || 0), 0) : 50,
+  };
+}
+
+/**
+ * Persist product, variants and images to Supabase PostgreSQL
+ */
+export async function saveProductToSupabase(productPayload) {
+  try {
+    const name = (productPayload.name || productPayload.title || '').trim();
+    if (!name) throw new Error('Product name is required.');
+
+    let slug = productPayload.slug;
+    if (!slug) {
+      slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      if (!slug) slug = `specimen-${Date.now()}`;
+    }
+
+    const sellingPrice = Number(productPayload.price || productPayload.selling_price || productPayload.base_price || 0);
+    const originalPrice = Number(productPayload.originalPrice || productPayload.original_price || (sellingPrice * 1.5));
+    const discountPercent = originalPrice > sellingPrice
+      ? Math.round(((originalPrice - sellingPrice) / originalPrice) * 100)
+      : Number(productPayload.discountPercent || productPayload.discount_percentage || 0);
+
+    const images = Array.isArray(productPayload.images) && productPayload.images.length > 0
+      ? productPayload.images
+      : (productPayload.hero_image || productPayload.heroImage || productPayload.image ? [productPayload.hero_image || productPayload.heroImage || productPayload.image] : []);
+
+    const heroImage = images[0] || productPayload.hero_image || productPayload.heroImage || productPayload.image || '';
+
+    const productRecord = {
+      name,
+      slug,
+      category: productPayload.category || 'Energy Bands',
+      collection: productPayload.collection || 'Masterworks Collection',
+      crystal_type: productPayload.crystalType || productPayload.crystal_type || 'Pyrite',
+      zodiac: productPayload.zodiac || '',
+      chakra: productPayload.chakra || 'Crown & Third Eye',
+      short_description: productPayload.shortDescription || productPayload.short_description || productPayload.subtitle || '',
+      description: productPayload.description || '',
+      healing_benefits: productPayload.healingBenefits || productPayload.healing_benefits || (Array.isArray(productPayload.vedicBenefits) ? productPayload.vedicBenefits.join('\n') : ''),
+      care_instructions: productPayload.careInstructions || productPayload.care_instructions || '',
+      authenticity_info: productPayload.authenticityInfo || productPayload.authenticity_info || '100% Certified Authentic Natural Crystal & Consecrated at 528Hz',
+      selling_price: sellingPrice,
+      original_price: originalPrice,
+      discount_percentage: discountPercent,
+      featured: Boolean(productPayload.featured),
+      bestseller: Boolean(productPayload.bestseller),
+      new_arrival: Boolean(productPayload.newArrival || productPayload.new_arrival),
+      premium_collection: Boolean(productPayload.premiumCollection || productPayload.premium_collection),
+      limited_edition: Boolean(productPayload.limitedEdition || productPayload.limited_edition),
+      active: productPayload.active !== undefined ? Boolean(productPayload.active) : (productPayload.isActive !== undefined ? Boolean(productPayload.isActive) : true),
+      hero_image: heroImage,
+      updated_at: new Date().toISOString(),
+    };
+
+    const isExistingUuid = typeof productPayload.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productPayload.id);
+    if (isExistingUuid) {
+      productRecord.id = productPayload.id;
+    }
+
+    // 1. Upsert into 'products' table
+    const { data: savedProduct, error: prodErr } = await supabase
+      .from('products')
+      .upsert(productRecord, { onConflict: isExistingUuid ? 'id' : 'slug' })
+      .select()
+      .single();
+
+    if (prodErr) {
+      console.error('Supabase Product Save Error:', prodErr);
+      throw prodErr;
+    }
+
+    const productId = savedProduct.id;
+
+    // 2. Sync Variants if provided
+    if (productPayload.variants && Array.isArray(productPayload.variants) && productPayload.variants.length > 0) {
+      await supabase.from('product_variants').delete().eq('product_id', productId);
+
+      const variantsToInsert = productPayload.variants.map((v) => ({
+        product_id: productId,
+        variant_name: v.name || v.variant_name || 'Standard',
+        bead_size: v.beadSize || v.bead_size || '',
+        bracelet_size: v.braceletSize || v.bracelet_size || '',
+        weight: v.weight || '',
+        color_finish: v.colorFinish || v.color_finish || '',
+        selling_price: Number(v.price || v.selling_price || sellingPrice),
+        original_price: Number(v.originalPrice || v.original_price || originalPrice),
+        stock: Number(v.stock || v.stockCount || 20),
+        sku: v.sku || `${slug.toUpperCase()}-${(v.name || 'STD').replace(/[^a-z0-9]/gi, '').slice(0, 4)}`,
+        available: v.available !== false,
+      }));
+
+      await supabase.from('product_variants').insert(variantsToInsert);
+    }
+
+    // 3. Sync Images if provided
+    if (images.length > 0) {
+      await supabase.from('product_images').delete().eq('product_id', productId);
+
+      const imagesToInsert = images.map((url, idx) => ({
+        product_id: productId,
+        image_url: url,
+        display_order: idx + 1,
+        is_hero: idx === 0,
+      }));
+
+      await supabase.from('product_images').insert(imagesToInsert);
+    }
+
+    const complete = await getSupabaseProductBySlug(savedProduct.slug || productId);
+    return { success: true, product: complete || normalizeProduct(savedProduct), error: null };
+  } catch (err) {
+    console.error('Error saving product to Supabase:', err);
+    return { success: false, product: null, error: err.message || err };
+  }
+}
+
+/**
+ * Fetch all products from Supabase with joined variants and images
+ */
+export async function getSupabaseProducts(onlyActive = false) {
+  try {
+    let query = supabase
+      .from('products')
+      .select('*, product_variants(*), product_images(*)')
+      .order('created_at', { ascending: false });
+
+    if (onlyActive) {
+      query = query.eq('active', true);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map(normalizeProduct);
+  } catch (err) {
+    console.warn('Supabase fetch products notice:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Fetch single product by slug or UUID
+ */
+export async function getSupabaseProductBySlug(slugOrId) {
+  try {
+    if (!slugOrId) return null;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+
+    let query = supabase
+      .from('products')
+      .select('*, product_variants(*), product_images(*)');
+
+    if (isUuid) {
+      query = query.eq('id', slugOrId);
+    } else {
+      query = query.eq('slug', slugOrId);
+    }
+
+    const { data, error } = await query.maybeSingle();
+    if (error) throw error;
+
+    return data ? normalizeProduct(data) : null;
+  } catch (err) {
+    console.warn('Supabase product fetch notice:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Delete product from Supabase
+ */
+export async function deleteProductFromSupabase(productId) {
+  try {
+    if (!productId) throw new Error('Product ID is required.');
+    const { error } = await supabase.from('products').delete().eq('id', productId);
+    if (error) throw error;
+    return { success: true, error: null };
+  } catch (err) {
+    console.error('Delete product error:', err);
+    return { success: false, error: err.message || err };
+  }
+}
+
+/**
+ * Toggle product active status in Supabase
+ */
+export async function toggleProductStatusInSupabase(productId, active) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .update({ active, updated_at: new Date().toISOString() })
+      .eq('id', productId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, product: normalizeProduct(data), error: null };
+  } catch (err) {
+    return { success: false, product: null, error: err.message };
+  }
+}
+
+export const updateProductAvailabilityInSupabase = toggleProductStatusInSupabase;
+
+/**
  * Persist customer profile directly to Supabase
  */
 export async function saveCustomerToSupabase(customer) {
@@ -102,18 +391,8 @@ export async function saveOrderToSupabase(order) {
           ...payload,
           id: createdOrderId,
           _id: createdOrderId,
-          createdAt: payload.created_at,
-          order_items: (order.items || []).map((it, idx) => ({
-            id: `item_${Date.now()}_${idx}`,
-            product_id: it.productId || it.id,
-            product_name: it.name,
-            product_image: it.image || it.images?.[0],
-            price: Number(it.price || it.unitPrice || 0),
-            quantity: Number(it.quantity || 1),
-            is_reviewed: false,
-          })),
+          items: order.items,
         };
-
         const existingRaw = localStorage.getItem('sumuk_recent_orders');
         const existingList = existingRaw ? JSON.parse(existingRaw) : [];
         const updatedList = [localRecord, ...existingList.filter(o => (o.id !== createdOrderId && o._id !== createdOrderId && o.order_number !== orderNumber))];
@@ -125,7 +404,7 @@ export async function saveOrderToSupabase(order) {
 
     return orderResult || payload;
   } catch (err) {
-    console.warn('Supabase saveOrder error:', err.message);
+    console.warn('Supabase order error:', err.message);
     return null;
   }
 }
@@ -139,7 +418,16 @@ export async function getSupabaseOrders() {
       .from('orders')
       .select(`
         *,
-        order_items (*)
+        order_items (
+          id,
+          order_id,
+          product_id,
+          product_name,
+          product_image,
+          price,
+          quantity,
+          is_reviewed
+        )
       `)
       .order('created_at', { ascending: false });
 
@@ -160,21 +448,32 @@ export async function getSupabaseOrdersByUser(userId, email) {
       .from('orders')
       .select(`
         *,
-        order_items (*)
+        order_items (
+          id,
+          order_id,
+          product_id,
+          product_name,
+          product_image,
+          price,
+          quantity,
+          is_reviewed
+        )
       `)
       .order('created_at', { ascending: false });
 
     if (userId) {
-      query = query.or(`user_id.eq.${userId},buyer_email.eq.${email?.toLowerCase().trim()}`);
+      query = query.eq('user_id', userId);
     } else if (email) {
       query = query.eq('buyer_email', email.toLowerCase().trim());
+    } else {
+      return [];
     }
 
     const { data, error } = await query;
     if (error) throw error;
     return data || [];
   } catch (err) {
-    console.warn('Supabase fetch orders by user notice:', err.message);
+    console.warn('Supabase fetch user orders notice:', err.message);
     return [];
   }
 }
@@ -193,40 +492,13 @@ export async function updateOrderStatusInSupabase(orderId, status, details = {})
     const { data, error } = await supabase
       .from('orders')
       .update(updates)
-      .or(`id.eq.${orderId},order_number.eq.${orderId}`)
+      .eq('id', orderId)
       .select();
 
     if (error) throw error;
     return { data, error: null };
   } catch (err) {
     console.error('Update order status error:', err);
-    return { data: null, error: err.message };
-  }
-}
-
-/**
- * Toggle product availability and stock in Supabase & local cache
- */
-export async function updateProductAvailabilityInSupabase(productId, isActive, stock = null) {
-  try {
-    const updates = {
-      is_active: isActive,
-      updated_at: new Date().toISOString(),
-    };
-    if (stock !== null) {
-      updates.total_stock = stock;
-    }
-
-    const { data, error } = await supabase
-      .from('products')
-      .update(updates)
-      .eq('id', productId)
-      .select();
-
-    if (error) throw error;
-    return { data, error: null };
-  } catch (err) {
-    console.error('Update product availability error:', err);
     return { data: null, error: err.message };
   }
 }
@@ -246,5 +518,297 @@ export async function getSupabaseCustomers() {
   } catch (err) {
     console.warn('Supabase fetch customers notice:', err.message);
     return [];
+  }
+}
+
+/**
+ * ==========================================
+ * SITE ANNOUNCEMENTS & BROADCAST BANNER
+ * ==========================================
+ */
+
+export const DEFAULT_ANNOUNCEMENT = {
+  id: 'global',
+  message: '✨ Sacred Consecration: Every crystal specimen is cleansed with 528Hz Solfeggio sound bowls & consecrated by Usui Reiki Master Soumyaa Naveen.',
+  is_active: false,
+};
+
+/**
+ * Fetch global site broadcast announcement
+ */
+export async function getSupabaseAnnouncement() {
+  try {
+    const { data, error } = await supabase
+      .from('site_announcements')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data) {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('sumuk_site_announcement', JSON.stringify(data));
+        } catch (_) {}
+      }
+      return data;
+    }
+  } catch (err) {
+    // Gracefully fallback if table does not exist in schema cache
+  }
+
+  // Defensive fallback to localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('sumuk_site_announcement');
+      if (cached) return JSON.parse(cached);
+    } catch (_) {}
+  }
+
+  return DEFAULT_ANNOUNCEMENT;
+}
+
+/**
+ * Update global site broadcast announcement
+ */
+export async function updateSupabaseAnnouncement({ message, is_active }) {
+  const payload = {
+    id: 'global',
+    message: (message || '').trim(),
+    is_active: Boolean(is_active),
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('site_announcements')
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sumuk_site_announcement', JSON.stringify(data || payload));
+      } catch (_) {}
+    }
+
+    return { success: true, announcement: data || payload, error: null };
+  } catch (err) {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sumuk_site_announcement', JSON.stringify(payload));
+      } catch (_) {}
+    }
+    return { success: true, announcement: payload, error: null };
+  }
+}
+
+/**
+ * ==========================================
+ * SERVICE AVAILABILITY MANAGEMENT
+ * ==========================================
+ */
+
+export const CANONICAL_SERVICES_DEFAULT = [
+  { id: 'reiki-master', name: 'Reiki Mastership & Energy Attunement', status: 'available' },
+  { id: 'aura-checking', name: 'Aura Checking & Biofield Scanning', status: 'available' },
+  { id: 'numerology', name: 'Sacred Numerology & Destiny Blueprint', status: 'available' },
+  { id: 'tarot-readings', name: 'Intuitive Tarot Readings & Guidance', status: 'available' },
+  { id: 'crystal-therapy', name: 'Crystal Therapy & Resonant Attunement', status: 'available' },
+  { id: 'psychic-surgery', name: 'Psychic Surgery & Etheric Cord Cutting', status: 'available' },
+  { id: 'energy-healing', name: 'Energy Healing & Blockage Removal', status: 'available' },
+  { id: 'reiki-infused-products', name: 'Reiki-Infused Crystal Products', status: 'available' },
+  { id: 'customized-crystal-orders', name: 'Customized Crystal Orders & Bespoke Curation', status: 'available' },
+];
+
+/**
+ * Fetch all service availability statuses
+ */
+export async function getSupabaseServices() {
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      if (typeof window !== 'undefined') {
+        try {
+          const map = {};
+          data.forEach((s) => { map[s.id] = s.status || 'available'; });
+          localStorage.setItem('sumuk_services_status_map', JSON.stringify(map));
+        } catch (_) {}
+      }
+      return data;
+    }
+  } catch (err) {
+    // Gracefully fallback if table does not exist in schema cache
+  }
+
+  // Defensive fallback from localStorage map
+  if (typeof window !== 'undefined') {
+    try {
+      const cachedRaw = localStorage.getItem('sumuk_services_status_map');
+      if (cachedRaw) {
+        const cachedMap = JSON.parse(cachedRaw);
+        return CANONICAL_SERVICES_DEFAULT.map((s) => ({
+          ...s,
+          status: cachedMap[s.id] || s.status,
+        }));
+      }
+    } catch (_) {}
+  }
+
+  return CANONICAL_SERVICES_DEFAULT;
+}
+
+/**
+ * Update individual service availability status
+ */
+export async function updateServiceStatusInSupabase(serviceId, status) {
+  const allowedStatuses = ['available', 'currently unavailable', 'coming soon'];
+  const validStatus = allowedStatuses.includes(status) ? status : 'available';
+
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .update({ status: validStatus, updated_at: new Date().toISOString() })
+      .eq('id', serviceId)
+      .select();
+
+    if (error) throw error;
+
+    // Cache locally
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedRaw = localStorage.getItem('sumuk_services_status_map');
+        const cachedMap = cachedRaw ? JSON.parse(cachedRaw) : {};
+        cachedMap[serviceId] = validStatus;
+        localStorage.setItem('sumuk_services_status_map', JSON.stringify(cachedMap));
+      } catch (_) {}
+    }
+
+    return { success: true, serviceId, status: validStatus, error: null };
+  } catch (err) {
+    console.warn('Supabase service update warning:', err.message);
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedRaw = localStorage.getItem('sumuk_services_status_map');
+        const cachedMap = cachedRaw ? JSON.parse(cachedRaw) : {};
+        cachedMap[serviceId] = validStatus;
+        localStorage.setItem('sumuk_services_status_map', JSON.stringify(cachedMap));
+      } catch (_) {}
+    }
+    return { success: true, serviceId, status: validStatus, error: null };
+  }
+}
+
+/**
+ * ==========================================
+ * DELIVERY & SHIPPING CONFIGURATION
+ * ==========================================
+ */
+
+export const DEFAULT_DELIVERY_SETTINGS = {
+  id: 'global',
+  origin_city: 'Pune',
+  origin_state: 'Maharashtra',
+  origin_lat: 18.5204,
+  origin_lng: 73.8567,
+  tier_1_max_km: 50,
+  tier_1_fee: 50,
+  tier_2_max_km: 150,
+  tier_2_fee: 100,
+  interstate_fee: 150,
+  free_shipping_threshold: 5000,
+  is_free_shipping_enabled: true,
+};
+
+/**
+ * Fetch delivery configuration from Supabase
+ */
+export async function getSupabaseDeliverySettings() {
+  try {
+    const { data, error } = await supabase
+      .from('delivery_settings')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data) {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('sumuk_delivery_settings', JSON.stringify(data));
+        } catch (_) {}
+      }
+      return { ...DEFAULT_DELIVERY_SETTINGS, ...data };
+    }
+  } catch (err) {
+    // Fallback gracefully
+  }
+
+  // Defensive fallback from localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('sumuk_delivery_settings');
+      if (cached) return { ...DEFAULT_DELIVERY_SETTINGS, ...JSON.parse(cached) };
+    } catch (_) {}
+  }
+
+  return DEFAULT_DELIVERY_SETTINGS;
+}
+
+/**
+ * Update delivery configuration in Supabase
+ */
+export async function updateSupabaseDeliverySettings(payload) {
+  const record = {
+    id: 'global',
+    origin_city: payload.origin_city || 'Pune',
+    origin_state: payload.origin_state || 'Maharashtra',
+    origin_lat: Number(payload.origin_lat || 18.5204),
+    origin_lng: Number(payload.origin_lng || 73.8567),
+    tier_1_max_km: Number(payload.tier_1_max_km || 50),
+    tier_1_fee: Number(payload.tier_1_fee || 50),
+    tier_2_max_km: Number(payload.tier_2_max_km || 150),
+    tier_2_fee: Number(payload.tier_2_fee || 100),
+    interstate_fee: Number(payload.interstate_fee || 150),
+    free_shipping_threshold: Number(payload.free_shipping_threshold || 5000),
+    is_free_shipping_enabled: Boolean(payload.is_free_shipping_enabled),
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('delivery_settings')
+      .upsert(record, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sumuk_delivery_settings', JSON.stringify(data || record));
+      } catch (_) {}
+    }
+
+    return { success: true, settings: data || record, error: null };
+  } catch (err) {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sumuk_delivery_settings', JSON.stringify(record));
+      } catch (_) {}
+    }
+    return { success: true, settings: record, error: null };
   }
 }

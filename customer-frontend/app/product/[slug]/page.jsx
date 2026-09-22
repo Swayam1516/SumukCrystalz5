@@ -6,8 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCartStore } from '../../../store/useCart';
-import { ENERGY_STONES_CATALOG } from '../../../data/energyStones';
-import { CRYSTAL_CATALOG } from '../../../data/crystals';
+import { getSupabaseProductBySlug, getSupabaseDeliverySettings } from '../../../lib/supabase';
+import { calculateDeliveryFee, DEFAULT_DELIVERY_SETTINGS } from '../../../lib/shippingEngine';
 import {
   ShieldCheck,
   Award,
@@ -46,12 +46,28 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState('8mm Regular');
-  const [isEnergizedAddon, setIsEnergizedAddon] = useState(true);
+  const [isEnergizedAddon, setIsEnergizedAddon] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeMediaTab, setActiveMediaTab] = useState('gallery'); // 'gallery' | '3d'
   const [pincode, setPincode] = useState('');
-  const [pincodeStatus, setPincodeStatus] = useState(null); // null | 'valid'
+  const [pincodeStatus, setPincodeStatus] = useState(null); // null | 'valid' | 'invalid'
+  const [pincodeResult, setPincodeResult] = useState(null);
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false);
+  const [deliverySettings, setDeliverySettings] = useState(DEFAULT_DELIVERY_SETTINGS);
   const [addedNotice, setAddedNotice] = useState(false);
+
+  // Load delivery settings from Supabase
+  useEffect(() => {
+    let isMounted = true;
+    getSupabaseDeliverySettings()
+      .then((settings) => {
+        if (isMounted && settings) setDeliverySettings(settings);
+      })
+      .catch((err) => console.warn('Delivery settings fetch note:', err.message));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Accordion states
   const [openAccordions, setOpenAccordions] = useState({
@@ -65,7 +81,7 @@ export default function ProductDetailPage() {
   };
 
   const [selectedVariant, setSelectedVariant] = useState(null);
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
   const [notFound, setNotFound] = useState(false);
 
@@ -75,24 +91,42 @@ export default function ProductDetailPage() {
     let isMounted = true;
     const loadProduct = async () => {
       setNotFound(false);
-      // 1. Fetch live product from Backend REST API (Supabase)
+      // 1. Fetch live product directly from Supabase (Source of Truth)
       try {
-        const res = await fetch(`${API_BASE}/api/products/${slug}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted && data.product) {
-            setProduct(data.product);
-            if (data.product.variants && data.product.variants.length > 0) {
-              setSelectedVariant(data.product.variants[0]);
-              setSelectedSize(data.product.variants[0].name);
-            }
-            return;
+        const supaProd = await getSupabaseProductBySlug(slug);
+        if (supaProd && isMounted) {
+          setProduct(supaProd);
+          if (supaProd.variants && supaProd.variants.length > 0) {
+            setSelectedVariant(supaProd.variants[0]);
+            setSelectedSize(supaProd.variants[0].name || supaProd.variants[0].variant_name);
           }
+          return;
         }
-      } catch (e) {
-        console.warn('Backend product slug fetch note:', e.message);
+      } catch (sbErr) {
+        console.warn('Supabase product slug fetch note:', sbErr.message);
       }
 
+      // 2. Fallback to Backend REST API if configured and Supabase did not locate
+      if (API_BASE) {
+        try {
+          const res = await fetch(`${API_BASE}/api/products/${slug}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (isMounted && data.product) {
+              setProduct(data.product);
+              if (data.product.variants && data.product.variants.length > 0) {
+                setSelectedVariant(data.product.variants[0]);
+                setSelectedSize(data.product.variants[0].name);
+              }
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Backend product slug fetch note:', e.message);
+        }
+      }
+
+      // If specimen is not in live database, set notFound to true
       if (isMounted) {
         setNotFound(true);
       }
@@ -138,10 +172,16 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Dynamic price calculation with Selected Variant & Energized Pran Pratishta Addon (+₹100)
-  const basePrice = selectedVariant?.price || product.price || 699;
-  const baseOriginalPrice = selectedVariant?.originalPrice || product.originalPrice || (basePrice * 1.6);
-  const addonCost = isEnergizedAddon ? 100 : 0;
+  // Dynamic price calculation directly adhering to Admin-saved values
+  const basePrice = (selectedVariant && Number(selectedVariant.price) > 0)
+    ? Number(selectedVariant.price)
+    : Number(product.price || product.sellingPrice || product.selling_price || 0);
+
+  const baseOriginalPrice = (selectedVariant && Number(selectedVariant.originalPrice) > 0)
+    ? Number(selectedVariant.originalPrice)
+    : Number(product.originalPrice || product.original_price || (basePrice > 0 ? Math.round(basePrice * 1.25) : 0));
+
+  const addonCost = isEnergizedAddon ? (Number(product.energizedPrice) || 100) : 0;
   const unitPrice = basePrice + addonCost;
   const originalUnitPrice = baseOriginalPrice + addonCost;
   const totalPrice = unitPrice * quantity;
@@ -149,7 +189,7 @@ export default function ProductDetailPage() {
   const discountPercent =
     originalUnitPrice > unitPrice
       ? Math.round(((originalUnitPrice - unitPrice) / originalUnitPrice) * 100)
-      : (product.discountPercent || 40);
+      : Number(product.discountPercent || product.discount_percentage || 0);
 
   const handleAddToCart = () => {
     addItem({
@@ -183,10 +223,20 @@ export default function ProductDetailPage() {
     router.push('/checkout');
   };
 
-  const handleCheckPincode = (e) => {
-    e.preventDefault();
-    if (pincode.length >= 6) {
-      setPincodeStatus('valid');
+  const handleCheckPincode = async (e) => {
+    if (e) e.preventDefault();
+    const cleanPin = pincode.replace(/\D/g, '').slice(0, 6);
+    if (cleanPin.length < 6) return;
+
+    setIsCheckingPincode(true);
+    try {
+      const res = await calculateDeliveryFee(cleanPin, totalPrice, deliverySettings);
+      setPincodeResult(res);
+      setPincodeStatus(res.valid ? 'valid' : 'invalid');
+    } catch (err) {
+      console.warn('Pincode check error:', err);
+    } finally {
+      setIsCheckingPincode(false);
     }
   };
 
@@ -544,7 +594,9 @@ export default function ProductDetailPage() {
                   <span>Check Express Delivery Date</span>
                 </span>
                 <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  Free Shipping
+                  {deliverySettings?.is_free_shipping_enabled
+                    ? `Free Shipping over ₹${Number(deliverySettings.free_shipping_threshold || 5000).toLocaleString('en-IN')}`
+                    : 'Insured Armored Transit'}
                 </span>
               </div>
 
@@ -554,23 +606,49 @@ export default function ProductDetailPage() {
                   maxLength={6}
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value.replace(/[^0-9]/g, ''))}
-                  placeholder="Enter 6-digit Pincode (e.g. 560001)"
+                  placeholder="Enter 6-digit Pincode (e.g. 411001, 560001)"
                   className="flex-1 px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#E0D7C7] text-xs text-[#1F1A15] placeholder:text-[#9E9589] focus:outline-none focus:border-[#D4AF37] font-mono shadow-inner"
                 />
                 <button
                   type="submit"
-                  className="cta-3d-gold px-5 py-2 rounded-xl text-xs font-bold text-white"
+                  disabled={isCheckingPincode || pincode.length < 6}
+                  className="cta-3d-gold px-5 py-2 rounded-xl text-xs font-bold text-white cursor-pointer disabled:opacity-50"
                 >
-                  Check
+                  {isCheckingPincode ? 'Checking…' : 'Check'}
                 </button>
               </form>
 
-              {pincodeStatus === 'valid' && (
-                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 animate-fade-in font-sans-ui">
-                  <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                  <span>
-                    ✓ Express delivery to <strong>{pincode}</strong> in <strong>3–5 business days</strong> with Free Transit Insurance.
-                  </span>
+              {pincodeStatus === 'valid' && pincodeResult && (
+                <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-50 via-emerald-100/40 to-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1.5 animate-fade-in font-sans-ui shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+                      <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span>
+                        {pincodeResult.city ? `${pincodeResult.city}, ${pincodeResult.state}` : pincodeResult.state}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-200/60 font-bold text-emerald-800">
+                      {pincodeResult.tierName}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] pt-1 border-t border-emerald-200/60 text-emerald-800">
+                    <span>
+                      Est. Arrival: <strong>{pincodeResult.estimatedDays}</strong>
+                    </span>
+                    <span className="font-mono font-bold">
+                      {pincodeResult.isFree ? (
+                        <span className="text-emerald-700 font-bold">FREE DELIVERY</span>
+                      ) : (
+                        `₹${pincodeResult.fee} Delivery Fee`
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {pincodeStatus === 'invalid' && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2 font-sans-ui">
+                  <span className="font-semibold">Please enter a valid 6-digit Indian PIN code.</span>
                 </div>
               )}
             </div>
