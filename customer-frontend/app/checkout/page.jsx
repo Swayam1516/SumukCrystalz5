@@ -19,15 +19,14 @@ import {
   ArrowRight,
   AlertCircle,
   ExternalLink,
-  QrCode,
-  Copy,
-  Check,
   Smartphone,
   Banknote,
   Ban,
+  Copy,
+  Check,
 } from 'lucide-react';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || '';
 const RAZORPAY_ME_URL =
   process.env.NEXT_PUBLIC_RAZORPAY_ME_URL || 'https://razorpay.me/@soumyaanaveenkumarkaradimath';
 const RAZORPAY_ME_HANDLE =
@@ -47,7 +46,7 @@ function loadRazorpayScript() {
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, clearCart, getTotalPrice } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
 
   const [formData, setFormData] = useState({
     fullName: user?.name || user?.fullName || '',
@@ -104,17 +103,18 @@ export default function CheckoutPage() {
   const [pendingOrder, setPendingOrder] = useState(null);
   const [utrNumber, setUtrNumber] = useState('');
 
-  const subtotal = items && items.length > 0
-    ? items.reduce((sum, item) => {
-        const rawPrice =
-          item.price !== undefined && item.price !== null && item.price !== ''
-            ? item.price
-            : item.unitPrice !== undefined && item.unitPrice !== null && item.unitPrice !== ''
-            ? item.unitPrice
-            : 0;
-        return sum + (Number(rawPrice) || 0) * (Number(item.quantity) || 1);
-      }, 0)
-    : (getTotalPrice() || 0);
+  const subtotal =
+    items && items.length > 0
+      ? items.reduce((sum, item) => {
+          const rawPrice =
+            item.price !== undefined && item.price !== null && item.price !== ''
+              ? item.price
+              : item.unitPrice !== undefined && item.unitPrice !== null && item.unitPrice !== ''
+              ? item.unitPrice
+              : 0;
+          return sum + (Number(rawPrice) || 0) * (Number(item.quantity) || 1);
+        }, 0)
+      : getTotalPrice() || 0;
 
   // Re-calculate dynamic shipping whenever postal code, subtotal, or delivery settings change
   useEffect(() => {
@@ -125,12 +125,14 @@ export default function CheckoutPage() {
       calculateDeliveryFee(cleanPin, subtotal, deliverySettings).then((calc) => {
         if (isMounted) {
           setShippingCalculation(calc);
-          // Auto fill city & state from resolved geocode if available
           if (calc.valid && calc.city && calc.state) {
             setFormData((prev) => ({
               ...prev,
               city: prev.city && prev.city !== 'Bengaluru' && prev.city !== 'Pune' ? prev.city : calc.city,
-              state: prev.state && prev.state !== 'Karnataka' && prev.state !== 'Maharashtra' ? prev.state : calc.state,
+              state:
+                prev.state && prev.state !== 'Karnataka' && prev.state !== 'Maharashtra'
+                  ? prev.state
+                  : calc.state,
             }));
           }
         }
@@ -185,9 +187,14 @@ export default function CheckoutPage() {
     try {
       if (API_BASE) {
         try {
-          const confirmRes = await fetch(`${API_BASE}/api/checkout/verify-link-payment`, {
+          const authHeaders = {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          };
+
+          const confirmRes = await fetch(`${API_BASE}/api/payment/verify-link-payment`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders,
             body: JSON.stringify({
               orderId: targetId,
               paymentRef: utrNumber.trim(),
@@ -258,18 +265,25 @@ export default function CheckoutPage() {
     setErrorMessage('');
 
     try {
-      let orderId = `ORD-${Date.now()}`;
-      let razorpayOrderId = `rzp_order_${Date.now()}`;
+      let finalOrderId = `ORD-${Date.now()}`;
+      let finalRazorpayOrderId = `rzp_order_${Date.now()}`;
       let isSimulated = false;
       let orderData = null;
 
-      // 1. Attempt backend order creation if API_BASE is configured
+      // 1. Attempt backend order creation
       if (API_BASE) {
         try {
-          const createRes = await fetch(`${API_BASE}/api/checkout/create-order`, {
+          const authHeaders = {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          };
+
+          const createRes = await fetch(`${API_BASE}/api/payment/create-order`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders,
             body: JSON.stringify({
+              amount: Math.round(total * 100),
+              currency: 'INR',
               items: items.map((i) => ({
                 productId: i.productId || i.id,
                 name: i.name,
@@ -291,14 +305,18 @@ export default function CheckoutPage() {
               },
             }),
           });
+
           if (createRes.ok) {
             orderData = await createRes.json();
-            orderId = orderData.orderId || orderId;
-            razorpayOrderId = orderData.razorpayOrderId || razorpayOrderId;
+            finalOrderId = orderData.orderId || finalOrderId;
+            finalRazorpayOrderId = orderData.razorpayOrderId || orderData.id || finalRazorpayOrderId;
             isSimulated = Boolean(orderData.isSimulated);
+          } else {
+            const errData = await createRes.json().catch(() => ({}));
+            console.warn('Backend order creation returned error:', errData.error || createRes.statusText);
           }
         } catch (apiErr) {
-          console.warn('Backend order endpoint unreachable, persisting directly to Supabase:', apiErr.message);
+          console.warn('Backend order endpoint unreachable, falling back:', apiErr.message);
         }
       }
 
@@ -312,10 +330,10 @@ export default function CheckoutPage() {
         totalSpent: total,
       });
 
-      // 2A. Direct Razorpay.me Payment Link Mode (@soumyaanaveenkumarkaradimath)
+      // 2A. Direct Razorpay.me Payment Link Mode
       if (paymentMode === 'razorpay_direct') {
         await saveOrderToSupabase({
-          orderId: orderId,
+          orderId: finalOrderId,
           userId: user?.id || user?._id || null,
           buyerName: formData.fullName,
           buyerEmail: formData.email,
@@ -325,22 +343,21 @@ export default function CheckoutPage() {
           subtotal,
           shippingFee,
           total,
-          razorpayOrderId: razorpayOrderId,
+          razorpayOrderId: finalRazorpayOrderId,
           status: 'pending',
           paymentMethod: 'razorpay_link',
         });
 
-        setPendingOrder({ _id: orderId, razorpayOrderId: razorpayOrderId });
+        setPendingOrder({ _id: finalOrderId, razorpayOrderId: finalRazorpayOrderId });
         setStatus('link_pending');
-        // Open Razorpay.me page in new tab
         window.open(RAZORPAY_ME_URL, '_blank', 'noopener,noreferrer');
         return;
       }
 
-      // 2B. Instant Sandbox / Demo Mode or direct Supabase order
-      if (paymentMode === 'instant_sandbox' || isSimulated || !API_BASE) {
+      // 2B. Instant Sandbox / Fallback mode
+      if (paymentMode === 'instant_sandbox' || isSimulated) {
         await saveOrderToSupabase({
-          orderId: orderId,
+          orderId: finalOrderId,
           userId: user?.id || user?._id || null,
           buyerName: formData.fullName,
           buyerEmail: formData.email,
@@ -350,13 +367,13 @@ export default function CheckoutPage() {
           subtotal,
           shippingFee,
           total,
-          razorpayOrderId: razorpayOrderId,
+          razorpayOrderId: finalRazorpayOrderId,
           status: 'paid',
           paymentMethod: paymentMode || 'sandbox',
         });
 
         clearCart();
-        router.push(`/order-success/${orderId}`);
+        router.push(`/order-success/${finalOrderId}`);
         return;
       }
 
@@ -368,8 +385,8 @@ export default function CheckoutPage() {
         amount: orderData?.amount || Math.round(total * 100),
         currency: orderData?.currency || 'INR',
         name: 'Sumuk Crystalz 5',
-        description: `Order ${orderId}`,
-        order_id: razorpayOrderId,
+        description: `Order ${finalOrderId}`,
+        order_id: finalRazorpayOrderId,
         prefill: {
           name: formData.fullName,
           email: formData.email,
@@ -377,14 +394,21 @@ export default function CheckoutPage() {
         },
         theme: { color: '#eab308' },
         handler: async (response) => {
+          let verifiedSuccessfully = true;
+
           if (API_BASE) {
             try {
-              const verifyRes = await fetch(`${API_BASE}/api/checkout/verify`, {
+              const authHeaders = {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              };
+
+              const verifyRes = await fetch(`${API_BASE}/api/payment/verify`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders,
                 body: JSON.stringify({
                   ...response,
-                  orderId: orderId,
+                  orderId: finalOrderId,
                   buyerName: formData.fullName,
                   buyerEmail: formData.email,
                   shippingAddress: formData,
@@ -394,33 +418,39 @@ export default function CheckoutPage() {
                   total,
                 }),
               });
-              const verifyData = await verifyRes.json();
+
               if (!verifyRes.ok) {
+                const verifyData = await verifyRes.json();
                 setStatus('error');
                 setErrorMessage(verifyData.error || 'Payment signature verification failed');
+                verifiedSuccessfully = false;
                 return;
               }
-            } catch (_) {}
+            } catch (err) {
+              console.warn('Backend payment verification fallback:', err.message);
+            }
           }
 
-          saveOrderToSupabase({
-            orderId: verifyData.orderId,
-            userId: user?.id || user?._id || null,
-            buyerName: formData.fullName,
-            buyerEmail: formData.email,
-            buyerPhone: formData.phone,
-            shippingAddress: formData,
-            items,
-            subtotal,
-            shippingFee,
-            total,
-            razorpayOrderId: orderData.razorpayOrderId,
-            razorpayPaymentId: response.razorpay_payment_id,
-            status: 'paid',
-          });
+          if (verifiedSuccessfully) {
+            await saveOrderToSupabase({
+              orderId: finalOrderId,
+              userId: user?.id || user?._id || null,
+              buyerName: formData.fullName,
+              buyerEmail: formData.email,
+              buyerPhone: formData.phone,
+              shippingAddress: formData,
+              items,
+              subtotal,
+              shippingFee,
+              total,
+              razorpayOrderId: finalRazorpayOrderId,
+              razorpayPaymentId: response.razorpay_payment_id,
+              status: 'paid',
+            });
 
-          clearCart();
-          router.push(`/order-success/${verifyData.orderId}`);
+            clearCart();
+            router.push(`/order-success/${finalOrderId}`);
+          }
         },
         modal: {
           ondismiss: () => setStatus('idle'),
@@ -459,7 +489,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-      {/* Title */}
       <div className="space-y-2">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full badge-3d text-[#e8c97c] text-[11px] font-mono uppercase tracking-[0.2em] font-semibold">
           <Lock className="w-3.5 h-3.5" />
@@ -471,7 +500,6 @@ export default function CheckoutPage() {
       </div>
 
       <form onSubmit={handleCheckout} className="space-y-10">
-        {/* Section 1: Insured Armored Delivery Details */}
         <section>
           <InsuredDeliveryDetails
             formData={formData}
@@ -482,9 +510,7 @@ export default function CheckoutPage() {
           />
         </section>
 
-        {/* Section 2: Payment Method & Order Summary Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Payment Method Selector */}
           <div className="lg:col-span-6 space-y-4">
             <div className="p-6 sm:p-7 rounded-[28px] bg-[#090812]/90 backdrop-blur-xl border border-amber-500/25 shadow-xl space-y-5">
               <div className="flex items-center justify-between">
@@ -497,9 +523,7 @@ export default function CheckoutPage() {
                 </span>
               </div>
 
-              {/* 3 Payment Options */}
               <div className="space-y-3">
-                {/* 1. Razorpay Secure Gateway Modal (Cards, UPI, NetBanking, Wallets) */}
                 <button
                   type="button"
                   onClick={() => setPaymentMode('razorpay')}
@@ -525,7 +549,6 @@ export default function CheckoutPage() {
                   </p>
                 </button>
 
-                {/* 2. Razorpay.me Direct Link & UPI (@soumyaanaveenkumarkaradimath) */}
                 <button
                   type="button"
                   onClick={() => setPaymentMode('razorpay_direct')}
@@ -551,7 +574,6 @@ export default function CheckoutPage() {
                   </p>
                 </button>
 
-                {/* 3. Cash on Delivery (Disabled / Not Available) */}
                 <div
                   className="w-full p-4 rounded-2xl border border-white/5 bg-white/[0.02] text-luxe-500 opacity-60 cursor-not-allowed select-none transition flex flex-col justify-between"
                   aria-disabled="true"
@@ -574,7 +596,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Razorpay Handle Showcase Banner */}
               <div className="p-4 rounded-2xl bg-amber-500/[0.06] border border-amber-500/20 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -611,7 +632,6 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Modal / Overlay when Razorpay.me payment link is pending */}
             {status === 'link_pending' && (
               <div className="p-6 rounded-[28px] bg-gradient-to-b from-[#181126] to-[#0c0817] border border-amber-500/40 shadow-2xl space-y-4 animate-in fade-in duration-300">
                 <div className="flex items-center gap-3 text-amber-400">
@@ -662,12 +682,10 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-6 space-y-4">
             <div className="p-6 sm:p-7 rounded-[28px] bg-[#090812]/90 backdrop-blur-xl border border-amber-500/25 shadow-xl space-y-5">
               <h3 className="font-serif text-lg font-bold text-white">Order Summary</h3>
 
-              {/* Item list */}
               <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                 {items.map((item) => (
                   <div
@@ -700,7 +718,6 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {/* Calculations */}
               <div className="space-y-2.5 pt-4 border-t border-white/10 text-xs text-luxe-300">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
@@ -735,7 +752,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Error banner */}
               {errorMessage && (
                 <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-600/40 text-rose-300 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -743,7 +759,6 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Submit Button */}
               {status !== 'link_pending' && (
                 <button
                   type="submit"
@@ -771,4 +786,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
