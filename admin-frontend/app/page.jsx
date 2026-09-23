@@ -22,6 +22,7 @@ import {
 } from '@/lib/supabase';
 import LuxuryProductModal from '@/components/LuxuryProductModal';
 import ProductPreviewModal from '@/components/ProductPreviewModal';
+import AdminFilterManager from '@/components/AdminFilterManager';
 import {
   ShieldCheck,
   Package,
@@ -632,7 +633,7 @@ export default function AdminDashboardPage() {
             <button
               type="submit"
               disabled={loadingAuth}
-              className="w-full py-3.5 bg-gradient-to-r from-[#D4AF37] via-[#C59B27] to-[#B8860B] text-black font-semibold text-xs uppercase tracking-widest rounded-xl hover:brightness-110 shadow-lg shadow-[#D4AF37]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3.5 bg-gradient-to-r from-[#D4AF37] via-[#C59B27] to-[#B8860B] text-black font-semibold text-xs uppercase tracking-widest rounded-xl hover:brightness-110 shadow-lg shadow-[#D4AF37]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {loadingAuth ? (
                 <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -643,6 +644,21 @@ export default function AdminDashboardPage() {
               )}
             </button>
           </form>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginEmail('sumukcrystalz5@gmail.com');
+                setLoginPassword('Sumukcrystalz@555');
+                setLoginError('');
+              }}
+              className="w-full py-2 px-3 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-mono transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>⚡ Fill Master Credentials (Founder)</span>
+            </button>
+          </div>
 
           <div className="pt-2 text-center text-[11px] text-stone-500 border-t border-stone-800/80">
             Protected under 256-bit AES cryptographic token security • Founder Access Only
@@ -836,6 +852,19 @@ export default function AdminDashboardPage() {
             >
               <Truck className="w-3.5 h-3.5" />
               Delivery &amp; Shipping Rules
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('filters')}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                activeTab === 'filters'
+                  ? 'bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20'
+                  : 'bg-stone-900/60 text-stone-400 hover:text-stone-200 border border-stone-800'
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Filters Matrix
             </button>
           </div>
 
@@ -1924,6 +1953,11 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* TAB: FILTERS MATRIX MANAGER */}
+        {activeTab === 'filters' && (
+          <AdminFilterManager onToast={addToast} />
         )}
       </main>
 

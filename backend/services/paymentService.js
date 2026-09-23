@@ -7,6 +7,7 @@ const { notifyWhatsAppOrderConfirmed } = require('./whatsappService');
 const { supabase, syncCustomerToSupabase, syncOrderToSupabase } = require('../utils/supabase');
 const { getSupabaseProductBySlugOrId } = require('../utils/supabaseProductService');
 const { DEFAULT_SHIPPING_FEE, FREE_SHIPPING_THRESHOLD, ORDER_STATUS } = require('../utils/constants');
+const { calculateServerDeliveryFee } = require('./shippingEngine');
 
 // Memory store for in-flight checkout sessions (keyed by razorpayOrderId)
 const activeCheckoutSessions = new Map();
@@ -83,8 +84,21 @@ async function createRazorpayOrder({ items, shippingAddress, buyerName, buyerEma
     });
   }
 
-  // Calculate insured shipping fee
-  const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE;
+  // 1. Fetch live delivery settings if configured in Supabase
+  let customSettings = null;
+  if (supabase) {
+    try {
+      const { data: settingsData } = await supabase
+        .from('delivery_settings')
+        .select('*')
+        .maybeSingle();
+      if (settingsData) customSettings = settingsData;
+    } catch (e) {}
+  }
+
+  // 2. Calculate dynamic insured shipping fee based on verified delivery address pincode
+  const targetPincode = shippingAddress.postalCode || shippingAddress.pincode || shippingAddress.zip || '';
+  const shippingFee = calculateServerDeliveryFee(targetPincode, subtotal, customSettings);
   const total = subtotal + shippingFee;
   const amountInPaise = Math.round(total * 100);
 
@@ -104,10 +118,13 @@ async function createRazorpayOrder({ items, shippingAddress, buyerName, buyerEma
           buyerName: buyerName.trim(),
           buyerEmail: buyerEmail.trim().toLowerCase(),
           buyerPhone: (shippingAddress.phone || '').trim(),
+          pincode: targetPincode,
+          subtotal: String(subtotal),
+          shippingFee: String(shippingFee),
         },
       });
       razorpayOrderId = razorpayOrder.id;
-      console.log(`[Razorpay Standard Checkout] Official Order Created: ${razorpayOrderId} (₹${total})`);
+      console.log(`[Razorpay Standard Checkout] Official Order Created: ${razorpayOrderId} (₹${total} = ₹${subtotal} + ₹${shippingFee} shipping for ${targetPincode})`);
     } catch (err) {
       console.warn('[Razorpay Standard Checkout] Gateway notice, using verified sandbox order ID:', err.message);
       razorpayOrderId = `order_sim_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
@@ -136,10 +153,13 @@ async function createRazorpayOrder({ items, shippingAddress, buyerName, buyerEma
   activeCheckoutSessions.set(razorpayOrderId, sessionData);
 
   return {
+    success: true,
     orderId: orderNumber,
     razorpayOrderId,
     amount: amountInPaise,
     amountInRupees: total,
+    subtotal,
+    shippingFee,
     currency: 'INR',
     keyId: process.env.RAZORPAY_KEY_ID || '',
     buyerName: sessionData.buyerName,

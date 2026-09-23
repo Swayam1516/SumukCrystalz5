@@ -201,7 +201,7 @@ export default function DynamicVideoEngine({
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onContextMenu={(e) => e.preventDefault()}
-      className="relative w-full h-full select-none overflow-hidden bg-[#050508] pointer-events-none"
+      className="relative w-full h-full max-w-full select-none overflow-hidden bg-transparent pointer-events-none"
       style={{
         transform: 'translateZ(0)',
         backfaceVisibility: 'hidden',
@@ -212,10 +212,10 @@ export default function DynamicVideoEngine({
 
       {/* Dynamic Aura Glow behind current crystal */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] max-w-[900px] h-[80vw] max-h-[900px] rounded-full blur-[160px] pointer-events-none transition-all duration-1000 z-0"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-[800px] h-[90vw] max-h-[800px] rounded-full blur-[140px] pointer-events-none transition-all duration-1000 z-0"
         style={{
-          background: `radial-gradient(circle, ${activeCrystal?.colorGlow || 'rgba(168, 85, 247, 0.5)'} 0%, rgba(0,0,0,0) 70%)`,
-          opacity: 0.75,
+          background: `radial-gradient(circle, ${activeCrystal?.colorGlow || 'rgba(168, 85, 247, 0.45)'} 0%, rgba(0,0,0,0) 70%)`,
+          opacity: 0.7,
         }}
       />
 
@@ -231,7 +231,7 @@ export default function DynamicVideoEngine({
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center brightness-90"
+          className="object-cover object-center brightness-95"
         />
       </div>
 
@@ -249,7 +249,7 @@ export default function DynamicVideoEngine({
         onPlaying={() => setIsVideoPlaying(true)}
         onError={() => {}}
         onContextMenu={(e) => e.preventDefault()}
-        className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none transition-opacity duration-[1200ms] ease-in-out"
+        className="absolute inset-0 w-full h-full max-w-full object-cover object-center pointer-events-none transition-opacity duration-[1200ms] ease-in-out"
         style={{
           opacity: layerAOpacity,
           zIndex: activeLayerState === 'A' ? 10 : 8,
@@ -273,7 +273,7 @@ export default function DynamicVideoEngine({
         onPlaying={() => setIsVideoPlaying(true)}
         onError={() => {}}
         onContextMenu={(e) => e.preventDefault()}
-        className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none transition-opacity duration-[1200ms] ease-in-out"
+        className="absolute inset-0 w-full h-full max-w-full object-cover object-center pointer-events-none transition-opacity duration-[1200ms] ease-in-out"
         style={{
           opacity: layerBOpacity,
           zIndex: activeLayerState === 'B' ? 10 : 8,
@@ -283,9 +283,9 @@ export default function DynamicVideoEngine({
         }}
       />
 
-      {/* Vignette & Obsidian Contrast Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#06050a] via-black/25 to-black/70 pointer-events-none z-15" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_20%,rgba(6,5,10,0.85)_100%)] pointer-events-none z-15" />
+      {/* Vignette & Obsidian Contrast Overlays with Amethyst Undertone */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0e0a1a]/90 via-black/20 to-black/60 pointer-events-none z-15" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_30%,rgba(14,10,26,0.85)_100%)] pointer-events-none z-15" />
     </div>
   );
 }

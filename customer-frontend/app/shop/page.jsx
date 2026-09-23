@@ -11,7 +11,7 @@ import {
   BEAD_TYPES,
   BRACELET_SIZES,
 } from '../../data/energyStones';
-import { getSupabaseProducts } from '../../lib/supabase';
+import { getSupabaseProducts, getSupabaseStoreFilters, DEFAULT_STORE_FILTERS } from '../../lib/supabase';
 import {
   Filter,
   Search,
@@ -49,6 +49,44 @@ function MasterworksShopContent() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [quickAddedId, setQuickAddedId] = useState(null);
+  const [storeFilters, setStoreFilters] = useState(DEFAULT_STORE_FILTERS);
+
+  // Dynamic filter lists loaded from admin/database
+  const dynamicIntentions = useMemo(() => {
+    const group = storeFilters.find((f) => f.id === 'intentions' || f.type === 'ticker_row1');
+    const opts = group?.options?.filter((o) => o.isActive !== false);
+    return opts && opts.length > 0 ? opts : DEFAULT_INTENTIONS;
+  }, [storeFilters]);
+
+  const dynamicModalities = useMemo(() => {
+    const group = storeFilters.find((f) => f.id === 'modalities' || f.type === 'ticker_row2');
+    const opts = group?.options?.filter((o) => o.isActive !== false);
+    return opts && opts.length > 0 ? opts : DEFAULT_MODALITIES;
+  }, [storeFilters]);
+
+  useEffect(() => {
+    let isMounted = true;
+    getSupabaseStoreFilters()
+      .then((data) => {
+        if (isMounted && data && Array.isArray(data)) setStoreFilters(data);
+      })
+      .catch((err) => console.warn('Store filters load note:', err.message));
+
+    const handleFilterUpdate = (e) => {
+      if (e.detail && Array.isArray(e.detail)) setStoreFilters(e.detail);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('sumuk_filters_updated', handleFilterUpdate);
+    }
+
+    return () => {
+      isMounted = false;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('sumuk_filters_updated', handleFilterUpdate);
+      }
+    };
+  }, []);
 
   // Accordion toggle states in sidebar
   const [openSections, setOpenSections] = useState({
@@ -299,6 +337,8 @@ function MasterworksShopContent() {
         {/* Dual-Tier Horizontal Ticker Register (Intentions & Modalities) */}
         <div className="mt-8 -mx-4 sm:-mx-6 lg:-mx-8">
           <DualTierFilterTicker
+            intentions={dynamicIntentions}
+            modalities={dynamicModalities}
             selectedIntention={selectedPurpose}
             onSelectIntention={(id) => setSelectedPurpose(id)}
             selectedModality={selectedModality}

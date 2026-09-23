@@ -2,6 +2,7 @@ import './globals.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CartDrawer from '../components/CartDrawer';
+import AuthModal from '../components/AuthModal';
 import ServiceWorkerCleaner from '../components/ServiceWorkerCleaner';
 import AnnouncementBanner from '../components/AnnouncementBanner';
 
@@ -76,7 +77,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: '#06050a',
+  themeColor: '#0e0a1a',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -117,7 +118,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -130,13 +131,14 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-[#06050a] text-[#f3f2fa] antialiased">
+      <body className="min-h-screen flex flex-col text-[#f3f2fa] antialiased overflow-x-hidden w-full max-w-full">
         <ServiceWorkerCleaner />
         <AnnouncementBanner />
         <Header />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 w-full max-w-full overflow-x-hidden">{children}</main>
         <Footer />
         <CartDrawer />
+        <AuthModal />
       </body>
     </html>
   );

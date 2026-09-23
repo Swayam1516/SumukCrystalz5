@@ -76,14 +76,18 @@ export default function HomePage() {
 
         // 2. Fetch from Backend API if configured
         if (API_BASE) {
-          const res = await fetch(`${API_BASE}/api/products`);
-          if (res.ok && isMounted) {
-            const data = await res.json();
-            const items = Array.isArray(data) ? data : (data.products || []);
-            if (items.length > 0) {
-              setFeaturedProducts(items);
-              return;
+          try {
+            const res = await fetch(`${API_BASE}/api/products`);
+            if (res.ok && isMounted) {
+              const data = await res.json();
+              const items = Array.isArray(data) ? data : (data.products || []);
+              if (items.length > 0) {
+                setFeaturedProducts(items);
+                return;
+              }
             }
+          } catch (_) {
+            // Backend offline - smooth Supabase fallback
           }
         }
 
@@ -91,7 +95,7 @@ export default function HomePage() {
           setFeaturedProducts(supaItems || []);
         }
       } catch (err) {
-        console.error('Customer storefront live products fetch error:', err);
+        console.warn('Customer storefront live products notice:', err?.message);
       } finally {
         if (isMounted) setLoadingProducts(false);
       }
@@ -164,7 +168,7 @@ export default function HomePage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#050508] text-white selection:bg-white selection:text-black overflow-x-hidden relative font-sans-ui">
+    <div className="min-h-screen bg-transparent text-white selection:bg-white selection:text-black overflow-x-hidden relative font-sans-ui w-full max-w-full">
       
       {/* 0. CINEMATIC FULL-SCREEN VIDEO PRELOADER (Plays Video 1 intro, reveals "WELCOME TO SUMUK CRYSTALZ 5", then transitions) */}
       <VideoPreloader
@@ -176,10 +180,10 @@ export default function HomePage() {
       />
 
       {/* 1. IMMERSIVE FULL-SCREEN CINEMATIC HERO VIDEO STAGE */}
-      <section className="relative w-screen h-screen min-h-screen flex flex-col justify-between overflow-hidden">
+      <section className="relative w-full max-w-full h-[85vh] sm:h-[90vh] lg:h-screen min-h-[540px] sm:min-h-[600px] flex flex-col justify-between overflow-hidden">
         
-        {/* Full-Screen Dual-Layer Video Engine (Object-Fit Cover, 100vw, 100vh) */}
-        <div className="absolute inset-0 z-0 w-full h-full pointer-events-none">
+        {/* Full-Screen Dual-Layer Video Engine (Object-Fit Cover, 100%, 100%) */}
+        <div className="absolute inset-0 z-0 w-full h-full max-w-full pointer-events-none overflow-hidden">
           <DynamicVideoEngine
             activeCrystal={activeCrystal}
             onAutoAdvance={handleAutoAdvance}
@@ -188,15 +192,15 @@ export default function HomePage() {
         </div>
 
         {/* Minimal Frosted-Glass Top HUD Overlay */}
-        <header className="relative z-30 pt-6 sm:pt-8 px-6 sm:px-12 max-w-7xl mx-auto w-full flex items-center justify-between pointer-events-none">
+        <header className="relative z-30 pt-4 sm:pt-6 md:pt-8 px-4 sm:px-8 md:px-12 max-w-7xl mx-auto w-full flex items-center justify-between pointer-events-none">
           
           {/* Empty spacer for header layout balance */}
           <div className="hidden sm:block" />
 
-          <div className="pointer-events-auto flex items-center gap-3">
+          <div className="pointer-events-auto flex items-center gap-3 ml-auto">
             <button
               onClick={openDrawer}
-              className="px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 shadow-[0_0_25px_rgba(245,158,11,0.4)] cursor-pointer"
+              className="px-3.5 sm:px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 shadow-[0_0_25px_rgba(245,158,11,0.4)] cursor-pointer active:scale-95"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Vault ({cartCount})</span>
@@ -205,25 +209,25 @@ export default function HomePage() {
         </header>
 
         {/* Hero Central / Bottom Typography & Interactive Glass Segment Selector */}
-        <div className="relative z-30 px-6 sm:px-12 max-w-7xl mx-auto w-full flex flex-col items-start justify-end gap-6 pb-12 pointer-events-none">
+        <div className="relative z-30 px-4 sm:px-8 md:px-12 max-w-7xl mx-auto w-full flex flex-col items-start justify-end gap-4 sm:gap-6 pb-8 sm:pb-12 pointer-events-none">
           
-          <div className="space-y-4 max-w-3xl pointer-events-auto">
+          <div className="space-y-3 sm:space-y-4 max-w-3xl pointer-events-auto">
 
             {/* Specimen Main Title */}
-            <h1 className="font-editorial text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.05] drop-shadow-[0_8px_30px_rgba(0,0,0,0.9)]">
+            <h1 className="font-editorial text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1] drop-shadow-[0_8px_30px_rgba(0,0,0,0.9)]">
               {activeCrystal.title}
             </h1>
 
             {/* Exact User-Specified Specimen Description */}
-            <p className="text-base sm:text-xl font-sans-ui text-white/95 max-w-2xl leading-relaxed drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] font-normal">
+            <p className="text-sm sm:text-lg md:text-xl font-sans-ui text-white/95 max-w-2xl leading-relaxed drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] font-normal">
               {activeCrystal.description}
             </p>
 
-            {/* Call to Action Bar (Matching Image 1 Pill Styles) */}
-            <div className="flex flex-wrap items-center gap-4 pt-3">
+            {/* Call to Action Bar */}
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2 sm:pt-3">
               <a
                 href="#specimen-dossier"
-                className="btn-pill-primary text-xs px-8 py-3.5 rounded-full flex items-center gap-2 shadow-[0_4px_25px_rgba(212,175,55,0.45)]"
+                className="btn-pill-primary text-xs px-6 sm:px-8 py-3 sm:py-3.5 rounded-full flex items-center gap-2 shadow-[0_4px_25px_rgba(212,175,55,0.45)] active:scale-95"
               >
                 <span>EXAMINE SPECIMEN</span>
                 <ChevronRight className="w-4 h-4 text-black" />
@@ -231,7 +235,7 @@ export default function HomePage() {
 
               <a
                 href="#sanctuary-vault"
-                className="btn-pill-secondary text-xs px-8 py-3.5 rounded-full flex items-center gap-2"
+                className="btn-pill-secondary text-xs px-6 sm:px-8 py-3 sm:py-3.5 rounded-full flex items-center gap-2 active:scale-95"
               >
                 <Sparkles className="w-4 h-4 text-amber-400" />
                 <span>ACQUIRE FROM VAULT</span>

@@ -24,48 +24,6 @@ import ServicesBySoumya from '../../components/ServicesBySoumya';
 import ProvenanceTrustCards from '../../components/ProvenanceTrustCards';
 
 export default function AboutPage() {
-  const signatureStones = [
-    {
-      name: 'Raw Amethyst',
-      tagline: 'Tranquil, Intuitive Depths',
-      chakra: 'Crown & Third Eye',
-      color: 'from-purple-900/40 via-purple-950/20 to-luxe-950',
-      borderColor: 'border-purple-500/30',
-      textColor: 'text-purple-300',
-      description:
-        'Prized across millennia as the master stone of stillness and spiritual attunement. Raw Amethyst brings tranquil, intuitive depths to any sanctuary, transmuting restless thoughts into meditative peace.',
-      image:
-        'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80',
-      link: '/shop?crystalType=Amethyst',
-    },
-    {
-      name: "Tiger's Eye",
-      tagline: 'Bold, Protective Warmth',
-      chakra: 'Solar Plexus & Sacral',
-      color: 'from-amber-900/40 via-amber-950/20 to-luxe-950',
-      borderColor: 'border-amber-500/30',
-      textColor: 'text-amber-300',
-      description:
-        'Radiating a golden-brown chatoyant shimmer, Tiger’s Eye anchors bold, protective warmth. It strengthens personal boundaries, ignites sovereign courage, and infuses your daily flow with grounded vitality.',
-      image:
-        'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80',
-      link: "/shop?crystalType=Tiger's+Eye",
-    },
-    {
-      name: 'Rose Quartz',
-      tagline: 'Gentle, Heart-Centered Compassion',
-      chakra: 'Heart (Anahata)',
-      color: 'from-rose-900/40 via-rose-950/20 to-luxe-950',
-      borderColor: 'border-rose-500/30',
-      textColor: 'text-rose-300',
-      description:
-        'The quintessential crystal of unconditional affection and emotional healing. Its soft blush hue encourages heart-centered compassion, inner forgiveness, and serene relationship harmony.',
-      image:
-        'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=800&q=80',
-      link: '/shop?crystalType=Rose+Quartz',
-    },
-  ];
-
   const offerings = [
     {
       title: 'Rare Display Geodes',
@@ -234,70 +192,7 @@ export default function AboutPage() {
         <ServicesBySoumya showHeader={true} />
       </section>
 
-      {/* 4. THE THREE SIGNATURE ENERGIES */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
-          <p className="text-[11px] font-mono uppercase tracking-[0.25em] text-gold-400 font-bold">
-            Signature Stones
-          </p>
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white text-3d-title">
-            Ancient Stories in Crystalline Form
-          </h2>
-          <p className="text-xs sm:text-sm text-luxe-400 leading-relaxed">
-            Highlighted by Soumyaa Naveen as fundamental keystones of grounding, protection, and unconditional love.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {signatureStones.map((stone) => (
-            <div
-              key={stone.name}
-              className={`card-3d-animatic rounded-2xl p-7 bg-gradient-to-b ${stone.color} border ${stone.borderColor} hover:border-gold-400/50 transition-all duration-300 flex flex-col justify-between group shadow-xl`}
-            >
-              <div className="space-y-4">
-                <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-white/10">
-                  <Image
-                    src={stone.image}
-                    alt={stone.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-
-                  <div className="absolute top-2.5 left-2.5 px-3 py-1 rounded-full badge-3d text-[10px] font-mono text-gold-300 font-bold">
-                    {stone.chakra}
-                  </div>
-                </div>
-
-                <div>
-                  <span className={`text-[11px] font-mono uppercase tracking-wider font-bold ${stone.textColor}`}>
-                    {stone.tagline}
-                  </span>
-                  <h3 className="font-serif text-2xl font-bold text-white mt-1 text-3d-subtle">
-                    {stone.name}
-                  </h3>
-                </div>
-
-                <p className="text-xs text-luxe-300 leading-relaxed">
-                  {stone.description}
-                </p>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-white/10">
-                <Link
-                  href={stone.link}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-gold-400 hover:text-gold-300 transition group-hover:translate-x-1 duration-200"
-                >
-                  <span>View {stone.name} Curations</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 5. THE 3 CORE OFFERINGS */}
+      {/* 4. THE 3 CORE OFFERINGS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" id="intention">
         <div className="glass-panel-3d p-8 sm:p-12 border border-white/10 relative overflow-hidden">
           <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">

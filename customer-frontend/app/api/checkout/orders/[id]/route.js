@@ -8,21 +8,20 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('orders')
-      .select('*')
-      .eq('order_number', id)
-      .maybeSingle();
+      .select('*');
+
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      query = query.or(`id.eq.${id},order_number.eq.${id}`);
+    } else {
+      query = query.or(`order_number.eq.${id},razorpay_order_id.eq.${id},razorpay_payment_id.eq.${id}`);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error || !data) {
-      // Fallback mock order if not found in database yet
-      return NextResponse.json({
-        order_number: id,
-        total: 1500,
-        status: 'paid',
-        items: [{ name: 'Sacred Consecrated Specimen', quantity: 1, unitPrice: 1500 }],
-        razorpayOrderId: `rzp_${id.slice(-8)}`,
-      });
+      return NextResponse.json({ error: 'Order not found in registry' }, { status: 404 });
     }
 
     return NextResponse.json(data);

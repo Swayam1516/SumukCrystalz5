@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
 const AppError = require('../utils/AppError');
 const { ROLES } = require('../utils/constants');
+const { supabase } = require('../utils/supabase');
 
 /**
- * Validates Bearer JWT, extracts identity, and attaches req.user
+ * Validates Bearer JWT or Supabase Auth Token, extracts identity, and attaches req.user
  */
 async function authenticate(req, res, next) {
   try {
@@ -16,31 +17,40 @@ async function authenticate(req, res, next) {
 
     const secret = process.env.JWT_SECRET || 'sumuk_crystalz_luxury_secret_key_99482749102834710293';
 
-    // Founder Master Sanctuary Token recognition
-    if (
-      token.startsWith('admin_jwt_') ||
-      token.includes('vault_key') ||
-      token === 'founder_master_token'
-    ) {
+    // 1. Try verifying via standard JWT secret
+    try {
+      const decoded = jwt.verify(token, secret);
       req.user = {
-        id: 'admin_founder_001',
-        name: 'Soumyaa Naveen',
-        email: 'sumukcrystalz5@gmail.com',
-        role: ROLES.ADMIN,
+        id: decoded.sub || decoded.id || 'usr_patron',
+        name: decoded.name || 'Valued Patron',
+        email: decoded.email,
+        role: decoded.role || ROLES.USER,
       };
       return next();
+    } catch (jwtErr) {
+      // 2. If standard JWT fails, verify against Supabase Auth (Source of Truth)
+      if (supabase) {
+        try {
+          const { data: { user: sbUser }, error: sbErr } = await supabase.auth.getUser(token);
+          if (!sbErr && sbUser) {
+            const userEmail = sbUser.email?.toLowerCase().trim();
+            const isAdmin =
+              sbUser.user_metadata?.role === 'admin' ||
+              userEmail === (process.env.ADMIN_EMAIL || 'sumukcrystalz5@gmail.com').toLowerCase().trim();
+
+            req.user = {
+              id: sbUser.id,
+              name: sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || userEmail.split('@')[0],
+              email: userEmail,
+              role: isAdmin ? ROLES.ADMIN : ROLES.USER,
+            };
+            return next();
+          }
+        } catch (sbEx) {}
+      }
+
+      return next(new AppError('Invalid or expired authentication token.', 401));
     }
-
-    const decoded = jwt.verify(token, secret);
-
-    req.user = {
-      id: decoded.sub || decoded.id || 'usr_patron',
-      name: decoded.name || 'Valued Patron',
-      email: decoded.email,
-      role: decoded.role || ROLES.USER,
-    };
-
-    next();
   } catch (err) {
     return next(new AppError('Invalid or expired authentication token: ' + err.message, 401));
   }
@@ -61,28 +71,39 @@ async function optionalAuth(req, res, next) {
 
     const secret = process.env.JWT_SECRET || 'sumuk_crystalz_luxury_secret_key_99482749102834710293';
 
-    if (
-      token.startsWith('admin_jwt_') ||
-      token.includes('vault_key') ||
-      token === 'founder_master_token'
-    ) {
+    try {
+      const decoded = jwt.verify(token, secret);
       req.user = {
-        id: 'admin_founder_001',
-        name: 'Soumyaa Naveen',
-        email: 'sumukcrystalz5@gmail.com',
-        role: ROLES.ADMIN,
+        id: decoded.sub || decoded.id || 'usr_patron',
+        name: decoded.name || 'Valued Patron',
+        email: decoded.email,
+        role: decoded.role || ROLES.USER,
       };
       return next();
-    }
+    } catch (jwtErr) {
+      if (supabase) {
+        try {
+          const { data: { user: sbUser }, error: sbErr } = await supabase.auth.getUser(token);
+          if (!sbErr && sbUser) {
+            const userEmail = sbUser.email?.toLowerCase().trim();
+            const isAdmin =
+              sbUser.user_metadata?.role === 'admin' ||
+              userEmail === (process.env.ADMIN_EMAIL || 'sumukcrystalz5@gmail.com').toLowerCase().trim();
 
-    const decoded = jwt.verify(token, secret);
-    req.user = {
-      id: decoded.sub || decoded.id || 'usr_patron',
-      name: decoded.name || 'Valued Patron',
-      email: decoded.email,
-      role: decoded.role || ROLES.USER,
-    };
-    next();
+            req.user = {
+              id: sbUser.id,
+              name: sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || userEmail.split('@')[0],
+              email: userEmail,
+              role: isAdmin ? ROLES.ADMIN : ROLES.USER,
+            };
+            return next();
+          }
+        } catch (sbEx) {}
+      }
+
+      req.user = null;
+      return next();
+    }
   } catch (err) {
     req.user = null;
     next();
@@ -112,4 +133,3 @@ module.exports = {
   requireAdmin,
   requireAuth: authenticate,
 };
-

@@ -33,9 +33,9 @@ export async function POST(request) {
       );
     }
 
-    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
 
-    // 1. Forward verification to Backend if available
+    // 1. Forward verification to Backend Payment Engine (Source of Truth)
     if (backendUrl) {
       try {
         const res = await fetch(`${backendUrl}/api/payment/verify`, {
@@ -44,7 +44,7 @@ export async function POST(request) {
           body: JSON.stringify(body),
         });
         const data = await res.json();
-        if (res.status < 500) {
+        if (res.status < 500 && data.success) {
           return NextResponse.json(data, { status: res.status });
         }
       } catch (err) {

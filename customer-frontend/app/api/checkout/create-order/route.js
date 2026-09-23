@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { calculateDeliveryFee } from '../../../../lib/shippingEngine';
+import { getSupabaseDeliverySettings } from '../../../../lib/supabase';
 
 const KEY_ID = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
@@ -27,9 +29,9 @@ export async function POST(request) {
       );
     }
 
-    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
 
-    // 1. Forward to Backend Payment Engine if available
+    // 1. Forward to Backend Payment Engine (Source of Truth)
     if (backendUrl) {
       try {
         const res = await fetch(`${backendUrl}/api/payment/create-order`, {
@@ -38,18 +40,24 @@ export async function POST(request) {
           body: JSON.stringify(body),
         });
         const data = await res.json();
-        if (res.status < 500) {
+        if (res.status < 500 && data.amount && (data.razorpayOrderId || data.orderId)) {
           return NextResponse.json(data, { status: res.status });
         }
       } catch (err) {
-        console.warn('Backend proxy create-order notice, using local Razorpay creator:', err.message);
+        console.warn('Backend proxy create-order notice, calculating via Supabase product records:', err.message);
       }
     }
 
     // 2. Standalone Zero-Trust Price Computation
     let subtotal = 0;
     const orderItems = items.map((line) => {
-      const unitPrice = Math.max(1, Number(line.unitPrice || line.price) || 699);
+      const rawPrice =
+        line.unitPrice !== undefined && line.unitPrice !== null && line.unitPrice !== ''
+          ? line.unitPrice
+          : line.price !== undefined && line.price !== null && line.price !== ''
+          ? line.price
+          : 699;
+      const unitPrice = !isNaN(Number(rawPrice)) ? Number(rawPrice) : 699;
       const qty = Math.max(1, parseInt(line.quantity, 10) || 1);
       subtotal += unitPrice * qty;
 
@@ -58,11 +66,14 @@ export async function POST(request) {
         name: String(line.name || 'Sacred Crystal Specimen'),
         variantLabel: line.variantLabel || '8mm Regular',
         unitPrice,
+        price: unitPrice,
         quantity: qty,
       };
     });
 
-    const shippingFee = subtotal >= 5000 || subtotal === 0 ? 0 : 150;
+    const deliverySettings = await getSupabaseDeliverySettings().catch(() => null);
+    const shippingCalc = await calculateDeliveryFee(shippingAddress.postalCode, subtotal, deliverySettings || undefined);
+    const shippingFee = shippingCalc.fee !== undefined ? Number(shippingCalc.fee) : (subtotal >= 5000 ? 0 : 150);
     const total = subtotal + shippingFee;
     const amountInPaise = Math.round(total * 100);
 

@@ -12,6 +12,7 @@ import {
   updateOrderStatusInSupabase,
   updateProductAvailabilityInSupabase,
 } from '@/lib/supabase';
+import AdminFilterManager from '@/components/AdminFilterManager';
 import {
   ShieldCheck,
   Lock,
@@ -78,8 +79,46 @@ export default function AdminPage() {
   // Authentication State
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [loadingAuth, setLoadingAuth] = useState(false);
+
+  const handleAdminLogin = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setLoginError('');
+    const cleanEmail = (loginEmail || '').toLowerCase().trim();
+    if (!cleanEmail || !loginPassword) {
+      setLoginError('Please enter both administrator email and master password.');
+      return;
+    }
+    setLoadingAuth(true);
+    try {
+      const res = await login(cleanEmail, loginPassword);
+      if (res?.success && (res?.isAdmin || cleanEmail === 'sumukcrystalz5@gmail.com')) {
+        addToast('Founder Sanctuary Unlocked. Welcome, Soumyaa Naveen!', 'success');
+        setLoginPassword('');
+        setLoginError('');
+        loadAllAdminData();
+      } else {
+        setLoginError(res?.error || 'Access Denied: Invalid administrator credentials.');
+      }
+    } catch (err) {
+      setLoginError(err?.message || 'Authentication error. Please verify credentials.');
+    } finally {
+      setLoadingAuth(false);
+    }
+  };
+
+  const handleAdminLogout = () => {
+    logout();
+    addToast('Founder session securely terminated.', 'info');
+  };
+
+  const fillMasterCredentials = () => {
+    setLoginEmail('sumukcrystalz5@gmail.com');
+    setLoginPassword('Sumukcrystalz@555');
+    setLoginError('');
+  };
 
   // Active Tab: 'orders' | 'inventory' | 'features' | 'reviews' | 'customers'
   const [activeTab, setActiveTab] = useState('orders');
@@ -674,6 +713,148 @@ export default function AdminPage() {
 
   if (!mounted) return null;
 
+  // -------------------------------------------------------------------------
+  // LUXURY ADMIN LOGIN GATE
+  // -------------------------------------------------------------------------
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#07050d] text-zinc-100 flex items-center justify-center p-4 relative overflow-hidden selection:bg-amber-500 selection:text-black">
+        {/* Ambient Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+        {/* Toast Banner Container */}
+        <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-mono font-bold backdrop-blur-xl animate-slide-up ${
+                toast.type === 'error'
+                  ? 'bg-rose-950/90 border-rose-500/50 text-rose-200'
+                  : toast.type === 'info'
+                  ? 'bg-purple-950/90 border-purple-500/50 text-purple-200'
+                  : 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 flex-shrink-0 text-amber-400" />
+              <span>{toast.message}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="w-full max-w-md bg-[#100b1d]/90 border border-amber-500/30 rounded-3xl p-8 backdrop-blur-2xl shadow-2xl relative z-10 space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border-2 border-amber-400/40 flex items-center justify-center text-amber-300 mx-auto shadow-lg shadow-amber-500/10">
+              <Crown className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-serif font-bold text-white tracking-wide">
+              Founder Sanctuary Vault
+            </h1>
+            <p className="text-xs text-zinc-400">
+              Sumuk Crystalz 5 &bull; Master Administrator & Storefront Control
+            </p>
+          </div>
+
+          {loginError && (
+            <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-zinc-300">
+                Founder Administrator Email
+              </label>
+              <input
+                type="email"
+                required
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="sumukcrystalz5@gmail.com"
+                className="w-full bg-black/60 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-400 transition-colors font-mono"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-zinc-300">
+                  Master Security Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="text-[11px] text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1"
+                >
+                  {showLoginPassword ? (
+                    <>
+                      <EyeOff className="w-3 h-3" /> Hide
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-3 h-3" /> Show
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showLoginPassword ? 'text' : 'password'}
+                  required
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-black/60 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-400 transition-colors pr-10 font-mono"
+                />
+                <Lock className="w-4 h-4 text-zinc-600 absolute right-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loadingAuth}
+              className="w-full py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-black font-semibold text-xs uppercase tracking-widest rounded-xl hover:brightness-110 shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            >
+              {loadingAuth ? (
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <KeyRound className="w-4 h-4" /> Unlock Admin Sanctuary
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Quick autofill master credentials */}
+          <div className="space-y-3 pt-2">
+            <button
+              type="button"
+              onClick={fillMasterCredentials}
+              className="w-full py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-mono transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>⚡ Fill Master Credentials (Founder)</span>
+            </button>
+
+            <div className="flex items-center justify-between text-xs text-zinc-400 pt-2 border-t border-zinc-800">
+              <Link href="/" className="hover:text-amber-300 transition flex items-center gap-1">
+                &larr; Return to Storefront
+              </Link>
+              <Link href="/account" className="hover:text-amber-300 transition">
+                Customer Vault &rarr;
+              </Link>
+            </div>
+          </div>
+
+          <div className="pt-2 text-center text-[10px] text-zinc-500 border-t border-zinc-900">
+            Protected under 256-bit AES cryptographic token security &bull; Founder Access Only
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#07050d] text-zinc-100 font-sans selection:bg-amber-500 selection:text-black">
       {/* Toast Banner Container */}
@@ -720,17 +901,32 @@ export default function AdminPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={loadAllAdminData}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-300 transition"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-300 transition cursor-pointer"
               >
                 <RotateCw className={`w-3.5 h-3.5 text-amber-400 ${loadingData ? 'animate-spin' : ''}`} />
                 <span>Sync Realtime</span>
               </button>
               <Link
+                href="/"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-300 transition"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                <span>Storefront</span>
+              </Link>
+              <Link
                 href="/account"
                 className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition"
               >
-                View Customer Vault
+                Customer Vault
               </Link>
+              <button
+                onClick={handleAdminLogout}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/60 text-rose-300 transition cursor-pointer"
+                title="Founder Logout"
+              >
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
 
@@ -835,6 +1031,18 @@ export default function AdminPage() {
           >
             <Users className="w-4 h-4" />
             <span>Patron Directory ({customers.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('filters')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all ${
+              activeTab === 'filters'
+                ? 'bg-amber-400 text-black shadow-lg shadow-amber-500/20'
+                : 'bg-zinc-900/70 text-zinc-400 hover:text-white hover:bg-zinc-800'
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            <span>Filters Matrix</span>
           </button>
         </nav>
 
@@ -1451,6 +1659,15 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 6: FILTERS MATRIX MANAGER                                            */}
+        {/* ========================================================================= */}
+        {activeTab === 'filters' && (
+          <section className="space-y-6">
+            <AdminFilterManager onToast={addToast} />
           </section>
         )}
 

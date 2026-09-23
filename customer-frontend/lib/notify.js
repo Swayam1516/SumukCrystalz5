@@ -467,6 +467,56 @@ export async function sendOrderConfirmationEmail(order) {
 }
 
 /**
+ * Password Reset Email Template (Luxury Crystal Theme)
+ */
+export function generatePasswordResetEmailHtml({ customerName, resetLink }) {
+  const content = `
+    <!-- Header Notice -->
+    <div style="text-align: center; margin-bottom: 25px;">
+      <div style="font-size: 32px; margin-bottom: 8px;">🔑</div>
+      <h1 style="font-family: 'Cinzel', Georgia, serif; font-size: 24px; color: #FFFFFF; margin: 0 0 8px; letter-spacing: 1px;">
+        Reset Your Password
+      </h1>
+      <div style="font-size: 11px; font-family: monospace; color: #D4AF37; text-transform: uppercase; letter-spacing: 2px;">
+        ✦ SACRED SANCTUARY SECURITY ✦
+      </div>
+    </div>
+
+    <!-- Message -->
+    <div style="background-color: #121016; border: 1px solid rgba(212,175,55,0.25); border-radius: 12px; padding: 22px; margin-bottom: 24px; text-align: center;">
+      <p style="margin: 0 0 12px; font-size: 14px; color: #FFFFFF; font-weight: 600;">
+        Hello, ${customerName || 'Valued Patron'}
+      </p>
+      <p style="margin: 0 0 20px; font-size: 13px; color: #C5BBAF; line-height: 1.6;">
+        We received a request to reset the password for your Sumuk Crystalz account. Click the secure button below to create your new password:
+      </p>
+      <div style="margin: 20px 0;">
+        <a href="${resetLink}" style="display: inline-block; background: linear-gradient(135deg, #D4AF37 0%, #AA820A 100%); color: #07050A; font-weight: 800; font-size: 13px; text-decoration: none; padding: 14px 36px; border-radius: 999px; text-transform: uppercase; letter-spacing: 1.5px; box-shadow: 0 8px 25px rgba(212,175,55,0.35);">
+          Reset My Password →
+        </a>
+      </div>
+      <p style="margin: 20px 0 0; font-size: 11px; color: #8C827A; line-height: 1.4;">
+        This secure link will expire in 60 minutes. If you did not request a password reset, you can safely ignore this email — your account remains completely secure.
+      </p>
+    </div>
+  `;
+
+  return wrapEmailTemplate(content);
+}
+
+/**
+ * Trigger Password Reset Email
+ */
+export async function sendPasswordResetEmail({ toEmail, customerName, resetLink }) {
+  const html = generatePasswordResetEmailHtml({ customerName, resetLink });
+  return sendLuxuryEmail({
+    to: toEmail,
+    subject: '🔑 Reset Your Sumuk Crystalz Password',
+    html,
+  });
+}
+
+/**
  * Trigger Order Shipped Email
  */
 export async function sendOrderShippedEmail(data) {

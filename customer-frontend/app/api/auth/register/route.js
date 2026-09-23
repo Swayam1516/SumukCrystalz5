@@ -1,131 +1,119 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { supabase } from '../../../../lib/supabase';
 import { sendWelcomeEmail } from '../../../../lib/notify';
-import { supabase, saveCustomerToSupabase } from '../../../../lib/supabase';
+
+const ADMIN_EMAIL = 'sumukcrystalz5@gmail.com';
 
 export async function POST(request) {
   try {
     const body = await request.json();
     const { fullName, email, phone, pincode, dob, password } = body;
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required for registration' }, { status: 400 });
-    }
-    if (!password) {
-      return NextResponse.json({ error: 'Password is required for registration' }, { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const customerName = fullName?.trim() || cleanEmail.split('@')[0] || 'Valued Patron';
-    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
+    const cleanName = fullName?.trim() || cleanEmail.split('@')[0];
+    const cleanPhone = phone?.trim() || '';
+    const cleanPincode = pincode?.trim() || '';
+    const cleanDob = dob?.trim() || '';
 
-    // 1. Attempt to forward registration to backend auth service
-    if (backendUrl) {
-      try {
-        const res = await fetch(`${backendUrl}/api/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fullName: customerName,
-            email: cleanEmail,
-            phone: phone || '',
-            pincode: pincode || '',
-            dob: dob || '',
-            password,
-          }),
-        });
+    // Create authentic Supabase user
+    const { data, error } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
+      options: {
+        data: {
+          full_name: cleanName,
+          name: cleanName,
+          phone: cleanPhone,
+          pincode: cleanPincode,
+          dob: cleanDob,
+          role: cleanEmail === ADMIN_EMAIL ? 'admin' : 'user',
+        },
+      },
+    });
 
-        const data = await res.json();
-        // If backend processed the request (including 409 duplicate email or 400 validation error or 201 success)
-        if (res.status < 500) {
-          return NextResponse.json(data, { status: res.status });
-        }
-      } catch (err) {
-        console.warn('Backend proxy registration note:', err.message);
+    if (error) {
+      let errorMsg = error.message;
+      if (
+        error.message?.toLowerCase().includes('already registered') ||
+        error.message?.toLowerCase().includes('user already exists')
+      ) {
+        return NextResponse.json(
+          {
+            error: `An account with ${cleanEmail} already exists. Please sign in.`,
+            message: `An account with ${cleanEmail} already exists. Please sign in.`,
+          },
+          { status: 409 }
+        );
       }
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
     }
 
-    // 2. Standalone / Fallback Supabase Mode
-    // Search Supabase profiles and customers for existing registration
-    if (supabase) {
-      try {
-        let isExisting = false;
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('id, email, full_name, role')
-          .ilike('email', cleanEmail)
-          .maybeSingle();
-
-        if (existingProfile) {
-          isExisting = true;
-        } else {
-          const { data: existingCustomer } = await supabase
-            .from('customers')
-            .select('id, email, full_name')
-            .ilike('email', cleanEmail)
-            .maybeSingle();
-
-          if (existingCustomer) {
-            isExisting = true;
-          }
-        }
-
-        if (isExisting) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: `This email address (${cleanEmail}) is already registered. Please sign in with your credentials or use a different email.`,
-              message: `This email address (${cleanEmail}) is already registered. Please sign in with your credentials or use a different email.`,
-            },
-            { status: 409 }
-          );
-        }
-      } catch (e) {
-        console.warn('Supabase duplicate check notice:', e.message);
-      }
+    if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return NextResponse.json(
+        {
+          error: `An account with ${cleanEmail} already exists. Please sign in.`,
+          message: `An account with ${cleanEmail} already exists. Please sign in.`,
+        },
+        { status: 409 }
+      );
     }
 
-    const isAdmin = cleanEmail === 'sumukcrystalz5@gmail.com' || cleanEmail === 'sumukcrystalz@gmail.com';
-    const role = isAdmin ? 'admin' : 'user';
-    const userId = `usr_${Date.now()}`;
+    const createdUser = data?.user;
+    const session = data?.session;
+    const isAdmin = cleanEmail === ADMIN_EMAIL;
 
-    // Hash password with bcrypt
+    const userObj = {
+      id: createdUser?.id || `usr_${Date.now()}`,
+      email: cleanEmail,
+      name: cleanName,
+      fullName: cleanName,
+      phone: cleanPhone,
+      pincode: cleanPincode,
+      dob: cleanDob,
+      role: isAdmin ? 'admin' : 'user',
+    };
+
+    // Hash password with bcrypt for secure database authentication
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Save profile to Supabase
-    if (supabase) {
-      try {
-        await supabase.from('profiles').upsert(
+    // Save profile to Supabase profiles & customers table
+    if (createdUser?.id) {
+      supabase
+        .from('profiles')
+        .upsert({
+          id: createdUser.id,
+          full_name: cleanName,
+          phone: cleanPhone,
+          address: cleanPincode ? `Pincode: ${cleanPincode}` : '',
+          created_at: new Date().toISOString(),
+        })
+        .then(() => {}, () => {});
+
+      supabase
+        .from('customers')
+        .upsert(
           {
-            id: userId,
-            full_name: customerName,
-            name: customerName,
+            id: createdUser.id,
+            full_name: cleanName,
             email: cleanEmail,
-            phone: phone || '',
-            password_hash: passwordHash,
-            role,
+            phone: cleanPhone,
+            shipping_address: { pincode: cleanPincode, dob: cleanDob, password_hash: passwordHash },
             created_at: new Date().toISOString(),
           },
           { onConflict: 'email' }
-        );
-      } catch (e) {}
+        )
+        .then(() => {}, () => {});
     }
-
-    // Save Customer Sync
-    saveCustomerToSupabase({
-      fullName: customerName,
-      email: cleanEmail,
-      phone: phone || '',
-      shippingAddress: { pincode, dob },
-      totalOrders: 0,
-      totalSpent: 0,
-    }).catch((e) => console.warn('Supabase registration sync notice:', e.message));
 
     // Send Welcome Email asynchronously
     sendWelcomeEmail({
-      customerName,
+      customerName: cleanName,
       customerEmail: cleanEmail,
       username: cleanEmail.split('@')[0],
       registrationDate: new Date().toLocaleDateString('en-IN', {
@@ -133,38 +121,21 @@ export async function POST(request) {
         month: 'long',
         day: 'numeric',
       }),
-    }).catch((e) => console.warn('Welcome email error:', e.message));
-
-    const secret = process.env.JWT_SECRET || 'sumuk_crystalz_luxury_secret_key_99482749102834710293';
-    const token = jwt.sign(
-      {
-        sub: userId,
-        id: userId,
-        name: customerName,
-        email: cleanEmail,
-        role,
-      },
-      secret,
-      { expiresIn: role === 'admin' ? '24h' : '7d' }
-    );
+    }).catch((e) => console.warn('Welcome email note:', e.message));
 
     return NextResponse.json(
       {
         success: true,
-        token,
-        message: 'Registration successful and welcome email dispatched.',
-        user: {
-          id: userId,
-          name: customerName,
-          email: cleanEmail,
-          role,
-        },
+        user: userObj,
+        token: session?.access_token || null,
+        sessionActive: !!session?.access_token,
       },
       { status: 201 }
     );
   } catch (err) {
-    console.error('Registration API error:', err);
-    return NextResponse.json({ error: 'Registration failed: ' + err.message }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Registration failed' },
+      { status: 500 }
+    );
   }
 }
-
