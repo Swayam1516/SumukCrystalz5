@@ -21,6 +21,7 @@ import {
   Flame,
   Info
 } from 'lucide-react';
+import { formatProductMultiTags } from '../lib/discoveryTaxonomy';
 
 export default function ProductPreviewModal({ product, onClose }) {
   if (!product) return null;
@@ -178,6 +179,20 @@ export default function ProductPreviewModal({ product, onClose }) {
                     {product.subtitle}
                   </p>
                 )}
+
+                {/* 6-Pillar Multi-Discovery Tags */}
+                <div className="flex flex-wrap items-center gap-1.5 mt-2.5 text-xs text-[#F3E5AB]">
+                  {formatProductMultiTags(product, 6).map((tag, tIdx, tArr) => (
+                    <React.Fragment key={tag}>
+                      <span className="px-2 py-0.5 rounded-md bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-[11px] font-mono font-medium">
+                        {tag}
+                      </span>
+                      {tIdx < tArr.length - 1 && (
+                        <span className="text-stone-600 font-bold">&middot;</span>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
               </div>
 
               {/* Live Price Calculation Bar */}

@@ -6,10 +6,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '../store/useCart';
 import DynamicVideoEngine from '../components/DynamicVideoEngine';
-import SpecimenDossier from '../components/SpecimenDossier';
 import VideoPreloader from '../components/VideoPreloader';
 import DualTierFilterTicker from '../components/DualTierFilterTicker';
 import ProvenanceTrustCards from '../components/ProvenanceTrustCards';
+import LiveProductSlideshow from '../components/LiveProductSlideshow';
 import { CRYSTAL_CATALOG } from '../data/crystals';
 import { getSupabaseProducts } from '../lib/supabase';
 import { crystalAudio } from '../utils/harmonicResonance';
@@ -37,10 +37,11 @@ const CHAKRA_ALIGNMENT = [
 
 const VAULT_CATEGORIES = [
   'All Masterworks',
-  'Cathedral Geodes',
-  'Chatoyant Minerals',
-  'Heart & Crown Quartz',
-  'Sacred Energy Crystals',
+  'Wealth & Abundance',
+  'Protection & Shielding',
+  'Love & Harmony',
+  'Peace & Meditation',
+  'Collector Geodes & Malas',
 ];
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
@@ -154,16 +155,44 @@ export default function HomePage() {
     setTimeout(() => setQuickAddedId(null), 2000);
   };
 
-  // Filtered vault products from live Supabase data
+  // Filtered vault products from live Supabase / Canonical catalog
   const filteredVaultProducts = featuredProducts.filter((p) => {
     if (selectedCategory === 'All Masterworks') return true;
-    const cat = p.category || p.form || '';
-    const col = p.collection || '';
-    const chk = Array.isArray(p.chakra) ? p.chakra.join(' ') : (p.chakra || '');
+    const cat = (p.category || p.form || '').toLowerCase();
+    const col = (p.collection || '').toLowerCase();
+    const purp = (p.purpose || p.purposeLabel || '').toLowerCase();
+    const name = (p.name || '').toLowerCase();
+    const chk = Array.isArray(p.chakra) ? p.chakra.join(' ').toLowerCase() : String(p.chakra || '').toLowerCase();
+
+    if (selectedCategory === 'Wealth & Abundance') {
+      return purp.includes('wealth') || name.includes('pyrite') || name.includes('citrine') || name.includes('money') || chk.includes('solar');
+    }
+    if (selectedCategory === 'Protection & Shielding') {
+      return purp.includes('protect') || name.includes('tourmaline') || name.includes('tiger') || name.includes('shield');
+    }
+    if (selectedCategory === 'Love & Harmony') {
+      return purp.includes('love') || name.includes('rose') || name.includes('jade') || chk.includes('heart');
+    }
+    if (selectedCategory === 'Peace & Meditation') {
+      return purp.includes('peace') || name.includes('amethyst') || name.includes('rudraksha') || chk.includes('crown');
+    }
+    if (selectedCategory === 'Collector Geodes & Malas') {
+      return (
+        cat.includes('geode') ||
+        cat.includes('specimen') ||
+        cat.includes('collector') ||
+        name.includes('selenite') ||
+        name.includes('geode') ||
+        name.includes('cluster') ||
+        name.includes('mala') ||
+        name.includes('plate')
+      );
+    }
+
     return (
-      cat.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-      col.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-      chk.toLowerCase().includes(selectedCategory.toLowerCase())
+      cat.includes(selectedCategory.toLowerCase()) ||
+      col.includes(selectedCategory.toLowerCase()) ||
+      purp.includes(selectedCategory.toLowerCase())
     );
   });
 
@@ -225,13 +254,13 @@ export default function HomePage() {
 
             {/* Call to Action Bar */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2 sm:pt-3">
-              <a
-                href="#specimen-dossier"
+              <Link
+                href="/shop"
                 className="btn-pill-primary text-xs px-6 sm:px-8 py-3 sm:py-3.5 rounded-full flex items-center gap-2 shadow-[0_4px_25px_rgba(212,175,55,0.45)] active:scale-95"
               >
-                <span>EXAMINE SPECIMEN</span>
+                <span>EXPLORE SANCTUARY SHOP</span>
                 <ChevronRight className="w-4 h-4 text-black" />
-              </a>
+              </Link>
 
               <a
                 href="#sanctuary-vault"
@@ -250,14 +279,14 @@ export default function HomePage() {
         <ProvenanceTrustCards />
       </section>
 
+      {/* 2.5 LIVE CONSECRATED PRODUCT SLIDESHOW SHOWCASE */}
+      <section className="relative z-20 my-6 sm:my-8">
+        <LiveProductSlideshow />
+      </section>
+
       {/* 3. DUAL-TIER HORIZONTAL TICKER (Intentions & Modalities) */}
       <div className="w-full relative z-20">
         <DualTierFilterTicker />
-      </div>
-
-      {/* 4. SPECIMEN DOSSIER (Detailed Metaphysical Analysis & Direct Acquisition) */}
-      <div id="specimen-dossier">
-        <SpecimenDossier activeCrystal={activeCrystal} />
       </div>
 
       {/* 4. 3D CHAKRA ALIGNMENT OPTIONS TILES */}

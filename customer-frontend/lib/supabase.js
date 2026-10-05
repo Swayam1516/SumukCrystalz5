@@ -10,6 +10,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Offline & DNS failure circuit breaker to prevent console spam and slow rendering
+let isSupabaseOffline = false;
+let lastOfflineCheck = 0;
+const OFFLINE_COOLDOWN_MS = 60000;
+
+export function isSupabaseOfflineState() {
+  return isSupabaseOffline && (Date.now() - lastOfflineCheck < OFFLINE_COOLDOWN_MS);
+}
+
+export function markSupabaseOffline() {
+  isSupabaseOffline = true;
+  lastOfflineCheck = Date.now();
+}
+
 /**
  * Normalizes a raw Supabase product record into a unified object
  */
@@ -94,6 +108,9 @@ export function normalizeProduct(raw) {
     product_variants: variantsList,
     product_images: imagesList.map((url, idx) => ({ image_url: url, display_order: idx + 1 })),
     stockCount: variantsList.length > 0 ? variantsList.reduce((sum, v) => sum + (v.stock || 0), 0) : 50,
+    assigned_filters: raw.assigned_filters || raw.assignedFilters || raw.tags || [],
+    assignedFilters: raw.assigned_filters || raw.assignedFilters || raw.tags || [],
+    tags: raw.assigned_filters || raw.assignedFilters || raw.tags || [],
   };
 }
 
@@ -211,56 +228,182 @@ export async function saveProductToSupabase(productPayload) {
   }
 }
 
+import { ENERGY_STONES_CATALOG } from '../data/energyStones';
+
+/**
+ * Normalizes an Energy Stone catalog record to full product format
+ */
+export function getFallbackEnergyStones() {
+  return ENERGY_STONES_CATALOG.map((raw) => {
+    const filters = [];
+    if (raw.purpose === 'wealth') {
+      filters.push('purpose:money-abundance', 'purpose:career-business', 'energy:chakra-solar-plexus');
+    } else if (raw.purpose === 'love') {
+      filters.push('purpose:love-relationships', 'purpose:healing-wellness', 'energy:chakra-heart');
+    } else if (raw.purpose === 'protection') {
+      filters.push('purpose:protection', 'energy:aura-energy', 'energy:chakra-root');
+    } else if (raw.purpose === 'peace') {
+      filters.push('purpose:peace-relaxation', 'purpose:spiritual-growth', 'energy:chakra-crown');
+    } else if (raw.purpose === 'career') {
+      filters.push('purpose:focus-studies', 'purpose:career-business', 'energy:chakra-third-eye');
+    }
+
+    if (raw.id.includes('mala') || raw.beadType === 'Rudraksha') {
+      filters.push('jewellery:malas');
+    } else if (raw.id.includes('plate') || raw.id.includes('cluster') || raw.id.includes('geode')) {
+      filters.push('specimen:clusters-geodes', 'home_space:altar-pooja');
+    } else {
+      filters.push('jewellery:bracelets');
+    }
+
+    if (raw.beadSize) {
+      if (raw.beadSize.includes('8mm')) filters.push('bead_size:8mm');
+      if (raw.beadSize.includes('6mm')) filters.push('bead_size:6mm');
+      if (raw.beadSize.includes('10mm')) filters.push('bead_size:10mm');
+    }
+
+    const imagesList = Array.isArray(raw.images) && raw.images.length > 0
+      ? raw.images
+      : ['/images/products/pyrite.jpg'];
+
+    const sellingPrice = Number(raw.price || 699);
+    const originalPrice = Number(raw.originalPrice || Math.round(sellingPrice * 1.5));
+    const discountPercent = Number(raw.discountPercent || Math.round(((originalPrice - sellingPrice) / originalPrice) * 100));
+
+    return {
+      ...raw,
+      id: raw.id,
+      slug: raw.slug || raw.id,
+      name: raw.name,
+      title: raw.name,
+      subtitle: raw.subtitle || raw.shortDescription,
+      shortDescription: raw.shortDescription || raw.subtitle,
+      short_description: raw.shortDescription || raw.subtitle,
+      description: raw.description,
+      category: raw.category || (raw.id.includes('plate') || raw.id.includes('cluster') ? 'Collector Geodes' : 'Energy Bands'),
+      collection: raw.collection || 'Masterworks Collection',
+      crystalType: raw.beadType || 'Pyrite',
+      crystal_type: raw.beadType || 'Pyrite',
+      chakra: Array.isArray(raw.chakra) ? raw.chakra.join(', ') : (raw.chakra || 'Crown & Solar Plexus'),
+      price: sellingPrice,
+      sellingPrice,
+      selling_price: sellingPrice,
+      originalPrice,
+      original_price: originalPrice,
+      discountPercent,
+      discount_percentage: discountPercent,
+      badge: raw.badge || 'BESTSELLER',
+      badgeColor: raw.badgeColor || 'bg-amber-600 text-white',
+      rating: raw.rating || 5.0,
+      reviewsCount: raw.reviewsCount || 120,
+      active: true,
+      isActive: true,
+      inStock: true,
+      heroImage: imagesList[0],
+      hero_image: imagesList[0],
+      image: imagesList[0],
+      images: imagesList,
+      variants: [
+        {
+          id: `${raw.id}-var-8mm`,
+          name: raw.beadSize ? `${raw.beadSize} Regular` : '8mm Regular Standard',
+          variant_name: raw.beadSize ? `${raw.beadSize} Regular` : '8mm Regular Standard',
+          beadSize: raw.beadSize || '8mm',
+          braceletSize: 'Standard (6.5" - 7.5")',
+          price: sellingPrice,
+          selling_price: sellingPrice,
+          originalPrice: originalPrice,
+          original_price: originalPrice,
+          stock: raw.stockCount || 25,
+          available: true,
+        },
+        {
+          id: `${raw.id}-var-10mm`,
+          name: '10mm Bold Masterwork',
+          variant_name: '10mm Bold Masterwork',
+          beadSize: '10mm',
+          braceletSize: 'Medium-Large (7.5" - 8.5")',
+          price: sellingPrice + 200,
+          selling_price: sellingPrice + 200,
+          originalPrice: originalPrice + 300,
+          original_price: originalPrice + 300,
+          stock: 15,
+          available: true,
+        },
+      ],
+      assigned_filters: filters,
+      assignedFilters: filters,
+      tags: filters,
+    };
+  });
+}
+
 /**
  * Fetch all products from Supabase with joined variants and images
  */
 export async function getSupabaseProducts(onlyActive = false) {
   try {
-    let query = supabase
-      .from('products')
-      .select('*, product_variants(*), product_images(*)')
-      .order('created_at', { ascending: false });
+    if (!isSupabaseOfflineState()) {
+      let query = supabase
+        .from('products')
+        .select('*, product_variants(*), product_images(*)')
+        .order('created_at', { ascending: false });
 
-    if (onlyActive) {
-      query = query.eq('active', true);
+      if (onlyActive) {
+        query = query.eq('active', true);
+      }
+
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        return data.map(normalizeProduct);
+      }
     }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    return (data || []).map(normalizeProduct);
   } catch (err) {
-    console.warn('Supabase fetch products notice:', err.message);
-    return [];
+    markSupabaseOffline();
   }
+
+  // Canonical fallback ensuring perfect 1-to-1 sync across Slideshow, Shop & Assistant
+  return getFallbackEnergyStones();
 }
 
 /**
  * Fetch single product by slug or UUID
  */
 export async function getSupabaseProductBySlug(slugOrId) {
+  if (!slugOrId) return null;
+
   try {
-    if (!slugOrId) return null;
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+    if (!isSupabaseOfflineState()) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
 
-    let query = supabase
-      .from('products')
-      .select('*, product_variants(*), product_images(*)');
+      let query = supabase
+        .from('products')
+        .select('*, product_variants(*), product_images(*)');
 
-    if (isUuid) {
-      query = query.eq('id', slugOrId);
-    } else {
-      query = query.eq('slug', slugOrId);
+      if (isUuid) {
+        query = query.eq('id', slugOrId);
+      } else {
+        query = query.eq('slug', slugOrId);
+      }
+
+      const { data, error } = await query.maybeSingle();
+      if (!error && data) {
+        return normalizeProduct(data);
+      }
     }
-
-    const { data, error } = await query.maybeSingle();
-    if (error) throw error;
-
-    return data ? normalizeProduct(data) : null;
   } catch (err) {
-    console.warn('Supabase product fetch notice:', err.message);
-    return null;
+    markSupabaseOffline();
   }
+
+  // Fallback search in master catalog
+  const fallbackList = getFallbackEnergyStones();
+  const matched = fallbackList.find(
+    (p) =>
+      p.slug === slugOrId ||
+      p.id === slugOrId ||
+      p.slug.toLowerCase() === String(slugOrId).toLowerCase()
+  );
+  return matched || null;
 }
 
 /**
@@ -537,26 +680,26 @@ export const DEFAULT_ANNOUNCEMENT = {
  * Fetch global site broadcast announcement
  */
 export async function getSupabaseAnnouncement() {
-  try {
-    const { data, error } = await supabase
-      .from('site_announcements')
-      .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  if (!isSupabaseOfflineState()) {
+    try {
+      const { data, error } = await supabase
+        .from('site_announcements')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (error) throw error;
-
-    if (data) {
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('sumuk_site_announcement', JSON.stringify(data));
-        } catch (_) {}
+      if (!error && data) {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('sumuk_site_announcement', JSON.stringify(data));
+          } catch (_) {}
+        }
+        return data;
       }
-      return data;
+    } catch (err) {
+      markSupabaseOffline();
     }
-  } catch (err) {
-    // Gracefully fallback if table does not exist in schema cache
   }
 
   // Defensive fallback to localStorage
@@ -734,26 +877,26 @@ export const DEFAULT_DELIVERY_SETTINGS = {
  * Fetch delivery configuration from Supabase
  */
 export async function getSupabaseDeliverySettings() {
-  try {
-    const { data, error } = await supabase
-      .from('delivery_settings')
-      .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  if (!isSupabaseOfflineState()) {
+    try {
+      const { data, error } = await supabase
+        .from('delivery_settings')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (error) throw error;
-
-    if (data) {
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('sumuk_delivery_settings', JSON.stringify(data));
-        } catch (_) {}
+      if (!error && data) {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('sumuk_delivery_settings', JSON.stringify(data));
+          } catch (_) {}
+        }
+        return { ...DEFAULT_DELIVERY_SETTINGS, ...data };
       }
-      return { ...DEFAULT_DELIVERY_SETTINGS, ...data };
+    } catch (err) {
+      markSupabaseOffline();
     }
-  } catch (err) {
-    // Fallback gracefully
   }
 
   // Defensive fallback from localStorage
@@ -820,83 +963,108 @@ export async function updateSupabaseDeliverySettings(payload) {
  */
 export const DEFAULT_STORE_FILTERS = [
   {
-    id: 'intentions',
-    name: 'Energy Intentions',
-    slug: 'intentions',
+    id: 'purpose',
+    name: '1. Shop by Purpose',
+    slug: 'purpose',
     type: 'ticker_row1',
     isActive: true,
     options: [
-      { id: 'all', label: 'All Energy Stones', count: 118, value: 'all', isActive: true },
-      { id: 'wealth', label: 'Wealth & Abundance', count: 34, value: 'wealth', isActive: true },
-      { id: 'love', label: 'Love & Harmony', count: 26, value: 'love', isActive: true },
-      { id: 'protection', label: 'Protection & Evil Eye', count: 28, value: 'protection', isActive: true },
-      { id: 'peace', label: 'Peace & Calm', count: 18, value: 'peace', isActive: true },
-      { id: 'career', label: 'Career & Focus', count: 12, value: 'career', isActive: true },
-      { id: 'spiritual', label: 'Spiritual Awakening', count: 15, value: 'spiritual', isActive: true },
+      { id: 'purpose:love-relationships', label: 'Love & Relationships', count: 26, value: 'love-relationships', isActive: true },
+      { id: 'purpose:money-abundance', label: 'Money & Abundance', count: 34, value: 'money-abundance', isActive: true },
+      { id: 'purpose:protection', label: 'Protection & Shielding', count: 28, value: 'protection', isActive: true },
+      { id: 'purpose:peace-relaxation', label: 'Peace & Relaxation', count: 18, value: 'peace-relaxation', isActive: true },
+      { id: 'purpose:focus-studies', label: 'Focus & Studies', count: 14, value: 'focus-studies', isActive: true },
+      { id: 'purpose:confidence', label: 'Confidence', count: 16, value: 'confidence', isActive: true },
+      { id: 'purpose:career-business', label: 'Career & Business', count: 22, value: 'career-business', isActive: true },
+      { id: 'purpose:manifestation', label: 'Manifestation', count: 20, value: 'manifestation', isActive: true },
+      { id: 'purpose:spiritual-growth', label: 'Spiritual Growth', count: 25, value: 'spiritual-growth', isActive: true },
+      { id: 'purpose:healing-wellness', label: 'Healing & Wellness', count: 30, value: 'healing-wellness', isActive: true },
     ],
   },
   {
-    id: 'modalities',
-    name: 'Healing Modalities',
-    slug: 'modalities',
+    id: 'energy_system',
+    name: '2. Shop by Energy System',
+    slug: 'energy_system',
     type: 'ticker_row2',
     isActive: true,
     options: [
-      { id: 'reiki-master', label: 'Reiki Master', value: 'reiki-master', isActive: true },
-      { id: 'aura-checking', label: 'Aura Checking', value: 'aura-checking', isActive: true },
-      { id: 'numerology', label: 'Numerology', value: 'numerology', isActive: true },
-      { id: 'tarot-readings', label: 'Tarot Readings', value: 'tarot-readings', isActive: true },
-      { id: 'crystal-therapy', label: 'Crystal Therapy', value: 'crystal-therapy', isActive: true },
-      { id: 'psychic-surgery', label: 'Psychic Surgery', value: 'psychic-surgery', isActive: true },
-      { id: 'vastu-alignment', label: 'Vastu Alignment', value: 'vastu-alignment', isActive: true },
+      { id: 'energy:7-chakras', label: '7 Chakras', count: 42, value: '7-chakras', isActive: true },
+      { id: 'energy:zodiac', label: 'Zodiac', count: 38, value: 'zodiac', isActive: true },
+      { id: 'energy:numerology', label: 'Numerology / Numbers', count: 18, value: 'numerology', isActive: true },
+      { id: 'energy:planetary', label: 'Planetary', count: 16, value: 'planetary', isActive: true },
+      { id: 'energy:aura-energy', label: 'Aura & Energy', count: 22, value: 'aura-energy', isActive: true },
+      { id: 'energy:vastu', label: 'Vastu', count: 26, value: 'vastu', isActive: true },
     ],
   },
   {
-    id: 'bead_sizes',
-    name: 'Bead Sizes & Dimensions',
-    slug: 'bead_sizes',
+    id: 'crystal_specimen',
+    name: '3. Shop by Crystal / Specimen',
+    slug: 'crystal_specimen',
     type: 'sidebar',
     isActive: true,
     options: [
-      { id: '6mm', label: '6mm Dainty Petite', value: '6mm', isActive: true },
-      { id: '8mm', label: '8mm Regular Standard', value: '8mm', isActive: true },
-      { id: '10mm', label: '10mm Statement High Grade', value: '10mm', isActive: true },
-      { id: '12mm', label: '12mm Master Collector', value: '12mm', isActive: true },
+      { id: 'specimen:raw-stones', label: 'Raw Stones', value: 'raw-stones', count: 19, isActive: true },
+      { id: 'specimen:tumbles', label: 'Tumbles', value: 'tumbles', count: 27, isActive: true },
+      { id: 'specimen:towers-points', label: 'Towers & Points', value: 'towers-points', count: 21, isActive: true },
+      { id: 'specimen:pyramids', label: 'Pyramids', value: 'pyramids', count: 18, isActive: true },
+      { id: 'specimen:spheres', label: 'Spheres', value: 'spheres', count: 15, isActive: true },
+      { id: 'specimen:clusters-geodes', label: 'Clusters & Geodes', value: 'clusters-geodes', count: 14, isActive: true },
+      { id: 'specimen:crystal-trees', label: 'Crystal Trees', value: 'crystal-trees', count: 12, isActive: true },
+      { id: 'specimen:crystal-chips', label: 'Crystal Chips', value: 'crystal-chips', count: 10, isActive: true },
+      { id: 'specimen:gemstone-specimens', label: 'Gemstone Specimens', value: 'gemstone-specimens', count: 32, isActive: true },
+      { id: 'specimen:rare-collector', label: 'Rare / Collector Crystals', value: 'rare-collector', count: 8, isActive: true },
     ],
   },
   {
-    id: 'chakras',
-    name: 'Chakra Alignment',
-    slug: 'chakras',
+    id: 'jewellery',
+    name: '4. Shop by Jewellery',
+    slug: 'jewellery',
     type: 'sidebar',
     isActive: true,
     options: [
-      { id: 'crown', label: 'Crown Chakra (Sahasrara)', value: 'crown', isActive: true },
-      { id: 'third-eye', label: 'Third Eye Chakra (Ajna)', value: 'third-eye', isActive: true },
-      { id: 'throat', label: 'Throat Chakra (Vishuddha)', value: 'throat', isActive: true },
-      { id: 'heart', label: 'Heart Chakra (Anahata)', value: 'heart', isActive: true },
-      { id: 'solar-plexus', label: 'Solar Plexus (Manipura)', value: 'solar-plexus', isActive: true },
-      { id: 'sacral', label: 'Sacral Chakra (Svadhishthana)', value: 'sacral', isActive: true },
-      { id: 'root', label: 'Root Chakra (Muladhara)', value: 'root', isActive: true },
+      { id: 'jewellery:bracelets', label: 'Bracelets', value: 'bracelets', count: 48, isActive: true },
+      { id: 'jewellery:malas', label: 'Malas', value: 'malas', count: 16, isActive: true },
+      { id: 'jewellery:necklaces', label: 'Necklaces', value: 'necklaces', count: 14, isActive: true },
+      { id: 'jewellery:pendants', label: 'Pendants', value: 'pendants', count: 24, isActive: true },
+      { id: 'jewellery:rings', label: 'Rings', value: 'rings', count: 11, isActive: true },
+      { id: 'jewellery:earrings', label: 'Earrings', value: 'earrings', count: 9, isActive: true },
+      { id: 'jewellery:beads', label: 'Beads', value: 'beads', count: 15, isActive: true },
+      { id: 'jewellery:custom-jewellery', label: 'Custom Jewellery', value: 'custom-jewellery', count: 7, isActive: true },
     ],
   },
   {
-    id: 'crystal_types',
-    name: 'Gemstones & Minerals',
-    slug: 'crystal_types',
+    id: 'bead_size',
+    name: '5. Shop by Bead Size',
+    slug: 'bead_size',
     type: 'sidebar',
     isActive: true,
     options: [
-      { id: 'fluorite', label: 'Rainbow Fluorite', value: 'fluorite', isActive: true },
-      { id: 'pyrite', label: 'Golden Pyrite / Fool\'s Gold', value: 'pyrite', isActive: true },
-      { id: 'amethyst', label: 'Amethyst Sacred Violet', value: 'amethyst', isActive: true },
-      { id: 'clear-quartz', label: 'Clear Quartz Master Healer', value: 'clear-quartz', isActive: true },
-      { id: 'rose-quartz', label: 'Rose Quartz Love Stone', value: 'rose-quartz', isActive: true },
-      { id: 'black-tourmaline', label: 'Black Tourmaline Shield', value: 'black-tourmaline', isActive: true },
-      { id: 'citrine', label: 'Natural Citrine Merchant Stone', value: 'citrine', isActive: true },
-      { id: 'tiger-eye', label: 'Golden Tiger Eye', value: 'tiger-eye', isActive: true },
-      { id: 'labradorite', label: 'Spectrolite Labradorite', value: 'labradorite', isActive: true },
-      { id: 'selenite', label: 'Moroccan Selenite', value: 'selenite', isActive: true },
+      { id: 'bead:4mm', label: '4 mm', value: '4mm', count: 12, isActive: true },
+      { id: 'bead:6mm', label: '6 mm', value: '6mm', count: 28, isActive: true },
+      { id: 'bead:8mm', label: '8 mm', value: '8mm', count: 52, isActive: true },
+      { id: 'bead:10mm', label: '10 mm', value: '10mm', count: 24, isActive: true },
+      { id: 'bead:12mm-plus', label: '12 mm+', value: '12mm-plus', count: 14, isActive: true },
+      { id: 'bead:custom-size', label: 'Custom Size', value: 'custom-size', count: 6, isActive: true },
+    ],
+  },
+  {
+    id: 'home_space',
+    name: '6. Shop for Home & Space',
+    slug: 'home_space',
+    type: 'sidebar',
+    isActive: true,
+    options: [
+      { id: 'home:vastu-crystals', label: 'Vastu Crystals', value: 'vastu-crystals', count: 26, isActive: true },
+      { id: 'home:crystal-trees', label: 'Crystal Trees', value: 'crystal-trees', count: 14, isActive: true },
+      { id: 'home:crystal-pyramids', label: 'Crystal Pyramids', value: 'crystal-pyramids', count: 18, isActive: true },
+      { id: 'home:selenite-decor', label: 'Selenite Décor', value: 'selenite-decor', count: 16, isActive: true },
+      { id: 'home:clusters-geodes', label: 'Crystal Geodes & Clusters', value: 'clusters-geodes', count: 15, isActive: true },
+      { id: 'home:crystal-spheres', label: 'Crystal Spheres', value: 'crystal-spheres', count: 12, isActive: true },
+      { id: 'home:crystal-idols', label: 'Crystal Idols', value: 'crystal-idols', count: 9, isActive: true },
+      { id: 'home:evil-eye-hangings', label: 'Evil-Eye / Protection Hangings', value: 'evil-eye-hangings', count: 18, isActive: true },
+      { id: 'home:desk-office', label: 'Desk & Office Décor', value: 'desk-office', count: 20, isActive: true },
+      { id: 'home:meditation-decor', label: 'Meditation / Spiritual Décor', value: 'meditation-decor', count: 22, isActive: true },
+      { id: 'home:gift-decor', label: 'Gift & Décor Pieces', value: 'gift-decor', count: 25, isActive: true },
     ],
   },
 ];
@@ -905,22 +1073,24 @@ export const DEFAULT_STORE_FILTERS = [
  * Fetch live dynamic store filters
  */
 export async function getSupabaseStoreFilters() {
-  try {
-    const { data, error } = await supabase
-      .from('store_filters')
-      .select('*')
-      .order('sort_order', { ascending: true });
+  if (!isSupabaseOfflineState()) {
+    try {
+      const { data, error } = await supabase
+        .from('store_filters')
+        .select('*')
+        .order('sort_order', { ascending: true });
 
-    if (!error && data && data.length > 0) {
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('sumuk_store_filters', JSON.stringify(data));
-        } catch (_) {}
+      if (!error && data && data.length > 0) {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('sumuk_store_filters', JSON.stringify(data));
+          } catch (_) {}
+        }
+        return data;
       }
-      return data;
+    } catch (err) {
+      markSupabaseOffline();
     }
-  } catch (err) {
-    console.warn('Supabase store filters note:', err.message);
   }
 
   // Defensive fallback from localStorage

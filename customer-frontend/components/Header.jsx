@@ -14,7 +14,12 @@ import {
   LogOut,
   Sparkles,
   ChevronDown,
+  Layers,
+  Zap,
+  Tag,
+  ArrowRight,
 } from 'lucide-react';
+import { TOP_NAV_SHOP_MENU } from '../lib/discoveryTaxonomy';
 
 function GoldenCrystalLogo() {
   return (
@@ -82,20 +87,26 @@ export default function Header() {
   const { openDrawer, getTotalCount } = useCartStore();
   const { user, isAdmin, openAuthModal, logout, initAuth } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileShopOpen, setMobileShopOpen] = useState(true);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [shopDropdownOpen, setShopDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef(null);
+  const shopDropdownRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
     initAuth();
   }, [initAuth]);
 
-  // Click outside to close user dropdown
+  // Click outside to close user and shop dropdowns
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setUserDropdownOpen(false);
+      }
+      if (shopDropdownRef.current && !shopDropdownRef.current.contains(event.target)) {
+        setShopDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -142,12 +153,67 @@ export default function Header() {
 
           {/* CENTER / NAVIGATION LINKS */}
           <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-[11px] lg:text-xs font-mono uppercase tracking-[0.16em]">
-            <Link
-              href="/shop"
-              className="text-[#e8c97c] font-bold hover:text-white transition-all duration-200"
+            {/* SHOP / STORE MEGAMENU DROPDOWN */}
+            <div
+              className="relative"
+              ref={shopDropdownRef}
+              onMouseEnter={() => setShopDropdownOpen(true)}
+              onMouseLeave={() => setShopDropdownOpen(false)}
             >
-              STORE
-            </Link>
+              <button
+                type="button"
+                onClick={() => setShopDropdownOpen(!shopDropdownOpen)}
+                className="text-[#e8c97c] font-bold hover:text-white transition-all duration-200 flex items-center gap-1.5 py-2 cursor-pointer outline-none"
+                aria-expanded={shopDropdownOpen}
+              >
+                <span>SHOP</span>
+                <ChevronDown className={`w-3 h-3 text-amber-400 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {shopDropdownOpen && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-[500px] p-4 bg-[#0c0915] border border-amber-500/35 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.8)] z-50 backdrop-blur-2xl animate-fade-in text-left">
+                  {/* Top Bar with All Store Link */}
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-400" />
+                      <span className="font-serif text-xs font-bold text-amber-200 tracking-wider uppercase">
+                        6-Pillar Discovery Vault
+                      </span>
+                    </div>
+                    <Link
+                      href="/shop"
+                      onClick={() => setShopDropdownOpen(false)}
+                      className="text-[10px] text-amber-400 hover:text-white font-mono flex items-center gap-1 transition"
+                    >
+                      <span>Explore All Products</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+
+                  {/* 2-Column Discovery Taxonomy Grid */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {TOP_NAV_SHOP_MENU.map((item) => (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        onClick={() => setShopDropdownOpen(false)}
+                        className="p-2.5 rounded-xl hover:bg-white/[0.06] border border-transparent hover:border-amber-500/25 transition group block"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-neutral-200 group-hover:text-amber-300 transition">
+                            {item.label}
+                          </span>
+                          <span className="text-[10px] text-amber-500/60 group-hover:text-amber-400">&rarr;</span>
+                        </div>
+                        <p className="text-[10px] text-neutral-400 group-hover:text-neutral-300 truncate mt-0.5">
+                          {item.description}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <Link
               href="/services"
@@ -348,13 +414,42 @@ export default function Header() {
               </Link>
             )}
 
-            <Link
-              href="/shop"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-mono uppercase tracking-wider text-[#e8c97c] font-semibold"
-            >
-              STORE
-            </Link>
+            {/* Mobile SHOP Discovery Section */}
+            <div className="rounded-xl bg-white/[0.04] border border-amber-500/25 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMobileShopOpen(!mobileShopOpen)}
+                className="w-full py-2.5 px-3 flex items-center justify-between text-xs font-mono uppercase tracking-wider text-[#e8c97c] font-bold"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>SHOP BY DISCOVERY CATEGORY</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-amber-400 transition-transform ${mobileShopOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {mobileShopOpen && (
+                <div className="p-2 pt-0 grid grid-cols-2 gap-1.5 border-t border-white/5">
+                  <Link
+                    href="/shop"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="col-span-2 p-2 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs font-bold font-mono text-center block"
+                  >
+                    ✨ View All Consecrated Crystals
+                  </Link>
+                  {TOP_NAV_SHOP_MENU.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-2 rounded-lg hover:bg-white/10 text-[11px] font-mono text-neutral-300 hover:text-[#e8c97c] block truncate"
+                    >
+                      &bull; {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <Link
               href="/services"

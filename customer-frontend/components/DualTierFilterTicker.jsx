@@ -5,20 +5,25 @@ import React, { useRef, useEffect } from 'react';
 // Exact dataset preserved from existing records
 export const DEFAULT_INTENTIONS = [
   { id: 'all', label: 'All Energy Stones', count: 118 },
-  { id: 'wealth', label: 'Wealth & Abundance', count: 34 },
-  { id: 'love', label: 'Love & Harmony', count: 26 },
-  { id: 'protection', label: 'Protection & Evil Eye', count: 28 },
-  { id: 'peace', label: 'Peace & Calm', count: 18 },
-  { id: 'career', label: 'Career & Focus', count: 12 },
+  { id: 'purpose:love-relationships', label: 'Love & Relationships', count: 26 },
+  { id: 'purpose:money-abundance', label: 'Money & Abundance', count: 34 },
+  { id: 'purpose:protection', label: 'Protection & Shielding', count: 28 },
+  { id: 'purpose:peace-relaxation', label: 'Peace & Relaxation', count: 18 },
+  { id: 'purpose:focus-studies', label: 'Focus & Studies', count: 14 },
+  { id: 'purpose:confidence', label: 'Confidence', count: 16 },
+  { id: 'purpose:career-business', label: 'Career & Business', count: 22 },
+  { id: 'purpose:manifestation', label: 'Manifestation', count: 20 },
+  { id: 'purpose:spiritual-growth', label: 'Spiritual Growth', count: 25 },
+  { id: 'purpose:healing-wellness', label: 'Healing & Wellness', count: 30 },
 ];
 
 export const DEFAULT_MODALITIES = [
-  { id: 'reiki-master', label: 'Reiki Master' },
-  { id: 'aura-checking', label: 'Aura Checking' },
-  { id: 'numerology', label: 'Numerology' },
-  { id: 'tarot-readings', label: 'Tarot Readings' },
-  { id: 'crystal-therapy', label: 'Crystal Therapy' },
-  { id: 'psychic-surgery', label: 'Psychic Surgery' },
+  { id: 'energy:7-chakras', label: '7 Chakras' },
+  { id: 'energy:zodiac', label: 'Zodiac' },
+  { id: 'energy:numerology', label: 'Numerology / Numbers' },
+  { id: 'energy:planetary', label: 'Planetary Energy' },
+  { id: 'energy:aura-energy', label: 'Aura & Energy' },
+  { id: 'energy:vastu', label: 'Vastu Remedy' },
 ];
 
 export default function DualTierFilterTicker({
@@ -190,7 +195,7 @@ export default function DualTierFilterTicker({
               letterSpacing: '0.2em',
             }}
           >
-            modalities
+            energy
           </span>
         </div>
 
