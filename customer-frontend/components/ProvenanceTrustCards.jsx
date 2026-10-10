@@ -17,7 +17,7 @@ export const PROVENANCE_FEATURES = [
     iconBg: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
   },
   {
-    title: '528 Hz Consecration',
+    title: 'Sacred Consecration',
     description: 'Cleansed with pure high-frequency Himalayan sound bowls and sandalwood prior to dispatch.',
     icon: Sparkles,
     iconBg: 'bg-pink-500/10 text-pink-400 border-pink-500/30',

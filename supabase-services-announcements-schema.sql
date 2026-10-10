@@ -166,14 +166,14 @@ VALUES
         'Reiki-Infused Crystal Products',
         'Reiki-Infused Products',
         'crystals',
-        'Personally Charged & 528Hz Sound-Attuned Minerals',
+        'Personally Charged & Sound-Attuned Minerals',
         'Every crystal specimen, gemstone bracelet, and altar geode offered under this collection is personally cleansed, consecrated, and infused with Usui Reiki intention by Soumyaa Naveen before dispatch.',
         1200.00,
         'available',
         'Immediate Dispatch from Vault',
         'Insured Luxury Delivery Worldwide',
         'Collectors, seekers, and gift-givers wanting crystals with alive, positive, high-vibration energy.',
-        '["Sound-cleansed with 528 Hz Himalayan singing bowls and white sage/sandalwood", "Infused with customized healing intentions (Protection, Wealth, Harmony, Intuition)", "Accompanied by a signed Consecration Certificate and activation ritual guide", "Ready to place immediately in your altar or wear as an energetic shield"]'::jsonb
+        '["Sound-cleansed with Himalayan singing bowls and white sage/sandalwood", "Infused with customized healing intentions (Protection, Wealth, Harmony, Intuition)", "Accompanied by a signed Consecration Certificate and activation ritual guide", "Ready to place immediately in your altar or wear as an energetic shield"]'::jsonb
     ),
     (
         'customized-crystal-orders',

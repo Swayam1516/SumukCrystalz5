@@ -128,12 +128,37 @@ function MasterworksShopContent() {
     };
   }, []);
 
-  // Sync with initial URL filter if changes
+  // Reactive synchronization with URL search parameters (handles clicking navigation, megamenu, and category pills)
   useEffect(() => {
-    if (initialFilter && !selectedDiscoveryFilters.includes(initialFilter)) {
-      setSelectedDiscoveryFilters([initialFilter]);
+    const purpose = searchParams.get('purpose') || 'all';
+    const filter = searchParams.get('filter') || '';
+    const pillar = searchParams.get('pillar') || '';
+    const sort = searchParams.get('sort') || 'bestselling';
+    const chakra = searchParams.get('chakra') || '';
+    const search = searchParams.get('search') || searchParams.get('q') || '';
+
+    setSelectedPurpose(purpose);
+    setSortBy(sort === 'new_arrival' ? 'newest' : sort);
+
+    if (search) {
+      setSearchQuery(search);
     }
-  }, [initialFilter]);
+
+    if (filter) {
+      setSelectedDiscoveryFilters([filter]);
+    } else if (chakra) {
+      const formattedChakra = `energy:${chakra.toLowerCase().replace(/\s+chakra/i, '').trim().replace(/\s+/g, '-')}`;
+      setSelectedDiscoveryFilters([formattedChakra]);
+    } else if (purpose === 'all' && !pillar && !search) {
+      setSelectedDiscoveryFilters([]);
+      setMinPrice(0);
+      setMaxPrice(50000);
+    }
+
+    if (pillar && openSections[pillar] !== undefined) {
+      setOpenSections((prev) => ({ ...prev, [pillar]: true }));
+    }
+  }, [searchParams]);
 
   const { addItem, openDrawer } = useCartStore();
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
@@ -197,6 +222,7 @@ function MasterworksShopContent() {
 
           // Soft matching for fallback attributes
           const tagLabel = getFilterLabel(fId).toLowerCase();
+          const cleanFId = fId.includes(':') ? fId.split(':')[1].toLowerCase() : fId.toLowerCase();
           const pText = [
             p.name || '',
             p.subtitle || '',
@@ -209,7 +235,18 @@ function MasterworksShopContent() {
             p.purpose || '',
           ].join(' ').toLowerCase();
 
-          return pText.includes(tagLabel);
+          if (cleanFId.includes('tree') && pText.includes('tree')) return true;
+          if (cleanFId.includes('pyramid') && pText.includes('pyramid')) return true;
+          if (cleanFId.includes('tower') && (pText.includes('tower') || pText.includes('point') || pText.includes('obelisk'))) return true;
+          if (cleanFId.includes('chip') && (pText.includes('chip') || pText.includes('gravel') || pText.includes('vial'))) return true;
+          if ((cleanFId.includes('jewel') || cleanFId.includes('bracelet')) && (pText.includes('bracelet') || pText.includes('mala') || pText.includes('pendant') || pText.includes('ring') || pText.includes('necklace') || pText.includes('jewel') || pText.includes('band'))) return true;
+          if (cleanFId.includes('numerology') && (pText.includes('numerology') || pText.includes('number') || pText.includes('life path'))) return true;
+          if ((cleanFId.includes('zodiac') || cleanFId.includes('astrology')) && (p.zodiac || pText.includes('zodiac') || pText.includes('astro'))) return true;
+
+          if (pText.includes(tagLabel)) return true;
+          const singularLabel = tagLabel.replace(/s$/, '');
+          if (singularLabel && pText.includes(singularLabel)) return true;
+          return false;
         });
       });
     }

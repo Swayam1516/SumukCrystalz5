@@ -213,11 +213,11 @@ export default function CrystalDock({
             )}
           </button>
 
-          {/* 528Hz Harmonic Sound Synthesizer */}
+          {/* Sacred Harmonic Sound Synthesizer */}
           <button
             type="button"
             onClick={handleSoundToggle}
-            title={soundActive ? 'Mute 528Hz Sacred Singing Bowl' : 'Enable 528Hz Sacred Singing Bowl Harmonic'}
+            title={soundActive ? 'Mute Sacred Singing Bowl' : 'Enable Sacred Singing Bowl Harmonic'}
             className={`btn-3d-action p-2 rounded-full transition border ${
               soundActive
                 ? 'bg-gradient-to-b from-white/30 to-white/10 border-white/50 text-white shadow-lg'

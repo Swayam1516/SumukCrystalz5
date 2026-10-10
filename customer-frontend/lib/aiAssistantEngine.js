@@ -19,7 +19,7 @@ export const STORE_CONTACT_INFO = {
   instagramUrl: 'https://www.instagram.com/sumukcrystalz5?stkn=d3NqcW1pbnV3ZDRn',
   email: 'sumukcrystalz5@gmail.com',
   operatingHours: '9:00 AM – 9:00 PM IST (Monday – Sunday)',
-  consecrationFrequency: '528 Hz Solfeggio Harmonic Resonance & Sacred Vedic Mantras',
+  consecrationFrequency: 'Sacred Solfeggio Harmonic Resonance & Sacred Vedic Mantras',
 };
 
 export const DEFAULT_FAQS = [
@@ -36,7 +36,7 @@ export const DEFAULT_FAQS = [
     category: 'Crystal Care',
     question: 'How are the crystals energized and consecrated before dispatch?',
     answer:
-      'Prior to dispatch, every specimen undergoes an individualized energetic purification ritual by Founder Soumyaa Naveen. Stagnant mining frequencies are cleared using Tibetan singing bowls attuned to the 528Hz Solfeggio frequency and sacred sandalwood smoke, followed by Usui Reiki charging.',
+      'Prior to dispatch, every specimen undergoes an individualized energetic purification ritual by Founder Soumyaa Naveen. Stagnant mining frequencies are cleared using Tibetan singing bowls attuned to sacred Solfeggio frequencies and sacred sandalwood smoke, followed by Usui Reiki charging.',
     isActive: true,
   },
   {
@@ -52,7 +52,7 @@ export const DEFAULT_FAQS = [
     category: 'Returns',
     question: 'What is your return and replacement policy?',
     answer:
-      'We offer a 7-day hassle-free replacement guarantee if your crystal arrives damaged in transit or if an incorrect item is received. Because crystals absorb individual personal auric fields upon opening, we do not accept returns on used energetic items. Please share an unboxing video with our WhatsApp support (+91 91117 16355) for instant claims.',
+      'Compulsory Unboxing Video Requirement: An unboxing video is strictly compulsory for any return, transit damage claim, or replacement. The video must capture the sealed package opening to crystal inspection in a single continuous recording without cuts or edits. For all returns and replacements, you must contact the owner directly (Founder Soumyaa Naveen) via WhatsApp or Call at +91 91117 16355 within 7 days of delivery. Because our crystals absorb personal energetic and auric fields upon opening, opened or used items cannot be returned for change of mind.',
     isActive: true,
   },
   {
@@ -455,7 +455,7 @@ export function getCrystalCareTool({ crystalName = '' } = {}) {
       waterRule: 'Hard quartz stones (Clear Quartz, Amethyst, Rose Quartz) are water-safe. Soft minerals (Selenite, Pyrite, Hematite, Black Tourmaline) should NEVER be soaked in water.',
       sunlightRule: 'Avoid harsh noon direct sun for pigmented stones (Amethyst, Rose Quartz, Fluorite) to prevent color fading.',
       chargingMethod: 'Safest charging method: Rest on a Moroccan Selenite charging plate or place under the monthly Full Moon.',
-      soundAttunement: 'Cleanse regularly with 528Hz Solfeggio sound bowls or sacred incense.',
+      soundAttunement: 'Cleanse regularly with sacred Solfeggio sound bowls or sacred incense.',
     },
   };
 }
@@ -553,9 +553,9 @@ export async function processCustomerMessage({
     lower.includes('exchange')
   ) {
     return {
-      reply: `**Sumuk Crystalz 7-Day Replacement Guarantee**\n\n- **Transit Damage Protection**: If your crystal parcel arrives damaged or cracked, we provide an immediate 100% free replacement or full refund.\n- **Process**: Simply record a short unboxing video and message our Founder Support via WhatsApp at **+91 91117 16355** within 7 days of delivery.\n- **Energetic Integrity**: Because our crystals undergo individual 528Hz consecration for specific auric fields, opened/worn pieces cannot be exchanged for general change-of-mind.`,
+      reply: `**Sumuk Crystalz Return & Replacement Policy**\n\n- **Compulsory Unboxing Video**: An uncut, continuous unboxing video (recorded from the sealed courier package opening to the specimen inspection without pauses or edits) is **strictly compulsory** for any return, transit damage claim, or replacement.\n- **Contact the Owner**: To initiate any return or replacement, you must **contact the owner directly** (Founder Soumyaa Naveen) via WhatsApp or Call at **+91 91117 16355** or email at **sumukcrystalz5@gmail.com** within 7 days of delivery.\n- **Energetic Integrity**: Because our crystals undergo individual sacred consecration for specific auric fields, opened/worn pieces cannot be exchanged for general change-of-mind.`,
       products: [],
-      quickReplies: ['Open WhatsApp Support', 'Shipping Info', 'Explore Crystals'],
+      quickReplies: ['Contact Owner on WhatsApp', 'Shipping Info', 'Explore Crystals'],
     };
   }
 
@@ -606,7 +606,7 @@ export async function processCustomerMessage({
     }
 
     return {
-      reply: `**Master Crystal Care & Cleansing Rules**\n\n1. **Water Safety Check**:\n   - **Water Safe**: Clear Quartz, Rose Quartz, Amethyst, Carnelian, Green Jade.\n   - **Do Not Soak**: Selenite (dissolves), Pyrite (rusts), Black Tourmaline, Hematite.\n2. **Sunlight Precautions**: Avoid prolonged harsh direct sunlight for Amethyst, Rose Quartz, and Fluorite to prevent fading.\n3. **Universal Recharging**: Place your crystals on a **Moroccan Selenite plate** or under the monthly **Full Moon** for 4–6 hours.\n4. **Sound Purification**: Himalayan sound bowls (528Hz) or sacred incense clear accumulated static prana immediately.`,
+      reply: `**Master Crystal Care & Cleansing Rules**\n\n1. **Water Safety Check**:\n   - **Water Safe**: Clear Quartz, Rose Quartz, Amethyst, Carnelian, Green Jade.\n   - **Do Not Soak**: Selenite (dissolves), Pyrite (rusts), Black Tourmaline, Hematite.\n2. **Sunlight Precautions**: Avoid prolonged harsh direct sunlight for Amethyst, Rose Quartz, and Fluorite to prevent fading.\n3. **Universal Recharging**: Place your crystals on a **Moroccan Selenite plate** or under the monthly **Full Moon** for 4–6 hours.\n4. **Sound Purification**: Himalayan sound bowls or sacred incense clear accumulated static prana immediately.`,
       products: [],
       quickReplies: ['Show Selenite Plates', 'Show Amethyst Bands', 'Show Pyrite Wealth Bands'],
     };
@@ -739,7 +739,7 @@ export async function processCustomerMessage({
   // 9. HOW TO ORDER / WEBSITE NAVIGATION
   if (lower.includes('how to order') || lower.includes('how to buy') || lower.includes('add to cart') || lower.includes('checkout')) {
     return {
-      reply: `**How to Acquire Your Consecrated Crystal:**\n\n1. **Browse Catalog**: Visit our **[Sanctuary Shop](/shop)** or ask me for specific crystals.\n2. **Select Specimen**: Choose your preferred bead size (e.g. 6mm, 8mm, or 10mm).\n3. **Add to Vault**: Click **Add to Cart** or **Quick Add** with 528Hz consecration audio.\n4. **Secure Checkout**: Enter your shipping address and complete 256-bit encrypted payment via Razorpay UPI/Cards/NetBanking.\n5. **Blessing & Dispatch**: Your specimen is individually cleansed and shipped in armored velvet packaging.`,
+      reply: `**How to Acquire Your Consecrated Crystal:**\n\n1. **Browse Catalog**: Visit our **[Sanctuary Shop](/shop)** or ask me for specific crystals.\n2. **Select Specimen**: Choose your preferred bead size (e.g. 6mm, 8mm, or 10mm).\n3. **Add to Vault**: Click **Add to Cart** or **Quick Add** with sacred consecration audio.\n4. **Secure Checkout**: Enter your shipping address and complete 256-bit encrypted payment via Razorpay UPI/Cards/NetBanking.\n5. **Blessing & Dispatch**: Your specimen is individually cleansed and shipped in armored velvet packaging.`,
       products: [],
       quickReplies: ['Open Sanctuary Shop', 'Shipping Info', 'Payment Options'],
     };

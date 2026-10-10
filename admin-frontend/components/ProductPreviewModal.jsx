@@ -353,7 +353,7 @@ export default function ProductPreviewModal({ product, onClose }) {
             <div className="p-3 rounded-xl bg-stone-950/60 border border-[#D4AF37]/20 text-center space-y-1.5">
               <Zap className="w-5 h-5 text-amber-400 mx-auto" />
               <div className="text-[11px] font-semibold text-stone-200">Energy Cleansed</div>
-              <div className="text-[9px] text-stone-400">528Hz sound attuned</div>
+              <div className="text-[9px] text-stone-400">Sacred sound attuned</div>
             </div>
             <div className="p-3 rounded-xl bg-stone-950/60 border border-[#D4AF37]/20 text-center space-y-1.5">
               <Gift className="w-5 h-5 text-[#D4AF37] mx-auto" />

@@ -50,7 +50,7 @@ const INITIAL_FAQS = [
     category: 'Crystal Care',
     question: 'How are the crystals energized and consecrated before dispatch?',
     answer:
-      'Prior to dispatch, every specimen undergoes an individualized energetic purification ritual by Founder Soumyaa Naveen. Stagnant mining frequencies are cleared using Tibetan singing bowls attuned to the 528Hz Solfeggio frequency and sacred sandalwood smoke, followed by Usui Reiki charging.',
+      'Prior to dispatch, every specimen undergoes an individualized energetic purification ritual by Founder Soumyaa Naveen. Stagnant mining frequencies are cleared using Tibetan singing bowls attuned to sacred Solfeggio frequencies and sacred sandalwood smoke, followed by Usui Reiki charging.',
     isActive: true,
   },
   {
@@ -66,7 +66,7 @@ const INITIAL_FAQS = [
     category: 'Returns',
     question: 'What is your return and replacement policy?',
     answer:
-      'We offer a 7-day hassle-free replacement guarantee if your crystal arrives damaged in transit or if an incorrect item is received. Because crystals absorb individual personal auric fields upon opening, we do not accept returns on used energetic items. Please share an unboxing video with our WhatsApp support (+91 91117 16355) for instant claims.',
+      'Compulsory Unboxing Video Requirement: An unboxing video recorded continuously from the sealed package opening to crystal inspection without cuts or edits is strictly compulsory for any return, transit damage claim, or replacement. For all returns and replacements, please contact the owner directly (Founder Soumyaa Naveen) via WhatsApp or Call at +91 91117 16355 within 7 days of delivery. Because our crystals absorb personal energetic and auric fields, opened or used items cannot be returned for change of mind.',
     isActive: true,
   },
   {
@@ -627,7 +627,7 @@ export default function AdminChatbotManager() {
               </label>
               <input
                 type="text"
-                defaultValue="528 Hz Solfeggio Attunement"
+                defaultValue="Sacred Solfeggio Attunement"
                 disabled
                 className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-amber-300 font-mono cursor-not-allowed"
               />

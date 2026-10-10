@@ -58,7 +58,7 @@ const VARIANT_PRESETS = [
     variants: [
       { name: 'Raw Natural Crystal (Standard Energy)', sizeOrWeight: 'Natural', price: 699, originalPrice: 1199, stock: 50, skuSuffix: 'RAW', isAvailable: true },
       { name: 'Vedic Consecrated by Soumyaa Naveen', sizeOrWeight: 'Vedic Consecrated', price: 1049, originalPrice: 1799, stock: 30, skuSuffix: 'VEDIC', isAvailable: true },
-      { name: '528Hz Solfeggio Sound-Attuned + Sacred Yantra', sizeOrWeight: '528Hz Attuned', price: 1299, originalPrice: 2199, stock: 20, skuSuffix: '528HZ', isAvailable: true },
+      { name: 'Solfeggio Sound-Attuned + Sacred Yantra', sizeOrWeight: 'Solfeggio Attuned', price: 1299, originalPrice: 2199, stock: 20, skuSuffix: 'SOLFEGGIO', isAvailable: true },
     ],
   },
 ];

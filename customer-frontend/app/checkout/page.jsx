@@ -125,6 +125,7 @@ export default function CheckoutPage() {
 
   const [status, setStatus] = useState('idle'); // 'idle' | 'processing' | 'verifying' | 'error'
   const [errorMessage, setErrorMessage] = useState('');
+  const [agreedUnboxingPolicy, setAgreedUnboxingPolicy] = useState(false);
 
   // Prefill user data if logged in
   useEffect(() => {
@@ -244,6 +245,11 @@ export default function CheckoutPage() {
     ) {
       setShowAddressDetails(true);
       setErrorMessage('Please complete your delivery address details below.');
+      return;
+    }
+
+    if (!agreedUnboxingPolicy) {
+      setErrorMessage('Please confirm and tick the compulsory unboxing video return policy checkbox to proceed.');
       return;
     }
 
@@ -657,7 +663,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <p className="text-[11px] text-neutral-500 leading-relaxed pl-8">
-                  Cash on Delivery is unavailable. We exclusively process secure prepaid orders (UPI, Cards, NetBanking) for armored insured transit &amp; 528Hz consecration.
+                  Cash on Delivery is unavailable. We exclusively process secure prepaid orders (UPI, Cards, NetBanking) for armored insured transit &amp; sacred consecration.
                 </p>
               </div>
             </div>
@@ -666,7 +672,7 @@ export default function CheckoutPage() {
             <div className="p-3.5 rounded-2xl bg-purple-50/80 border border-purple-200/70 flex items-center gap-3">
               <ShieldCheck className="w-4 h-4 text-purple-600 flex-shrink-0" />
               <p className="text-xs text-purple-900 font-medium">
-                Every order includes museum provenance certificate &amp; 528Hz sound attunement.
+                Every order includes museum provenance certificate &amp; sacred sound attunement.
               </p>
             </div>
 
@@ -774,7 +780,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className="flex justify-between items-center">
-                <span>Gemological Certification &amp; 528Hz Consecration</span>
+                <span>Gemological Certification &amp; Sacred Consecration</span>
                 <span className="text-[#B8860B] font-bold">Included Free</span>
               </div>
 
@@ -784,6 +790,43 @@ export default function CheckoutPage() {
                 <span className="text-2xl font-extrabold text-[#110D23] font-mono tracking-tight">
                   ₹{Number(total || 0).toLocaleString('en-IN')}
                 </span>
+              </div>
+            </div>
+
+            {/* Compulsory Unboxing Video Return Policy Consent Box */}
+            <div
+              onClick={() => setAgreedUnboxingPolicy(!agreedUnboxingPolicy)}
+              className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer select-none ${
+                agreedUnboxingPolicy
+                  ? 'bg-purple-50/90 border-purple-300 shadow-xs'
+                  : 'bg-amber-50/70 border-amber-300 hover:border-amber-400 shadow-xs'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="unboxing-return-policy-checkbox"
+                  checked={agreedUnboxingPolicy}
+                  onChange={(e) => setAgreedUnboxingPolicy(e.target.checked)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-4 h-4 mt-1 rounded text-purple-600 border-purple-300 focus:ring-purple-500 cursor-pointer accent-[#7C3AED] flex-shrink-0"
+                />
+                <div className="space-y-1.5 flex-1">
+                  <label
+                    htmlFor="unboxing-return-policy-checkbox"
+                    className="block text-xs font-bold text-[#1E1B4B] leading-snug cursor-pointer"
+                  >
+                    Return Policy Agreement • Compulsory Unboxing Video Required
+                  </label>
+                  <p className="text-[11px] text-[#4B5563] leading-relaxed">
+                    I understand and confirm that for any return, replacement, or transit damage claim, a continuous <strong className="text-[#1E1B4B] font-semibold">unboxing video is compulsorily required</strong> (recorded continuously from parcel seal opening without cuts/pauses). For any return request, I must <strong className="text-[#1E1B4B] font-semibold">contact the owner directly</strong>.
+                  </p>
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-100/90 text-[10px] font-mono font-bold text-purple-800 border border-purple-200/80">
+                      Owner Contact: Soumyaa Naveen (+91 91117 16355)
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 

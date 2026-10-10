@@ -196,7 +196,7 @@ export default function LiveProductSlideshow({ className = '' }) {
             const price = Number(prod.price || prod.sellingPrice || prod.selling_price || 699);
             const origPrice = Number(prod.originalPrice || prod.original_price || price * 1.3);
             const discount = prod.discountPercent || (origPrice > price ? Math.round(((origPrice - price) / origPrice) * 100) : 0);
-            const badge = prod.badge || (prod.isNewArrival ? 'New Arrival' : prod.isBestSeller ? 'Best Seller' : '528Hz Sacred');
+            const badge = prod.badge || (prod.isNewArrival ? 'New Arrival' : prod.isBestSeller ? 'Best Seller' : 'Sacred Masterwork');
             const multiTags = formatProductMultiTags(prod, 4);
 
             return (

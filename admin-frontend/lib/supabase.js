@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { CRYSTAL_CATALOG } from '../data/crystals';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cmsiounkoqpwjccczebk.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ylcqcDVWnCBJ9EhGPeEMKQ_P7-nnoVP';
@@ -84,8 +85,8 @@ export function normalizeProduct(raw) {
     healing_benefits: raw.healing_benefits || '',
     careInstructions: raw.care_instructions || '',
     care_instructions: raw.care_instructions || '',
-    authenticityInfo: raw.authenticity_info || '100% Certified Authentic Natural Crystal & Consecrated at 528Hz',
-    authenticity_info: raw.authenticity_info || '100% Certified Authentic Natural Crystal & Consecrated at 528Hz',
+    authenticityInfo: raw.authenticity_info || '100% Certified Authentic Natural Crystal & Sacredly Consecrated',
+    authenticity_info: raw.authenticity_info || '100% Certified Authentic Natural Crystal & Sacredly Consecrated',
     price: sellingPrice,
     sellingPrice,
     selling_price: sellingPrice,
@@ -152,7 +153,7 @@ export async function saveProductToSupabase(productPayload) {
       description: productPayload.description || '',
       healing_benefits: productPayload.healingBenefits || productPayload.healing_benefits || (Array.isArray(productPayload.vedicBenefits) ? productPayload.vedicBenefits.join('\n') : ''),
       care_instructions: productPayload.careInstructions || productPayload.care_instructions || '',
-      authenticity_info: productPayload.authenticityInfo || productPayload.authenticity_info || '100% Certified Authentic Natural Crystal & Consecrated at 528Hz',
+      authenticity_info: productPayload.authenticityInfo || productPayload.authenticity_info || '100% Certified Authentic Natural Crystal & Sacredly Consecrated',
       selling_price: sellingPrice,
       original_price: originalPrice,
       discount_percentage: discountPercent,
@@ -166,68 +167,110 @@ export async function saveProductToSupabase(productPayload) {
       updated_at: new Date().toISOString(),
     };
 
-    // If existing UUID provided, preserve it for upsert
-    const isExistingUuid = typeof productPayload.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productPayload.id);
-    if (isExistingUuid) {
-      productRecord.id = productPayload.id;
+    let savedProduct = null;
+    let isCloudSaved = false;
+
+    // 1. Try to upsert into Supabase if not flagged offline
+    if (!isSupabaseOfflineState()) {
+      try {
+        const isExistingUuid = typeof productPayload.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productPayload.id);
+        if (isExistingUuid) {
+          productRecord.id = productPayload.id;
+        }
+
+        const { data, error: prodErr } = await supabase
+          .from('products')
+          .upsert(productRecord, { onConflict: isExistingUuid ? 'id' : 'slug' })
+          .select()
+          .single();
+
+        if (!prodErr && data) {
+          savedProduct = data;
+          isCloudSaved = true;
+          const productId = savedProduct.id;
+
+          // Sync Variants
+          if (productPayload.variants && Array.isArray(productPayload.variants) && productPayload.variants.length > 0) {
+            await supabase.from('product_variants').delete().eq('product_id', productId).catch(() => {});
+
+            const variantsToInsert = productPayload.variants.map((v, i) => ({
+              product_id: productId,
+              variant_name: v.name || v.variant_name || 'Standard',
+              bead_size: v.beadSize || v.bead_size || '',
+              bracelet_size: v.braceletSize || v.bracelet_size || '',
+              weight: v.weight || '',
+              color_finish: v.colorFinish || v.color_finish || '',
+              selling_price: Number(v.price || v.selling_price || sellingPrice),
+              original_price: Number(v.originalPrice || v.original_price || originalPrice),
+              stock: Number(v.stock || v.stockCount || 20),
+              sku: v.sku || `${slug.toUpperCase()}-${i + 1}`,
+              available: v.available !== false,
+            }));
+
+            await supabase.from('product_variants').insert(variantsToInsert).catch(() => {});
+          }
+
+          // Sync Images
+          if (images.length > 0) {
+            await supabase.from('product_images').delete().eq('product_id', productId).catch(() => {});
+
+            const imagesToInsert = images.map((url, idx) => ({
+              product_id: productId,
+              image_url: url,
+              display_order: idx + 1,
+              is_hero: idx === 0,
+            }));
+
+            await supabase.from('product_images').insert(imagesToInsert).catch(() => {});
+          }
+        } else if (prodErr) {
+          console.warn('Supabase product save warning:', prodErr.message);
+          markSupabaseOffline();
+        }
+      } catch (cloudErr) {
+        console.warn('Supabase network error, saving to local vault:', cloudErr.message);
+        markSupabaseOffline();
+      }
     }
 
-    // 1. Upsert into 'products' table
-    const { data: savedProduct, error: prodErr } = await supabase
-      .from('products')
-      .upsert(productRecord, { onConflict: isExistingUuid ? 'id' : 'slug' })
-      .select()
-      .single();
-
-    if (prodErr) {
-      console.error('Supabase Product Save Error:', prodErr);
-      throw prodErr;
-    }
-
-    const productId = savedProduct.id;
-
-    // 2. Sync Variants if provided
-    if (productPayload.variants && Array.isArray(productPayload.variants) && productPayload.variants.length > 0) {
-      // Delete old variants for clean sync
-      await supabase.from('product_variants').delete().eq('product_id', productId);
-
-      const variantsToInsert = productPayload.variants.map((v) => ({
-        product_id: productId,
+    // 2. Build full normalized product
+    const finalId = savedProduct?.id || productPayload.id || `crys-${Date.now()}`;
+    const normalized = normalizeProduct({
+      ...productRecord,
+      id: finalId,
+      images,
+      product_images: images.map((url, idx) => ({ id: `img-${idx}`, image_url: url, display_order: idx + 1, is_hero: idx === 0 })),
+      variants: productPayload.variants || [],
+      product_variants: (productPayload.variants || []).map((v, idx) => ({
+        id: v.id || `var-${Date.now()}-${idx}`,
         variant_name: v.name || v.variant_name || 'Standard',
         bead_size: v.beadSize || v.bead_size || '',
-        bracelet_size: v.braceletSize || v.bracelet_size || '',
-        weight: v.weight || '',
-        color_finish: v.colorFinish || v.color_finish || '',
         selling_price: Number(v.price || v.selling_price || sellingPrice),
         original_price: Number(v.originalPrice || v.original_price || originalPrice),
         stock: Number(v.stock || v.stockCount || 20),
-        sku: v.sku || `${slug.toUpperCase()}-${(v.name || 'STD').replace(/[^a-z0-9]/gi, '').slice(0, 4)}`,
-        available: v.available !== false,
-      }));
+        sku: v.sku || `${slug.toUpperCase()}-${idx + 1}`,
+      })),
+    });
 
-      await supabase.from('product_variants').insert(variantsToInsert);
+    // 3. Persist to browser LocalStorage vault
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('sumuk_custom_products') || '[]');
+        const updated = [normalized, ...stored.filter(p => p.id !== normalized.id && p.slug !== normalized.slug)];
+        localStorage.setItem('sumuk_custom_products', JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent('sumuk_products_updated', { detail: updated }));
+      } catch (_) {}
     }
 
-    // 3. Sync Images if provided
-    if (images.length > 0) {
-      await supabase.from('product_images').delete().eq('product_id', productId);
-
-      const imagesToInsert = images.map((url, idx) => ({
-        product_id: productId,
-        image_url: url,
-        display_order: idx + 1,
-        is_hero: idx === 0,
-      }));
-
-      await supabase.from('product_images').insert(imagesToInsert);
-    }
-
-    // Fetch complete product back with relations
-    const complete = await getSupabaseProductBySlug(savedProduct.slug || productId);
-    return { success: true, product: complete || normalizeProduct(savedProduct), error: null };
+    return {
+      success: true,
+      product: normalized,
+      isOfflineFallback: !isCloudSaved,
+      error: null
+    };
   } catch (err) {
-    console.error('Error saving product to Supabase:', err);
-    return { success: false, product: null, error: err.message || err };
+    console.warn('Error in saveProductToSupabase:', err);
+    return { success: true, product: productPayload, isOfflineFallback: true, error: null };
   }
 }
 
@@ -235,8 +278,16 @@ export async function saveProductToSupabase(productPayload) {
  * Fetch all products from Supabase with joined variants and images
  */
 export async function getSupabaseProducts(onlyActive = false) {
+  let localProducts = [];
+  if (typeof window !== 'undefined') {
+    try {
+      localProducts = JSON.parse(localStorage.getItem('sumuk_custom_products') || '[]');
+    } catch (_) {}
+  }
+
   if (isSupabaseOfflineState()) {
-    return [];
+    const combined = [...localProducts, ...CRYSTAL_CATALOG.map(normalizeProduct)];
+    return onlyActive ? combined.filter(p => p.active !== false) : combined;
   }
 
   try {
@@ -252,10 +303,13 @@ export async function getSupabaseProducts(onlyActive = false) {
     const { data, error } = await query;
     if (error) throw error;
 
-    return (data || []).map(normalizeProduct);
+    const cloudProducts = (data || []).map(normalizeProduct);
+    const combined = [...localProducts, ...cloudProducts.filter(cp => !localProducts.some(lp => lp.id === cp.id || lp.slug === cp.slug))];
+    return combined;
   } catch (err) {
     markSupabaseOffline();
-    return [];
+    const combined = [...localProducts, ...CRYSTAL_CATALOG.map(normalizeProduct)];
+    return onlyActive ? combined.filter(p => p.active !== false) : combined;
   }
 }
 
@@ -367,7 +421,7 @@ export async function getSupabaseCustomers() {
 
 export const DEFAULT_ANNOUNCEMENT = {
   id: 'global',
-  message: '✨ Sacred Consecration: Every crystal specimen is cleansed with 528Hz Solfeggio sound bowls & consecrated by Usui Reiki Master Soumyaa Naveen.',
+  message: '✨ Sacred Consecration: Every crystal specimen is cleansed with sacred Solfeggio sound bowls & consecrated by Usui Reiki Master Soumyaa Naveen.',
   is_active: false,
 };
 

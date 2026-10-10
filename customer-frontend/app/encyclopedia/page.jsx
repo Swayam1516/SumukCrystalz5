@@ -41,7 +41,7 @@ const chakraGuides = [
   },
   {
     name: 'Heart (Anahata)',
-    frequency: '639 Hz / 528 Hz',
+    frequency: '639 Hz',
     element: 'Air',
     crystal: 'Madagascar Rose Quartz & Malachite',
     color: 'border-emerald-500/40 bg-emerald-950/20 text-emerald-300',
@@ -52,7 +52,7 @@ const chakraGuides = [
   },
   {
     name: 'Solar Plexus (Manipura)',
-    frequency: '528 Hz',
+    frequency: '320 Hz',
     element: 'Fire',
     crystal: 'Golden Pyrite & Sunset Citrine',
     color: 'border-yellow-500/40 bg-yellow-950/20 text-yellow-300',

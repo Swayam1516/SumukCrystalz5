@@ -447,7 +447,7 @@ export default function AICustomerChatbot() {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               </span>
               <span className="text-[10.5px] text-[#6F6879] font-sans">
-                528 Hz Consecrated AI Guide
+                Sacred Consecrated AI Guide
               </span>
             </div>
 
@@ -499,7 +499,7 @@ export default function AICustomerChatbot() {
                     ASSISTANT
                   </span>
                   <span className="text-[10.5px] text-[#6F6879] font-sans font-normal truncate hidden sm:inline">
-                    • Your Online Sanctuary Guide • 528 Hz Consecrated
+                    • Your Online Sanctuary Guide • Sacred Consecrated
                   </span>
                 </div>
               </div>
@@ -817,7 +817,7 @@ export default function AICustomerChatbot() {
                       <span className="w-0.5 h-4 bg-[#7026B5] rounded-full inline-block" />
                       <span className="w-0.5 h-1.5 bg-[#7026B5] rounded-full inline-block" />
                     </span>
-                    <span>528Hz Solfeggio Consecrated AI</span>
+                    <span>Solfeggio Consecrated AI</span>
                   </div>
 
                   <a

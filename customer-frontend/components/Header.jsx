@@ -125,7 +125,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full transition-all duration-300 px-3 sm:px-6 pt-3 pb-2">
+      <header className="sticky top-0 z-50 w-full transition-all duration-300 px-3 sm:px-6 pt-3 pb-2">
         {/* Subtle Ambient Twinkling Stars in Background */}
         <div className="absolute top-2 left-1/4 pointer-events-none opacity-40 animate-pulse">
           <SparkleStar className="w-3 h-3 text-amber-300" />
@@ -135,81 +135,89 @@ export default function Header() {
         </div>
 
         {/* Translucent Floating Glass Header Bar */}
-        <div className="max-w-7xl mx-auto rounded-2xl bg-[#090812]/80 backdrop-blur-xl border border-amber-500/25 shadow-[0_8px_32px_rgba(0,0,0,0.6)] px-4 sm:px-7 h-16 sm:h-20 flex items-center justify-between relative overflow-hidden">
+        <div className="max-w-7xl mx-auto rounded-2xl bg-[#090812]/80 backdrop-blur-xl border border-amber-500/25 shadow-[0_8px_32px_rgba(0,0,0,0.6)] px-4 sm:px-7 h-16 sm:h-20 flex items-center justify-between relative">
           {/* Subtle Golden Glow Line at top/bottom border */}
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
-          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none rounded-t-2xl" />
+          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent pointer-events-none rounded-b-2xl" />
 
           {/* LEFT: Crystal Logo + Brand Name + Sparkle Divider */}
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group flex-shrink-0 whitespace-nowrap">
               <GoldenCrystalLogo />
-              <span className="font-serif text-sm sm:text-base font-semibold tracking-[0.2em] text-[#e8c97c] group-hover:text-white transition-colors uppercase whitespace-nowrap">
+              <span className="font-serif text-xs sm:text-sm md:text-base font-semibold tracking-[0.16em] sm:tracking-[0.2em] text-[#e8c97c] group-hover:text-white transition-colors uppercase whitespace-nowrap">
                 SUMUK CRYSTALZ 5
               </span>
             </Link>
-            <SparkleStar className="w-3.5 h-3.5 text-amber-300/80 hidden sm:block ml-1" />
+            <SparkleStar className="w-3.5 h-3.5 text-amber-300/80 hidden sm:block ml-0.5 flex-shrink-0" />
           </div>
 
           {/* CENTER / NAVIGATION LINKS */}
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-[11px] lg:text-xs font-mono uppercase tracking-[0.16em]">
+          <nav className="hidden md:flex items-center gap-3.5 lg:gap-5 xl:gap-6 text-[11px] lg:text-xs font-mono uppercase tracking-[0.14em]">
             {/* SHOP / STORE MEGAMENU DROPDOWN */}
             <div
-              className="relative"
+              className="relative flex items-center"
               ref={shopDropdownRef}
               onMouseEnter={() => setShopDropdownOpen(true)}
               onMouseLeave={() => setShopDropdownOpen(false)}
             >
+              <Link
+                href="/shop"
+                onClick={() => setShopDropdownOpen(false)}
+                className="text-[#e8c97c] font-bold hover:text-white transition-all duration-200 py-2.5 px-2 flex items-center gap-1.5 cursor-pointer rounded-lg hover:bg-white/[0.04]"
+              >
+                <span>SHOP</span>
+              </Link>
               <button
                 type="button"
                 onClick={() => setShopDropdownOpen(!shopDropdownOpen)}
-                className="text-[#e8c97c] font-bold hover:text-white transition-all duration-200 flex items-center gap-1.5 py-2 cursor-pointer outline-none"
-                aria-expanded={shopDropdownOpen}
+                className="p-1.5 text-amber-400/80 hover:text-amber-300 cursor-pointer outline-none rounded-md hover:bg-white/[0.04]"
+                aria-label="Toggle Shop Category Menu"
               >
-                <span>SHOP</span>
-                <ChevronDown className={`w-3 h-3 text-amber-400 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {shopDropdownOpen && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-[500px] p-4 bg-[#0c0915] border border-amber-500/35 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.8)] z-50 backdrop-blur-2xl animate-fade-in text-left">
-                  {/* Top Bar with All Store Link */}
-                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-400" />
-                      <span className="font-serif text-xs font-bold text-amber-200 tracking-wider uppercase">
-                        6-Pillar Discovery Vault
-                      </span>
-                    </div>
-                    <Link
-                      href="/shop"
-                      onClick={() => setShopDropdownOpen(false)}
-                      className="text-[10px] text-amber-400 hover:text-white font-mono flex items-center gap-1 transition"
-                    >
-                      <span>Explore All Products</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-
-                  {/* 2-Column Discovery Taxonomy Grid */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {TOP_NAV_SHOP_MENU.map((item) => (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 w-[520px] max-w-[92vw] z-50 animate-fade-in text-left pointer-events-auto">
+                  <div className="p-4 bg-[#0c0915] border border-amber-500/35 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl">
+                    {/* Top Bar with All Store Link */}
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-amber-400" />
+                        <span className="font-serif text-xs font-bold text-amber-200 tracking-wider uppercase">
+                          6-Pillar Discovery Vault
+                        </span>
+                      </div>
                       <Link
-                        key={item.label}
-                        href={item.href}
+                        href="/shop"
                         onClick={() => setShopDropdownOpen(false)}
-                        className="p-2.5 rounded-xl hover:bg-white/[0.06] border border-transparent hover:border-amber-500/25 transition group block"
+                        className="text-[11px] text-amber-400 hover:text-white font-mono flex items-center gap-1 transition"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-neutral-200 group-hover:text-amber-300 transition">
-                            {item.label}
-                          </span>
-                          <span className="text-[10px] text-amber-500/60 group-hover:text-amber-400">&rarr;</span>
-                        </div>
-                        <p className="text-[10px] text-neutral-400 group-hover:text-neutral-300 truncate mt-0.5">
-                          {item.description}
-                        </p>
+                        <span>Explore All Products</span>
+                        <ArrowRight className="w-3 h-3" />
                       </Link>
-                    ))}
+                    </div>
+
+                    {/* 2-Column Discovery Taxonomy Grid */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {TOP_NAV_SHOP_MENU.map((item) => (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          onClick={() => setShopDropdownOpen(false)}
+                          className="p-2.5 rounded-xl hover:bg-white/[0.06] border border-transparent hover:border-amber-500/25 transition group block"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-neutral-200 group-hover:text-amber-300 transition">
+                              {item.label}
+                            </span>
+                            <span className="text-[10px] text-amber-500/60 group-hover:text-amber-400">&rarr;</span>
+                          </div>
+                          <p className="text-[10px] text-neutral-400 group-hover:text-neutral-300 truncate mt-0.5">
+                            {item.description}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -229,43 +237,24 @@ export default function Header() {
               FOUNDER STORY
             </Link>
 
-            <Link
-              href="/account"
-              className="text-amber-300 font-bold hover:text-white transition-all duration-200 flex items-center gap-1.5"
-            >
-              <User className="w-3.5 h-3.5 text-amber-400" />
-              ACCOUNT
-            </Link>
-
-            {/* Auth / Sign Up Link or User Status */}
+            {/* Auth / Account Profile or Sign In */}
             {currentUser ? (
-              <div className="relative flex items-center gap-2" ref={dropdownRef}>
-                {/* User Dropdown Button */}
+              <div className="relative flex items-center" ref={dropdownRef}>
+                {/* User Profile Dropdown Button */}
                 <button
                   type="button"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-amber-500/35 text-white hover:text-[#e8c97c] transition-all flex items-center gap-2 font-bold shadow-sm"
+                  className="px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-amber-500/35 text-white hover:text-[#e8c97c] transition-all flex items-center gap-2 font-bold shadow-sm cursor-pointer"
                   aria-expanded={userDropdownOpen}
-                  title="Patron Profile Menu"
+                  title="Patron Profile & Orders"
                 >
                   {isCurrentAdmin ? (
                     <Crown className="w-3.5 h-3.5 text-amber-400" />
                   ) : (
                     <User className="w-3.5 h-3.5 text-[#e8c97c]" />
                   )}
-                  <span className="max-w-[95px] truncate">{currentUser.name?.split(' ')[0] || 'Patron'}</span>
-                  <ChevronDown className={`w-3 h-3 text-amber-400 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Direct 1-Click Sign Out Quick Action Button */}
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/25 border border-red-500/30 hover:border-red-500/50 text-red-300 hover:text-red-200 transition-all flex items-center gap-1.5 text-[10px] font-bold tracking-wider"
-                  title="Sign Out of Sanctuary"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-red-400" />
-                  <span className="hidden xl:inline">SIGN OUT</span>
+                  <span className="max-w-[110px] truncate">{currentUser.name?.split(' ')[0] || 'Patron'}</span>
+                  <ChevronDown className={`w-3 h-3 text-amber-400 transition-transform duration-200 ${userDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {userDropdownOpen && (
@@ -416,17 +405,24 @@ export default function Header() {
 
             {/* Mobile SHOP Discovery Section */}
             <div className="rounded-xl bg-white/[0.04] border border-amber-500/25 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setMobileShopOpen(!mobileShopOpen)}
-                className="w-full py-2.5 px-3 flex items-center justify-between text-xs font-mono uppercase tracking-wider text-[#e8c97c] font-bold"
-              >
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between py-1 px-3">
+                <Link
+                  href="/shop"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 py-2 text-xs font-mono uppercase tracking-wider text-[#e8c97c] font-bold flex-1"
+                >
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>SHOP BY DISCOVERY CATEGORY</span>
-                </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-amber-400 transition-transform ${mobileShopOpen ? 'rotate-180' : ''}`} />
-              </button>
+                  <span>SHOP ALL CRYSTALS</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setMobileShopOpen(!mobileShopOpen)}
+                  className="p-2 text-amber-400"
+                  aria-label="Toggle Category Submenu"
+                >
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mobileShopOpen ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
 
               {mobileShopOpen && (
                 <div className="p-2 pt-0 grid grid-cols-2 gap-1.5 border-t border-white/5">
@@ -435,7 +431,7 @@ export default function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="col-span-2 p-2 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs font-bold font-mono text-center block"
                   >
-                    ✨ View All Consecrated Crystals
+                    View All Consecrated Crystals
                   </Link>
                   {TOP_NAV_SHOP_MENU.map((item) => (
                     <Link

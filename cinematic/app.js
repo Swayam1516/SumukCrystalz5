@@ -24,7 +24,7 @@ const VIDEO_CONFIG = {
       '/videos/Video 1.mp4',
       '/videos/intro.mp4'
     ],
-    consecrationFreq: '528 Hz',
+    consecrationFreq: 'Sacred Solfeggio',
   },
 
   // The Live UI Sequence Begins from Video 2 through Video 6
@@ -38,7 +38,7 @@ const VIDEO_CONFIG = {
       specimenCode: 'SPECIMEN // AM-202',
       provenance: 'Rio Grande do Sul, Brazil',
       chakra: 'Crown & Third Eye',
-      frequency: '528 Hz Solfeggio',
+      frequency: 'Solfeggio Harmonic',
       freqHz: 528,
       colorAccent: '#c084fc',
       colorGlow: 'rgba(168, 85, 247, 0.55)',
@@ -84,7 +84,7 @@ const VIDEO_CONFIG = {
       specimenCode: 'SPECIMEN // GA-404',
       provenance: 'Tamil Nadu & Karnataka, India',
       chakra: 'Heart & Solar Plexus',
-      frequency: '528 Hz Prosperity',
+      frequency: 'Prosperity Harmonic',
       freqHz: 528,
       colorAccent: '#34d399',
       colorGlow: 'rgba(52, 211, 153, 0.55)',

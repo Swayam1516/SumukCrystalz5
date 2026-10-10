@@ -23,7 +23,7 @@ export const CRYSTAL_CATALOG = [
     altVideoSrc: '/videos/video2.mp4',
     image: 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=1920&q=85',
     chakra: 'Crown & Third Eye',
-    chakraFrequency: '528 Hz',
+    chakraFrequency: '963 Hz',
     freqValue: 528,
     colorAccent: '#c084fc',
     colorLight: '#e9d5ff',
@@ -45,7 +45,7 @@ export const CRYSTAL_CATALOG = [
     description:
       'Known as the stone of peace, it promotes calm, relieves stress, and enhances spiritual intuition.',
     metaphysical:
-      'Consecrated at 528Hz Solfeggio frequency to open the Crown Chakra (Sahasrara), clear psychic fog, and elevate sanctuary atmospheres into states of deep stillness.',
+      'Consecrated with sacred Solfeggio sound bowls to open the Crown Chakra (Sahasrara), clear psychic fog, and elevate sanctuary atmospheres into states of deep stillness.',
     opticalCharacteristics: [
       'Pleochroism: Distinct dichroic violet to lilac',
       'Lustre: Vitreous on crystal faces',
@@ -75,10 +75,10 @@ export const CRYSTAL_CATALOG = [
         id: 'core',
         x: 64,
         y: 54,
-        title: '528Hz Acoustic Cavity',
+        title: 'Harmonic Acoustic Cavity',
         category: 'Harmonic Geometry',
-        desc: 'Internal geometric geode cavity naturally attuned to amplify 528Hz transformation harmonics.',
-        spec: 'Crown Attunement • 528 Hz Consecrated',
+        desc: 'Internal geometric geode cavity naturally attuned to amplify transformation harmonics.',
+        spec: 'Crown Attunement • Sacred Consecrated',
       },
     ],
   },
@@ -149,7 +149,7 @@ export const CRYSTAL_CATALOG = [
     altVideoSrc: '/videos/video4.mp4',
     image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1920&q=85',
     chakra: 'Heart & Solar Plexus',
-    chakraFrequency: '528 Hz',
+    chakraFrequency: '639 Hz',
     freqValue: 528,
     colorAccent: '#34d399',
     colorLight: '#d1fae5',
@@ -171,7 +171,7 @@ export const CRYSTAL_CATALOG = [
     description:
       'Regarded as the stone of opportunity, it attracts good luck, wealth, and abundance.',
     metaphysical:
-      'Attuned to 528Hz prosperity transformation harmonics. Calibrates mental receptivity to serendipitous opportunities and clears energetic blockages around financial flow.',
+      'Attuned to sacred prosperity transformation harmonics. Calibrates mental receptivity to serendipitous opportunities and clears energetic blockages around financial flow.',
     opticalCharacteristics: [
       'Phenomenon: Aventurescence (shimmering green chrome-mica platelets)',
       'Lustre: Vitreous to silky',
@@ -185,7 +185,7 @@ export const CRYSTAL_CATALOG = [
         title: 'Fuchsite Platelet Shimmer',
         category: 'Mineral Phenomenon',
         desc: 'Microscopic green fuchsite mica inclusions producing genuine aventurescence glitter.',
-        spec: 'Abundance Catalyst • 528 Hz Consecrated',
+        spec: 'Abundance Catalyst • Sacred Consecrated',
       },
     ],
   },

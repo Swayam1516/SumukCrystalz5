@@ -132,7 +132,7 @@ export default function OrderSuccessPage() {
               <div className="w-7 h-7 rounded-full bg-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center mx-auto animate-pulse">
                 <Sparkles className="w-3.5 h-3.5" />
               </div>
-              <p className="font-bold text-xs text-amber-200">528Hz Cleansing</p>
+              <p className="font-bold text-xs text-amber-200">Sacred Cleansing</p>
               <p className="text-[10px] text-amber-300 font-mono">In Chamber</p>
             </div>
 
@@ -211,7 +211,7 @@ export default function OrderSuccessPage() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Gemological Provenance &amp; 528Hz Attunement</span>
+                  <span>Gemological Provenance &amp; Sacred Attunement</span>
                   <span className="font-mono text-amber-300">INCLUDED</span>
                 </div>
                 <div className="flex justify-between pt-3 border-t border-white/10 text-sm font-bold text-white">

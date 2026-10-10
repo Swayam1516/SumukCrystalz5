@@ -320,9 +320,15 @@ export default function CartDrawer() {
                 </span>
               </div>
 
-              <div className="text-xs text-[#6B7280] flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#B8860B] flex-shrink-0" />
-                <span>Certificate &amp; consecration included with every order</span>
+              <div className="space-y-1.5">
+                <div className="text-xs text-[#6B7280] flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#B8860B] flex-shrink-0" />
+                  <span>Certificate &amp; consecration included with every order</span>
+                </div>
+                <div className="text-[11px] text-purple-900 bg-purple-50/90 border border-purple-200/80 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 font-medium">
+                  <span className="text-purple-600 font-bold">📦 Note:</span>
+                  <span>Compulsory unboxing video required for returns. Contact owner for assistance.</span>
+                </div>
               </div>
 
               {/* Luminous Celestial Purple CTA Button */}

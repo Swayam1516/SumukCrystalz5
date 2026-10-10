@@ -222,11 +222,11 @@ export const SOUMYA_SERVICES = [
     borderColor: 'border-gold-500/30',
     glowColor: 'rgba(234, 179, 8, 0.4)',
     iconColor: 'text-gold-300',
-    tagline: 'Personally Charged & 528Hz Sound-Attuned Minerals',
+    tagline: 'Personally Charged & Sound-Attuned Minerals',
     description:
       'Every crystal specimen, gemstone bracelet, and altar geode offered under this collection is personally cleansed, consecrated, and infused with Usui Reiki intention by Soumyaa Naveen before dispatch.',
     benefits: [
-      'Sound-cleansed with 528 Hz Himalayan singing bowls and white sage/sandalwood',
+      'Sound-cleansed with Himalayan singing bowls and white sage/sandalwood',
       'Infused with customized healing intentions (Protection, Wealth, Harmony, Intuition)',
       'Accompanied by a signed Consecration Certificate and activation ritual guide',
       'Ready to place immediately in your altar or wear as an energetic shield',

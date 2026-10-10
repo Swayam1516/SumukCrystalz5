@@ -137,16 +137,15 @@ export const DISCOVERY_PILLARS = [
  * Top Navigation Megamenu Structure for Storefront Header
  */
 export const TOP_NAV_SHOP_MENU = [
-  { label: 'By Purpose', href: '/shop?pillar=purpose', description: 'Love, Wealth, Protection, Peace & Growth' },
-  { label: 'By Chakra', href: '/shop?pillar=energy_system&filter=energy:7-chakras', description: '7 Sacred Chakras Alignment' },
-  { label: 'By Zodiac', href: '/shop?pillar=energy_system&filter=energy:zodiac', description: 'Astrological Sun & Moon Crystals' },
-  { label: 'By Numbers', href: '/shop?pillar=energy_system&filter=energy:numerology', description: 'Numerology & Birth Path stones' },
-  { label: 'By Vastu', href: '/shop?pillar=energy_system&filter=energy:vastu', description: 'Spatial Harmony & Energy Remedies' },
-  { label: 'By Crystal/Specimen', href: '/shop?pillar=crystal_specimen', description: 'Raw Stones, Tumbles, Towers & Geodes' },
-  { label: 'Jewellery', href: '/shop?pillar=jewellery', description: 'Bracelets, Malas, Pendants & Rings' },
-  { label: 'Bead Size', href: '/shop?pillar=bead_size', description: '4mm, 6mm, 8mm, 10mm & 12mm+' },
-  { label: 'Home & Space', href: '/shop?pillar=home_space', description: 'Vastu Décor, Trees, Idols & Selenite' },
-  { label: 'Gifts', href: '/shop?filter=home:gift-decor', description: 'Consecrated Spiritual Gift Sets' },
+  { label: 'Numerology', href: '/shop?filter=energy:numerology', description: 'Crystals by Life Path & Numbers' },
+  { label: 'Astrology', href: '/shop?filter=energy:zodiac', description: 'Zodiac & Planetary Crystals' },
+  { label: 'Crystal Trees', href: '/shop?filter=specimen:crystal-trees', description: 'Gemstone Bonsai & Trees of Life' },
+  { label: 'Luxury Jewelry', href: '/shop?pillar=jewellery&filter=jewellery:bracelets', description: 'Consecrated Bracelets & Malas' },
+  { label: 'Crystal Chips', href: '/shop?filter=specimen:crystal-chips', description: 'Natural Crushed Gemstones' },
+  { label: 'Pyramids', href: '/shop?filter=specimen:pyramids', description: 'Sacred Geometric Generators' },
+  { label: 'Towers & Points', href: '/shop?filter=specimen:towers-points', description: 'Standing Obelisks & Prisms' },
+  { label: '7 Chakras', href: '/shop?pillar=energy_system&filter=energy:7-chakras', description: '7 Sacred Energy Centers' },
+  { label: 'By Purpose', href: '/shop?pillar=purpose', description: 'Love, Wealth, Protection & Peace' },
   { label: 'New Arrivals', href: '/shop?sort=new_arrival', description: 'Recently Consecrated Masterworks' },
 ];
 

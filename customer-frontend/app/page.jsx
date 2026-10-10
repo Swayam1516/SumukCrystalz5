@@ -23,25 +23,154 @@ import {
   Check,
   ChevronRight,
   ChevronLeft,
+  Moon,
+  Trees,
+  Crown,
+  Boxes,
+  Triangle,
+  Zap,
+  Layers,
+  Hash,
+  SlidersHorizontal,
+  ArrowDown,
 } from 'lucide-react';
 
-const CHAKRA_ALIGNMENT = [
-  { name: 'Crown', crystal: 'Amethyst', hz: '528 Hz', color: 'from-purple-900/60 to-black', border: 'border-purple-500/50', accent: '#c084fc', glow: 'rgba(168, 85, 247, 0.45)', desc: 'Spiritual Attunement & Conscious Clarity' },
-  { name: 'Third Eye', crystal: 'Labradorite', hz: '852 Hz', color: 'from-indigo-900/60 to-black', border: 'border-indigo-500/50', accent: '#818cf8', glow: 'rgba(99, 102, 241, 0.45)', desc: 'Intuitive Vision & Lucid Perception' },
-  { name: 'Throat', crystal: 'Aquamarine', hz: '741 Hz', color: 'from-cyan-900/60 to-black', border: 'border-cyan-500/50', accent: '#22d3ee', glow: 'rgba(6, 182, 212, 0.45)', desc: 'Authentic Expression & Sovereign Truth' },
-  { name: 'Heart', crystal: 'Rose Quartz', hz: '639 Hz', color: 'from-pink-900/60 to-black', border: 'border-pink-500/50', accent: '#f472b6', glow: 'rgba(244, 114, 182, 0.45)', desc: 'Unconditional Love & Auric Healing' },
-  { name: 'Solar Plexus', crystal: "Tiger's Eye", hz: '320 Hz', color: 'from-amber-900/60 to-black', border: 'border-amber-500/50', accent: '#f5d47a', glow: 'rgba(245, 212, 122, 0.45)', desc: 'Sovereign Will & Grounded Power' },
-  { name: 'Sacral', crystal: 'Carnelian', hz: '417 Hz', color: 'from-orange-900/60 to-black', border: 'border-orange-500/50', accent: '#fb923c', glow: 'rgba(251, 146, 60, 0.45)', desc: 'Creative Genesis & Emotional Vitality' },
-  { name: 'Root', crystal: 'Black Tourmaline', hz: '396 Hz', color: 'from-rose-950/70 to-black', border: 'border-rose-800/50', accent: '#f43f5e', glow: 'rgba(244, 63, 94, 0.45)', desc: 'Deep Earth Grounding & Shielding' },
+export const POPULAR_FILTER_CATEGORIES = [
+  {
+    id: 'numerology',
+    name: 'Numerology',
+    badge: '1–9 & Master Numbers',
+    subtitle: 'Crystals based on Numbers',
+    desc: 'Sacred vibrational crystals attuned to Life Path, Destiny & Master Numbers 11/22/33.',
+    specimens: 'Pyrite (1) • Moonstone (2) • Citrine (3) • Emerald (5)',
+    href: '/shop?filter=energy:numerology',
+    vaultCategory: 'Numerology',
+    color: 'from-purple-900/60 via-purple-950/40 to-black',
+    border: 'border-purple-500/40 hover:border-purple-400',
+    accent: '#c084fc',
+    glow: 'rgba(168, 85, 247, 0.45)',
+    icon: Hash,
+  },
+  {
+    id: 'astrology',
+    name: 'Astrology',
+    badge: 'Zodiac & Planetary Energy',
+    subtitle: 'Crystals based on Zodiac Signs',
+    desc: 'Align with natal Sun, Moon & Rising astrological charts and pacify planetary transits.',
+    specimens: 'Aries Carnelian • Leo Tiger’s Eye • Pisces Amethyst',
+    href: '/shop?filter=energy:zodiac',
+    vaultCategory: 'Astrology',
+    color: 'from-indigo-900/60 via-indigo-950/40 to-black',
+    border: 'border-indigo-500/40 hover:border-indigo-400',
+    accent: '#818cf8',
+    glow: 'rgba(99, 102, 241, 0.45)',
+    icon: Moon,
+  },
+  {
+    id: 'trees',
+    name: 'Crystal Trees',
+    badge: 'Vastu & Feng Shui Energy',
+    subtitle: 'Gemstone Bonsai & Trees of Life',
+    desc: '300+ natural bead wire-wrapped money and health trees radiating continuous abundance.',
+    specimens: '7-Chakra Tree • Citrine Wealth Bonsai • Rose Quartz Harmony',
+    href: '/shop?filter=specimen:crystal-trees',
+    vaultCategory: 'Trees',
+    color: 'from-emerald-900/60 via-emerald-950/40 to-black',
+    border: 'border-emerald-500/40 hover:border-emerald-400',
+    accent: '#34d399',
+    glow: 'rgba(16, 185, 129, 0.45)',
+    icon: Trees,
+  },
+  {
+    id: 'luxury-jewelry',
+    name: 'Luxury Jewelry',
+    badge: 'Wearable Consecrated Art',
+    subtitle: 'Sacred Bracelets, Malas & Pendants',
+    desc: 'AAA natural gemstone bracelets, 108 japa malas & energized sterling silver talisman pendants.',
+    specimens: 'Pyrite Wealth Band • Tiger Eye Mala • Moldavite Pendants',
+    href: '/shop?pillar=jewellery&filter=jewellery:bracelets',
+    vaultCategory: 'Luxury Jewelry',
+    color: 'from-amber-900/60 via-amber-950/40 to-black',
+    border: 'border-amber-500/40 hover:border-amber-400',
+    accent: '#f59e0b',
+    glow: 'rgba(245, 158, 11, 0.45)',
+    icon: Crown,
+  },
+  {
+    id: 'chips',
+    name: 'Crystal Chips',
+    badge: 'Apothecary & Sacred Grids',
+    subtitle: 'Natural Crushed Gemstones',
+    desc: 'Raw crushed mineral gravel for singing bowl charging, crystal vials & potted plant energizers.',
+    specimens: 'Clear Quartz Chips • Black Tourmaline • Raw Amethyst Grit',
+    href: '/shop?filter=specimen:crystal-chips',
+    vaultCategory: 'Chips',
+    color: 'from-rose-900/60 via-rose-950/40 to-black',
+    border: 'border-rose-500/40 hover:border-rose-400',
+    accent: '#fb7185',
+    glow: 'rgba(244, 63, 94, 0.45)',
+    icon: Boxes,
+  },
+  {
+    id: 'pyramids',
+    name: 'Pyramids',
+    badge: 'Sacred Geometry Vortex',
+    subtitle: 'Cosmic Energy Generators',
+    desc: 'Precision 4-sided apex pyramids concentrating and amplifying manifestation frequencies.',
+    specimens: 'Orgonite Wealth Pyramid • Black Obsidian Shield • Selenite Apex',
+    href: '/shop?filter=specimen:pyramids',
+    vaultCategory: 'Pyramids',
+    color: 'from-cyan-900/60 via-cyan-950/40 to-black',
+    border: 'border-cyan-500/40 hover:border-cyan-400',
+    accent: '#22d3ee',
+    glow: 'rgba(6, 182, 212, 0.45)',
+    icon: Triangle,
+  },
+  {
+    id: 'towers',
+    name: 'Towers & Points',
+    badge: 'High Vibrational Obelisks',
+    subtitle: 'Standing Generator Prisms',
+    desc: 'Six-faceted natural towers channeling high vibrational energy skyward to clear room aurics.',
+    specimens: 'Clear Quartz Tower • Smoky Quartz Point • Fluorite Pillar',
+    href: '/shop?filter=specimen:towers-points',
+    vaultCategory: 'Towers',
+    color: 'from-sky-900/60 via-sky-950/40 to-black',
+    border: 'border-sky-500/40 hover:border-sky-400',
+    accent: '#38bdf8',
+    glow: 'rgba(56, 189, 248, 0.45)',
+    icon: Layers,
+  },
+  {
+    id: 'chakras',
+    name: '7 Chakras',
+    badge: 'Harmonic Alignment',
+    subtitle: 'Kundalini Energy Balancing',
+    desc: 'Solfeggio sound bowl cleansed stones balanced for the 7 primary spiritual energy wheels.',
+    specimens: 'Crown Amethyst • Heart Rose Quartz • Root Black Tourmaline',
+    href: '/shop?pillar=energy_system&filter=energy:7-chakras',
+    vaultCategory: 'Chakras',
+    color: 'from-fuchsia-900/60 via-fuchsia-950/40 to-black',
+    border: 'border-fuchsia-500/40 hover:border-fuchsia-400',
+    accent: '#e879f9',
+    glow: 'rgba(232, 121, 249, 0.45)',
+    icon: Compass,
+  },
 ];
 
 const VAULT_CATEGORIES = [
   'All Masterworks',
+  'Numerology',
+  'Astrology',
+  'Trees',
+  'Luxury Jewelry',
+  'Chips',
+  'Pyramids',
+  'Towers',
+  'Chakras',
   'Wealth & Abundance',
   'Protection & Shielding',
   'Love & Harmony',
-  'Peace & Meditation',
-  'Collector Geodes & Malas',
 ];
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
@@ -155,6 +284,16 @@ export default function HomePage() {
     setTimeout(() => setQuickAddedId(null), 2000);
   };
 
+  const handleFilterVault = (categoryName) => {
+    setSelectedCategory(categoryName);
+    if (typeof window !== 'undefined') {
+      const el = document.getElementById('sanctuary-vault');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   // Filtered vault products from live Supabase / Canonical catalog
   const filteredVaultProducts = featuredProducts.filter((p) => {
     if (selectedCategory === 'All Masterworks') return true;
@@ -163,7 +302,33 @@ export default function HomePage() {
     const purp = (p.purpose || p.purposeLabel || '').toLowerCase();
     const name = (p.name || '').toLowerCase();
     const chk = Array.isArray(p.chakra) ? p.chakra.join(' ').toLowerCase() : String(p.chakra || '').toLowerCase();
+    const zod = (p.zodiac || '').toLowerCase();
+    const sub = (p.subtitle || '').toLowerCase();
 
+    if (selectedCategory === 'Numerology') {
+      return cat.includes('number') || purp.includes('number') || name.includes('pyrite') || name.includes('moonstone') || name.includes('citrine') || name.includes('emerald');
+    }
+    if (selectedCategory === 'Astrology') {
+      return zod !== '' || cat.includes('zodiac') || purp.includes('astro') || name.includes('amethyst') || name.includes('tiger') || name.includes('carnelian');
+    }
+    if (selectedCategory === 'Trees') {
+      return cat.includes('tree') || name.includes('tree') || sub.includes('tree');
+    }
+    if (selectedCategory === 'Luxury Jewelry') {
+      return cat.includes('bracelet') || cat.includes('mala') || cat.includes('pendant') || cat.includes('jewel') || name.includes('bracelet') || name.includes('mala') || name.includes('band') || name.includes('pendant');
+    }
+    if (selectedCategory === 'Chips') {
+      return cat.includes('chip') || name.includes('chip') || name.includes('vial') || sub.includes('chip');
+    }
+    if (selectedCategory === 'Pyramids') {
+      return cat.includes('pyramid') || name.includes('pyramid') || sub.includes('pyramid');
+    }
+    if (selectedCategory === 'Towers') {
+      return cat.includes('tower') || cat.includes('point') || name.includes('tower') || name.includes('point') || name.includes('obelisk') || sub.includes('tower');
+    }
+    if (selectedCategory === 'Chakras') {
+      return chk !== '' || cat.includes('chakra') || name.includes('chakra');
+    }
     if (selectedCategory === 'Wealth & Abundance') {
       return purp.includes('wealth') || name.includes('pyrite') || name.includes('citrine') || name.includes('money') || chk.includes('solar');
     }
@@ -172,21 +337,6 @@ export default function HomePage() {
     }
     if (selectedCategory === 'Love & Harmony') {
       return purp.includes('love') || name.includes('rose') || name.includes('jade') || chk.includes('heart');
-    }
-    if (selectedCategory === 'Peace & Meditation') {
-      return purp.includes('peace') || name.includes('amethyst') || name.includes('rudraksha') || chk.includes('crown');
-    }
-    if (selectedCategory === 'Collector Geodes & Malas') {
-      return (
-        cat.includes('geode') ||
-        cat.includes('specimen') ||
-        cat.includes('collector') ||
-        name.includes('selenite') ||
-        name.includes('geode') ||
-        name.includes('cluster') ||
-        name.includes('mala') ||
-        name.includes('plate')
-      );
     }
 
     return (
@@ -274,12 +424,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 2. PROVENANCE TRUST REGISTER (Matching Image 3) */}
-      <section className="relative z-20 -mt-6 sm:-mt-8 mb-4">
-        <ProvenanceTrustCards />
-      </section>
-
-      {/* 2.5 LIVE CONSECRATED PRODUCT SLIDESHOW SHOWCASE */}
+      {/* 1.5 LIVE CONSECRATED PRODUCT SLIDESHOW SHOWCASE */}
       <section className="relative z-20 my-6 sm:my-8">
         <LiveProductSlideshow />
       </section>
@@ -289,51 +434,105 @@ export default function HomePage() {
         <DualTierFilterTicker />
       </div>
 
-      {/* 4. 3D CHAKRA ALIGNMENT OPTIONS TILES */}
+      {/* 4. DIRECT ACCESS SACRED CRYSTAL FILTERS */}
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-3d text-xs font-sans-ui uppercase tracking-wider text-amber-300 font-semibold">
-            <Compass className="w-4 h-4 text-amber-400" />
-            <span>Harmonic Energetic Architecture</span>
+        <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-3d text-xs font-sans-ui uppercase tracking-wider text-amber-300 font-semibold border border-amber-500/30 bg-amber-500/10">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Direct Access Sacred Discovery</span>
           </div>
           <h2 className="font-editorial text-3xl sm:text-5xl font-bold text-white text-3d-title">
-            Curated by Chakra Alignment
+            Crystals Curated by Form &amp; Energy
           </h2>
-          <p className="text-xs sm:text-sm font-sans-ui text-neutral-400 leading-relaxed max-w-lg mx-auto">
-            Select a sacred energy center to explore authentic crystals calibrated to balance and elevate specific conscious frequencies.
+          <p className="text-xs sm:text-sm font-sans-ui text-neutral-300 leading-relaxed max-w-2xl mx-auto">
+            Direct filter access to authentic museum-grade crystals calibrated for numerology, astrology, sacred trees, luxury jewelry, chips, pyramids, towers, and sacred energy centers.
           </p>
+
+          {/* Quick Filter Pill Shortcuts */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-3">
+            {POPULAR_FILTER_CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleFilterVault(cat.vaultCategory)}
+                className="px-3.5 py-1.5 rounded-full text-[11px] font-mono uppercase tracking-wider border border-white/10 bg-white/5 hover:bg-amber-500/20 hover:border-amber-400/50 hover:text-amber-200 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <cat.icon className="w-3 h-3 text-amber-400" />
+                <span>{cat.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* 3D Animatic Chakra Option Tiles */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
-          {CHAKRA_ALIGNMENT.map((c) => (
-            <Link
-              key={c.name}
-              href={`/shop?chakra=${encodeURIComponent(c.name)}`}
-              className={`chakra-option-3d p-5 rounded-2xl bg-gradient-to-b ${c.color} border ${c.border} group flex flex-col justify-between shadow-2xl relative overflow-hidden`}
-              style={{
-                boxShadow: `0 14px 35px -10px ${c.glow}`,
-              }}
-            >
-              <div>
-                <span className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase block font-bold">
-                  {c.hz}
-                </span>
-                <p className="font-editorial font-bold text-lg text-white mt-1 group-hover:text-amber-200 transition text-3d-subtle">
-                  {c.name}
-                </p>
-                <p className="text-xs font-sans-ui font-semibold mt-1" style={{ color: c.accent }}>
-                  {c.crystal}
-                </p>
-              </div>
+        {/* 8-Card Responsive Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {POPULAR_FILTER_CATEGORIES.map((c) => {
+            const Icon = c.icon;
+            return (
+              <div
+                key={c.id}
+                className={`p-6 rounded-2xl bg-gradient-to-b ${c.color} border ${c.border} group flex flex-col justify-between shadow-2xl relative transition-all duration-300 hover:-translate-y-1.5 backdrop-blur-xl`}
+                style={{
+                  boxShadow: `0 16px 40px -12px ${c.glow}`,
+                }}
+              >
+                <div>
+                  {/* Top Badge & Icon */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-white/10 border border-white/15 group-hover:scale-110 transition-transform shadow-inner">
+                      <Icon className="w-5 h-5" style={{ color: c.accent }} />
+                    </div>
+                    <span className="text-[10px] font-mono tracking-wider text-neutral-300 uppercase px-2.5 py-1 rounded-full bg-white/5 border border-white/10 font-medium">
+                      {c.badge}
+                    </span>
+                  </div>
 
-              <div className="mt-6 pt-3 border-t border-white/15">
-                <p className="text-[11px] font-sans-ui text-neutral-300 line-clamp-2 leading-relaxed">
-                  {c.desc}
-                </p>
+                  {/* Title & Subtitle */}
+                  <h3 className="font-editorial font-bold text-2xl text-white group-hover:text-amber-200 transition">
+                    {c.name}
+                  </h3>
+                  <p className="text-xs font-sans-ui font-semibold mt-1" style={{ color: c.accent }}>
+                    {c.subtitle}
+                  </p>
+
+                  {/* Description */}
+                  <p className="text-xs font-sans-ui text-neutral-300/90 mt-3 leading-relaxed">
+                    {c.desc}
+                  </p>
+
+                  {/* Specimen Highlights */}
+                  <div className="mt-4 pt-3 border-t border-white/10">
+                    <span className="text-[10px] font-mono tracking-widest text-amber-400/80 uppercase block font-semibold mb-1">
+                      Key Specimens:
+                    </span>
+                    <p className="text-[11px] font-sans-ui text-neutral-300">
+                      {c.specimens}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bottom Dual Action Links */}
+                <div className="mt-6 pt-4 border-t border-white/15 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleFilterVault(c.vaultCategory)}
+                    className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 hover:text-amber-300 flex items-center gap-1 transition group/btn cursor-pointer"
+                    title={`Filter live vault below for ${c.name}`}
+                  >
+                    <span>Filter Vault</span>
+                    <ArrowDown className="w-3 h-3 group-hover/btn:translate-y-0.5 transition-transform" />
+                  </button>
+
+                  <Link
+                    href={c.href}
+                    className="px-3.5 py-1.5 rounded-full text-[11px] font-mono uppercase tracking-wider font-bold bg-amber-400/15 hover:bg-amber-400 hover:text-black text-amber-300 border border-amber-400/35 transition-all flex items-center gap-1 shadow-sm"
+                  >
+                    <span>Shop All</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </section>
 

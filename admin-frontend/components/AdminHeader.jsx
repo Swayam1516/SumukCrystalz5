@@ -78,7 +78,7 @@ export default function AdminHeader({
 
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-800/50 text-emerald-400 text-xs font-mono">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold">Supabase Synchronized (528Hz)</span>
+            <span className="font-semibold">Supabase Synchronized</span>
           </div>
         </div>
 

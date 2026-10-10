@@ -177,7 +177,7 @@ export function generateWelcomeEmailHtml(data) {
 
     <!-- Spiritual Guarantee Message -->
     <div style="background-color: #161616; border: 1px solid #222222; border-radius: 12px; padding: 14px; text-align: center; font-size: 12px; color: #C5BBAF; line-height: 1.5;">
-      Every crystal specimen in our treasury is 100% natural, lab-certified, and attuned with 528Hz Solfeggio sound bowls by Soumyaa Naveen for maximum pranic energy.
+      Every crystal specimen in our treasury is 100% natural, lab-certified, and attuned with sacred Solfeggio sound bowls by Soumyaa Naveen for maximum pranic energy.
     </div>
   `;
 
@@ -540,7 +540,7 @@ export function formatCustomerWhatsAppMessage(order) {
     `💳 *Payment ID:* ${order.razorpayPaymentId || 'Verified'}\n\n` +
     `✨ *Acquired Specimens:*\n` +
     (order.items || []).map((i) => `• ${i.name} (x${i.quantity})`).join('\n') +
-    `\n\n🔮 *Next Step:* Your specimens are now entering the 528Hz Vedic sound attunement by Soumyaa Naveen & insured armored boxing.\n\n` +
+    `\n\n🔮 *Next Step:* Your specimens are now entering the sacred Vedic sound attunement by Soumyaa Naveen & insured armored boxing.\n\n` +
     `Thank you for honoring the sacred gemstone tradition with Sumuk Crystalz 5.`
   );
 }

@@ -32,7 +32,7 @@ export default function ServicesPage() {
     },
     {
       q: 'How Do I Request a Customized Crystal Order or Altar Grid?',
-      a: 'You can select "Customized Crystal Orders" above and submit your birth details, intention, and preferred stone types. Soumyaa personally cross-references your astrological profile to curate, wire-wrap, and 528Hz consecrate your bespoke crystal piece.',
+      a: 'You can select "Customized Crystal Orders" above and submit your birth details, intention, and preferred stone types. Soumyaa personally cross-references your astrological profile to curate, wire-wrap, and sacredly consecrate your bespoke crystal piece.',
     },
     {
       q: 'How Soon Will I Feel the Effects of Energy Healing or Cord-Cutting?',

@@ -115,7 +115,7 @@ export default function AdminDashboardPage() {
 
   // Broadcast & Modalities State
   const [announcementMessage, setAnnouncementMessage] = useState(
-    '✨ Sacred Consecration: Every crystal specimen is cleansed with 528Hz Solfeggio sound bowls & consecrated by Usui Reiki Master Soumyaa Naveen.'
+    '✨ Sacred Consecration: Every crystal specimen is cleansed with sacred Solfeggio sound bowls & consecrated by Usui Reiki Master Soumyaa Naveen.'
   );
   const [announcementActive, setAnnouncementActive] = useState(false);
   const [savingAnnouncement, setSavingAnnouncement] = useState(false);

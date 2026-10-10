@@ -57,7 +57,7 @@ export default function DynamicOptionBuilder({ onSuccess, onError }) {
       values: [
         { id: 'val_4', label: 'Standard Raw Energy (No Charge)', price_adjustment: 0, stock_quantity: 50 },
         { id: 'val_5', label: 'Vedic Mantra Consecrated by Soumyaa Naveen', price_adjustment: 350, stock_quantity: 50 },
-        { id: 'val_6', label: '528Hz Solfeggio Sound-Attuned + Custom Yantra', price_adjustment: 500, stock_quantity: 25 },
+        { id: 'val_6', label: 'Solfeggio Sound-Attuned + Custom Yantra', price_adjustment: 500, stock_quantity: 25 },
       ],
     },
   ]);

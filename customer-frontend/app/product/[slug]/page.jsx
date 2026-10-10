@@ -525,7 +525,7 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-[#6B6357] leading-relaxed font-sans-ui">
-                  Individually consecrated with Vedic Surya mantras &amp; 528Hz Solfeggio sound bowls by Reiki Master Soumyaa Naveen prior to dispatch.
+                  Individually consecrated with Vedic Surya mantras &amp; sacred Solfeggio sound bowls by Reiki Master Soumyaa Naveen prior to dispatch.
                 </p>
               </div>
             </div>
@@ -699,6 +699,34 @@ export default function ProductDetailPage() {
                     </p>
                     <p>
                       <strong>Cleansing:</strong> Re-charge on Selenite charging plates or under full moonlight once every month. Avoid submerging in harsh chemical soaps.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Accordion 3: Return Policy & Compulsory Unboxing Video */}
+              <div className="rounded-2xl store-card-light overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggleAccordion('returns')}
+                  className="w-full p-4 flex items-center justify-between text-xs font-editorial font-bold text-[#1F1A15] hover:bg-[#FDFBF7]"
+                >
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-[#B8860B]" />
+                    <span>Return Policy &amp; Compulsory Unboxing Video</span>
+                  </div>
+                  {openAccordions.returns ? <ChevronUp className="w-4 h-4 text-[#B8860B]" /> : <ChevronDown className="w-4 h-4 text-[#B8860B]" />}
+                </button>
+                {openAccordions.returns && (
+                  <div className="p-4 pt-0 text-xs text-[#6B6357] space-y-2 border-t border-[#EDE6DA] font-sans-ui leading-relaxed">
+                    <p>
+                      <strong>Compulsory Unboxing Video Requirement:</strong> For all return, replacement, or transit damage claims, a continuous uncut unboxing video is <strong>compulsorily required</strong> (recorded from the sealed parcel opening to crystal inspection without pauses or edits).
+                    </p>
+                    <p>
+                      <strong>Contact the Owner:</strong> Please contact Founder Soumyaa Naveen directly on WhatsApp/Call at <strong>+91 91117 16355</strong> within 7 days of delivery to initiate any return or replacement.
+                    </p>
+                    <p className="text-[11px] text-[#8C8377] italic">
+                      *Note: Due to sacred energetic consecration, opened or handled crystals cannot be returned for change of mind.
                     </p>
                   </div>
                 )}

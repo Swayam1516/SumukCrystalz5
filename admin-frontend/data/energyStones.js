@@ -35,7 +35,7 @@ export const ENERGY_STONES_CATALOG = [
     shortDescription:
       'Engineered to unlock multi-directional financial channels, business magnetism, and sovereign confidence with 8mm natural gemstones.',
     description:
-      'The Money Magnet Fusion Band is crafted with certified Peruvian Pyrite (The Abundance Stone), Green Aventurine (The Gambler’s Stone of Opportunity), and Golden Tiger’s Eye (Sovereign Will & Solar Plexus Power). Handcrafted with high-tensile silicone elastic and 528Hz sound consecrated by Reiki Master Soumyaa Naveen to attract unexpected wealth, career promotions, and financial breakthroughs.',
+      'The Money Magnet Fusion Band is crafted with certified Peruvian Pyrite (The Abundance Stone), Green Aventurine (The Gambler’s Stone of Opportunity), and Golden Tiger’s Eye (Sovereign Will & Solar Plexus Power). Handcrafted with high-tensile silicone elastic and sacredly consecrated by Reiki Master Soumyaa Naveen to attract unexpected wealth, career promotions, and financial breakthroughs.',
     purpose: 'wealth',
     purposeLabel: 'Wealth & Abundance',
     beadType: 'Pyrite',
@@ -176,7 +176,7 @@ export const ENERGY_STONES_CATALOG = [
     id: 'amethyst-crown-tranquility-mala',
     slug: 'amethyst-crown-tranquility-mala',
     name: 'Royal Amethyst Crown Meditation Band',
-    subtitle: 'Deep Brazilian Violet Quartz with 528Hz Solfeggio Attunement',
+    subtitle: 'Deep Brazilian Violet Quartz with Sacred Solfeggio Attunement',
     shortDescription:
       'Master stone of deep sleep, anxiety relief, third-eye intuition, and transcendental mental stillness.',
     description:

@@ -244,10 +244,10 @@ export default function LuxuryInvoiceModal({ order, isOpen, onClose }) {
               <ShieldCheck className="w-8 h-8 text-amber-400 flex-shrink-0" />
               <div>
                 <p className="text-xs font-serif font-bold text-white print:text-black">
-                  Authenticity &amp; 528Hz Sound Consecration Sealed
+                  Authenticity &amp; Sacred Sound Consecration Sealed
                 </p>
                 <p className="text-[11px] text-neutral-400 print:text-neutral-600 font-sans-ui">
-                  Every crystal specimen is ethically mined, lab certified for 100% natural mineral provenance, and attuned with 528Hz Solfeggio sound bowls.
+                  Every crystal specimen is ethically mined, lab certified for 100% natural mineral provenance, and attuned with sacred Solfeggio sound bowls.
                 </p>
               </div>
             </div>
