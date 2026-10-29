@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import ServicesBySoumya from '../../components/ServicesBySoumya';
 import DualTierFilterTicker from '../../components/DualTierFilterTicker';
-import ProvenanceTrustCards from '../../components/ProvenanceTrustCards';
 
 export default function ServicesPage() {
 
@@ -94,11 +93,6 @@ export default function ServicesPage() {
           <DualTierFilterTicker
             isMarquee={false}
           />
-        </div>
-
-        {/* Provenance Trust Cards (Matching Image 3) */}
-        <div className="mt-12">
-          <ProvenanceTrustCards />
         </div>
       </section>
 

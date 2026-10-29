@@ -85,8 +85,8 @@ export function normalizeProduct(raw) {
     healing_benefits: raw.healing_benefits || '',
     careInstructions: raw.care_instructions || '',
     care_instructions: raw.care_instructions || '',
-    authenticityInfo: raw.authenticity_info || '100% Certified Authentic Natural Crystal & Sacredly Consecrated',
-    authenticity_info: raw.authenticity_info || '100% Certified Authentic Natural Crystal & Sacredly Consecrated',
+    authenticityInfo: raw.authenticity_info || 'Authentic Natural Crystal & Sacredly Consecrated',
+    authenticity_info: raw.authenticity_info || 'Authentic Natural Crystal & Sacredly Consecrated',
     price: sellingPrice,
     sellingPrice,
     selling_price: sellingPrice,
@@ -153,7 +153,7 @@ export async function saveProductToSupabase(productPayload) {
       description: productPayload.description || '',
       healing_benefits: productPayload.healingBenefits || productPayload.healing_benefits || (Array.isArray(productPayload.vedicBenefits) ? productPayload.vedicBenefits.join('\n') : ''),
       care_instructions: productPayload.careInstructions || productPayload.care_instructions || '',
-      authenticity_info: productPayload.authenticityInfo || productPayload.authenticity_info || '100% Certified Authentic Natural Crystal & Sacredly Consecrated',
+      authenticity_info: productPayload.authenticityInfo || productPayload.authenticity_info || 'Authentic Natural Crystal & Sacredly Consecrated',
       selling_price: sellingPrice,
       original_price: originalPrice,
       discount_percentage: discountPercent,
@@ -501,51 +501,151 @@ export async function updateSupabaseAnnouncement({ message, is_active }) {
 
 /**
  * ==========================================
+ * OCCASION & FESTIVAL SALE BANNER MANAGEMENT
+ * ==========================================
+ */
+
+export const DEFAULT_OCCASION_BANNER = {
+  id: 'occasion_sale_banner',
+  occasion_name: 'Diwali',
+  title: 'BIG SPIRITUAL DIWALI',
+  subtitle: 'SALE STARTS 28TH OCT',
+  discount_badge: 'FESTIVE SALE',
+  link_url: '/shop?sale=diwali',
+  image_url: '/images/diwali-sale-banner.jpg',
+  gradient_theme: 'diwali',
+  is_active: true,
+  updated_at: new Date().toISOString(),
+};
+
+/**
+ * Fetch dynamic occasion sale banner
+ */
+export async function getSupabaseOccasionBanner() {
+  if (!isSupabaseOfflineState()) {
+    try {
+      const { data, error } = await supabase
+        .from('site_announcements')
+        .select('*')
+        .eq('id', 'occasion_sale_banner')
+        .maybeSingle();
+
+      if (!error && data && data.message) {
+        try {
+          const parsed = JSON.parse(data.message);
+          if (parsed && typeof parsed === 'object') {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('sumuk_occasion_banner', JSON.stringify(parsed));
+            }
+            return parsed;
+          }
+        } catch (_) {}
+      }
+    } catch (err) {
+      // ignore
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('sumuk_occasion_banner');
+      if (cached) return JSON.parse(cached);
+    } catch (_) {}
+  }
+
+  return DEFAULT_OCCASION_BANNER;
+}
+
+/**
+ * Save/update dynamic occasion sale banner
+ */
+export async function updateSupabaseOccasionBanner(bannerPayload) {
+  const merged = {
+    ...DEFAULT_OCCASION_BANNER,
+    ...bannerPayload,
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sumuk_occasion_banner', JSON.stringify(merged));
+      window.dispatchEvent(new CustomEvent('sumuk_occasion_banner_updated', { detail: merged }));
+    }
+
+    if (!isSupabaseOfflineState()) {
+      await supabase
+        .from('site_announcements')
+        .upsert({
+          id: 'occasion_sale_banner',
+          message: JSON.stringify(merged),
+          is_active: Boolean(merged.is_active),
+          updated_at: merged.updated_at,
+        }, { onConflict: 'id' })
+        .catch(() => {});
+    }
+
+    return { success: true, banner: merged };
+  } catch (err) {
+    console.warn('Update banner warning:', err);
+    return { success: true, banner: merged };
+  }
+}
+
+/**
+ * ==========================================
  * SERVICE AVAILABILITY MANAGEMENT
  * ==========================================
  */
 
-export const CANONICAL_SERVICES_DEFAULT = [
-  { id: 'reiki-master', name: 'Reiki Mastership & Energy Attunement', status: 'available' },
-  { id: 'aura-checking', name: 'Aura Checking & Biofield Scanning', status: 'available' },
-  { id: 'numerology', name: 'Sacred Numerology & Destiny Blueprint', status: 'available' },
-  { id: 'tarot-readings', name: 'Intuitive Tarot Readings & Guidance', status: 'available' },
-  { id: 'crystal-therapy', name: 'Crystal Therapy & Resonant Attunement', status: 'available' },
-  { id: 'psychic-surgery', name: 'Psychic Surgery & Etheric Cord Cutting', status: 'available' },
-  { id: 'energy-healing', name: 'Energy Healing & Blockage Removal', status: 'available' },
-  { id: 'reiki-infused-products', name: 'Reiki-Infused Crystal Products', status: 'available' },
-  { id: 'customized-crystal-orders', name: 'Customized Crystal Orders & Bespoke Curation', status: 'available' },
-];
+import { CANONICAL_SERVICES_DEFAULT, normalizeService, SERVICE_CATEGORIES } from '../data/servicesData';
+export { CANONICAL_SERVICES_DEFAULT, normalizeService, SERVICE_CATEGORIES };
 
 /**
- * Fetch all service availability statuses
+ * ==========================================
+ * SERVICE AVAILABILITY & MODALITIES MANAGEMENT
+ * ==========================================
+ */
+
+/**
+ * Fetch all service availability statuses and full rich descriptions
  */
 export async function getSupabaseServices() {
+  // 1. Try Supabase
   try {
     const { data, error } = await supabase
       .from('services')
       .select('*')
       .order('id', { ascending: true });
 
-    if (error) throw error;
+    if (!error && data && data.length > 0) {
+      const normalizedList = data.map(normalizeService);
 
-    if (data && data.length > 0) {
       if (typeof window !== 'undefined') {
         try {
           const map = {};
-          data.forEach((s) => { map[s.id] = s.status || 'available'; });
+          normalizedList.forEach((s) => { map[s.id] = s.status || 'available'; });
           localStorage.setItem('sumuk_services_status_map', JSON.stringify(map));
+          localStorage.setItem('sumuk_custom_services_list', JSON.stringify(normalizedList));
         } catch (_) {}
       }
-      return data;
+      return normalizedList;
     }
   } catch (err) {
-    // Gracefully fallback if table does not exist in schema cache
+    // Gracefully fallback
   }
 
-  // Defensive fallback from localStorage map
+  // 2. Check localStorage custom services list
   if (typeof window !== 'undefined') {
     try {
+      const cachedCustom = localStorage.getItem('sumuk_custom_services_list');
+      if (cachedCustom) {
+        const parsed = JSON.parse(cachedCustom);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(normalizeService);
+        }
+      }
+
+      // Check status map fallback
       const cachedRaw = localStorage.getItem('sumuk_services_status_map');
       if (cachedRaw) {
         const cachedMap = JSON.parse(cachedRaw);
@@ -557,6 +657,7 @@ export async function getSupabaseServices() {
     } catch (_) {}
   }
 
+  // 3. Fallback to canonical 9 modalities
   return CANONICAL_SERVICES_DEFAULT;
 }
 
@@ -583,22 +684,126 @@ export async function updateServiceStatusInSupabase(serviceId, status) {
         const cachedMap = cachedRaw ? JSON.parse(cachedRaw) : {};
         cachedMap[serviceId] = validStatus;
         localStorage.setItem('sumuk_services_status_map', JSON.stringify(cachedMap));
+
+        const cachedCustom = localStorage.getItem('sumuk_custom_services_list');
+        if (cachedCustom) {
+          const list = JSON.parse(cachedCustom);
+          const idx = list.findIndex((s) => s.id === serviceId);
+          if (idx >= 0) {
+            list[idx].status = validStatus;
+            localStorage.setItem('sumuk_custom_services_list', JSON.stringify(list));
+          }
+        }
       } catch (_) {}
     }
 
     return { success: true, serviceId, status: validStatus, error: null };
   } catch (err) {
-    console.warn('Supabase service update warning:', err.message);
     if (typeof window !== 'undefined') {
       try {
         const cachedRaw = localStorage.getItem('sumuk_services_status_map');
         const cachedMap = cachedRaw ? JSON.parse(cachedRaw) : {};
         cachedMap[serviceId] = validStatus;
         localStorage.setItem('sumuk_services_status_map', JSON.stringify(cachedMap));
+
+        const cachedCustom = localStorage.getItem('sumuk_custom_services_list');
+        if (cachedCustom) {
+          const list = JSON.parse(cachedCustom);
+          const idx = list.findIndex((s) => s.id === serviceId);
+          if (idx >= 0) {
+            list[idx].status = validStatus;
+            localStorage.setItem('sumuk_custom_services_list', JSON.stringify(list));
+          }
+        }
       } catch (_) {}
     }
     return { success: true, serviceId, status: validStatus, error: null };
   }
+}
+
+/**
+ * Save complete service object (Broad description, pricing, tiers, keywords, requirements)
+ */
+export async function saveServiceToSupabase(serviceData) {
+  const normalized = normalizeService(serviceData);
+  if (!normalized || !normalized.id) {
+    return { success: false, error: 'Service ID is required' };
+  }
+
+  // 1. Cache locally immediately
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('sumuk_custom_services_list');
+      let list = cached ? JSON.parse(cached) : [...CANONICAL_SERVICES_DEFAULT];
+      const idx = list.findIndex((s) => s.id === normalized.id);
+      if (idx >= 0) {
+        list[idx] = normalized;
+      } else {
+        list.push(normalized);
+      }
+      localStorage.setItem('sumuk_custom_services_list', JSON.stringify(list));
+
+      const statusMapRaw = localStorage.getItem('sumuk_services_status_map');
+      const statusMap = statusMapRaw ? JSON.parse(statusMapRaw) : {};
+      statusMap[normalized.id] = normalized.status || 'available';
+      localStorage.setItem('sumuk_services_status_map', JSON.stringify(statusMap));
+    } catch (_) {}
+  }
+
+  // 2. Persist to Supabase
+  try {
+    const payload = {
+      id: normalized.id,
+      name: normalized.name || normalized.title,
+      title: normalized.title || normalized.name,
+      short_title: normalized.shortTitle || normalized.name,
+      category: normalized.category || 'readings',
+      price: Number(normalized.price || 0),
+      status: normalized.status || 'available',
+      duration: normalized.duration || '',
+      format: normalized.format || '',
+      tagline: normalized.tagline || '',
+      description: normalized.description || '',
+      benefits: {
+        badge: normalized.badge,
+        priceDisplay: normalized.priceDisplay,
+        broadDescription: normalized.broadDescription,
+        keywords: normalized.keywords,
+        pricingTiers: normalized.pricingTiers,
+        whatWeAnalyse: normalized.whatWeAnalyse,
+        howItWorks: normalized.howItWorks,
+        detailsRequired: normalized.detailsRequired,
+        importantNote: normalized.importantNote,
+      },
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from('services')
+      .upsert(payload, { onConflict: 'id' })
+      .select();
+
+    if (error) {
+      console.warn('Supabase service upsert error:', error.message);
+    }
+    return { success: true, service: normalized, error: null };
+  } catch (err) {
+    console.warn('Supabase service upsert exception:', err.message);
+    return { success: true, service: normalized, error: null };
+  }
+}
+
+/**
+ * Reset all services to default canonical seed data
+ */
+export async function resetServicesToDefault() {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('sumuk_custom_services_list');
+      localStorage.removeItem('sumuk_services_status_map');
+    } catch (_) {}
+  }
+  return CANONICAL_SERVICES_DEFAULT;
 }
 
 /**

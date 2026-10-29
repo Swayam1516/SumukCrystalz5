@@ -493,7 +493,7 @@ export default function CheckoutPage() {
                   Safe &amp; Encrypted
                 </div>
                 <div className="text-[10px] text-[#6B7280] flex items-center gap-1">
-                  <span>256-bit security</span>
+                  <span>Bank-grade security</span>
                   <div className="w-4 h-[1px] bg-[#D4AF37]/70 inline-block" />
                 </div>
               </div>
@@ -629,7 +629,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <p className="text-[11px] text-[#6B7280] leading-relaxed pl-8">
-                  Official 256-bit encrypted Razorpay modal. Accepts Google Pay, PhonePe, Paytm, all Credit/Debit cards &amp; NetBanking.
+                  Official bank-grade encrypted Razorpay modal. Accepts Google Pay, PhonePe, Paytm, all Credit/Debit cards &amp; NetBanking.
                 </p>
 
                 {/* Brand Logos Row */}
@@ -672,7 +672,7 @@ export default function CheckoutPage() {
             <div className="p-3.5 rounded-2xl bg-purple-50/80 border border-purple-200/70 flex items-center gap-3">
               <ShieldCheck className="w-4 h-4 text-purple-600 flex-shrink-0" />
               <p className="text-xs text-purple-900 font-medium">
-                Every order includes museum provenance certificate &amp; sacred sound attunement.
+                Every specimen is 100% natural, authentic, and securely packed with transit protection guarantee.
               </p>
             </div>
 
@@ -682,7 +682,7 @@ export default function CheckoutPage() {
                 <div className="w-7 h-7 rounded-full bg-[#FAF5E6] border border-[#D4AF37]/40 flex items-center justify-center text-[#B8860B]">
                   <Lock className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[10px] font-semibold text-[#4B5563]">256-bit Encryption</span>
+                <span className="text-[10px] font-semibold text-[#4B5563]">Encrypted Checkout</span>
               </div>
 
               <div className="flex flex-col items-center justify-center p-2 space-y-1">
@@ -777,11 +777,6 @@ export default function CheckoutPage() {
                     `₹${shippingFee}`
                   )}
                 </span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span>Gemological Certification &amp; Sacred Consecration</span>
-                <span className="text-[#B8860B] font-bold">Included Free</span>
               </div>
 
               {/* Total Investment Line */}

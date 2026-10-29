@@ -139,7 +139,7 @@ export default function LuxuryInvoiceModal({ order, isOpen, onClose }) {
                 Payment Verification
               </p>
               <p className="text-xs text-neutral-300 print:text-neutral-800 font-mono">
-                Gateway: <strong className="text-white print:text-black">Razorpay Secure 256-bit</strong>
+                Gateway: <strong className="text-white print:text-black">Razorpay Secure Gateway</strong>
               </p>
               <p className="text-xs text-neutral-300 print:text-neutral-800 font-mono">
                 Payment ID: <strong className="text-emerald-400 print:text-black">{order.razorpayPaymentId || 'Verified'}</strong>
@@ -183,7 +183,7 @@ export default function LuxuryInvoiceModal({ order, isOpen, onClose }) {
                         {item.name}
                       </strong>
                       <span className="text-[10px] text-amber-400/80 font-mono">
-                        {item.variantLabel || 'Consecrated 8mm Regular'} &bull; Lab Certified
+                        {item.variantLabel || 'Consecrated 8mm Regular'} &bull; Natural Mineral
                       </span>
                     </td>
                     <td className="py-3.5 px-3 text-center font-mono text-neutral-400 print:text-neutral-700">
@@ -225,10 +225,7 @@ export default function LuxuryInvoiceModal({ order, isOpen, onClose }) {
                   {shippingFee === 0 ? 'COMPLIMENTARY' : `₹${shippingFee.toFixed(2)}`}
                 </span>
               </div>
-              <div className="flex justify-between text-neutral-400 print:text-neutral-700">
-                <span>Gemological Certification</span>
-                <span className="font-mono text-amber-400 print:text-black">INCLUDED FREE</span>
-              </div>
+
               <div className="flex justify-between pt-3 border-t border-amber-500/30 text-sm font-bold text-white print:text-black">
                 <span className="font-serif">Grand Total Paid</span>
                 <span className="font-mono text-base text-[#E8C97C] print:text-black">
@@ -247,7 +244,7 @@ export default function LuxuryInvoiceModal({ order, isOpen, onClose }) {
                   Authenticity &amp; Sacred Sound Consecration Sealed
                 </p>
                 <p className="text-[11px] text-neutral-400 print:text-neutral-600 font-sans-ui">
-                  Every crystal specimen is ethically mined, lab certified for 100% natural mineral provenance, and attuned with sacred Solfeggio sound bowls.
+                  Every crystal specimen is ethically mined, verified for natural mineral provenance, and attuned with sacred Solfeggio sound bowls.
                 </p>
               </div>
             </div>

@@ -297,27 +297,25 @@ export default function AccountPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#07050d] text-white flex flex-col selection:bg-amber-500 selection:text-black">
+    <div className="min-h-screen bg-[#140C1D] text-[#FAF8F5] flex flex-col selection:bg-amber-400 selection:text-black">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Luxury Top Header Banner */}
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#171026] via-[#100b1d] to-[#1c1230] border border-amber-500/25 p-6 sm:p-10 mb-8 shadow-2xl">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#1A1226] via-[#150E20] to-[#1C122B] border border-[#D4AF37]/30 p-6 sm:p-8 mb-8 shadow-xl">
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4 sm:gap-5">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border-2 border-amber-400/40 flex items-center justify-center shadow-lg shadow-amber-500/10">
-                <Crown className="w-8 h-8 sm:w-10 sm:h-10 text-amber-300" />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/10 border border-[#D4AF37]/40 flex items-center justify-center shadow-md">
+                <User className="w-7 h-7 sm:w-8 sm:h-8 text-[#E5C378]" />
               </div>
 
               <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/10 border border-amber-400/30 text-[10px] font-mono font-bold text-amber-300 uppercase tracking-widest mb-1.5">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
-                  <span>Sanctuary Patron Tier I</span>
+                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/10 border border-[#D4AF37]/30 text-[10px] font-mono font-bold text-[#E5C378] uppercase tracking-widest mb-1">
+                  <span>Verified Patron Account</span>
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-wide">
-                  {user ? user.name || 'Sacred Collector' : 'Collector Sanctuary'}
+                <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-white tracking-wide">
+                  {user ? user.name || 'Crystal Patron' : 'Patron Account'}
                 </h1>
-                <p className="text-xs sm:text-sm text-neutral-400 font-mono mt-1">
-                  {user ? user.email : 'Sign in to access your consecrated orders & provenance vault'}
+                <p className="text-xs text-stone-400 font-mono mt-0.5">
+                  {user ? user.email : 'Sign in to access your orders, invoices, and saved addresses.'}
                 </p>
               </div>
             </div>
@@ -329,20 +327,20 @@ export default function AccountPage() {
                     logout();
                     router.push('/');
                   }}
-                  className="px-5 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/40 hover:border-red-500/60 text-red-200 text-xs font-mono font-bold transition flex items-center gap-2 shadow-lg hover:shadow-red-500/20"
-                  title="Sign Out of Sanctuary"
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-red-400/40 text-stone-300 hover:text-red-300 text-xs font-mono transition flex items-center gap-2 cursor-pointer shadow-xs"
+                  title="Sign Out"
                 >
-                  <LogOut className="w-4 h-4 text-red-400" />
+                  <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => openAuthModal('login')}
-                className="btn-pill-primary px-6 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider shadow-xl flex items-center gap-2"
+                className="px-6 py-3 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#C59B27] hover:brightness-110 text-stone-950 text-xs font-mono font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-black" />
-                <span>Sign In to Sanctuary</span>
+                <Sparkles className="w-4 h-4 text-stone-950" />
+                <span>Sign In</span>
               </button>
             )}
           </div>
@@ -350,26 +348,26 @@ export default function AccountPage() {
 
         {/* Not Logged In Prompt */}
         {!user && (
-          <div className="my-12 text-center py-16 px-6 rounded-3xl bg-[#0c0915] border border-amber-500/20 shadow-2xl max-w-2xl mx-auto space-y-6">
-            <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-400/30 flex items-center justify-center">
-              <Shield className="w-8 h-8 text-amber-300" />
+          <div className="my-12 text-center py-16 px-6 rounded-3xl bg-white/[0.03] border border-white/10 shadow-2xl max-w-2xl mx-auto space-y-6">
+            <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-[#D4AF37]/30 flex items-center justify-center">
+              <Shield className="w-8 h-8 text-[#E5C378]" />
             </div>
             <div className="space-y-2">
-              <h2 className="font-serif text-2xl font-bold text-white">Private Sanctuary Vault</h2>
-              <p className="text-xs sm:text-sm text-neutral-400 font-mono max-w-md mx-auto leading-relaxed">
-                Connect your patron account to review your consecrated crystals, live Shiprocket tracking, official Vedic certificates, and invoices.
+              <h2 className="font-editorial text-2xl font-bold text-white">Patron Account Portal</h2>
+              <p className="text-xs sm:text-sm text-stone-400 font-sans max-w-md mx-auto leading-relaxed">
+                Sign in to review your orders, track courier dispatches, access official invoices, and update your delivery addresses.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
                 onClick={() => openAuthModal('login')}
-                className="btn-pill-primary w-full sm:w-auto px-8 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider"
+                className="px-7 py-3 rounded-full bg-[#D4AF37] hover:bg-[#C59B27] text-stone-950 text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
               >
                 Sign In
               </button>
               <button
                 onClick={() => openAuthModal('register')}
-                className="btn-pill-secondary w-full sm:w-auto px-8 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider"
+                className="px-7 py-3 rounded-full bg-white/10 hover:bg-white/15 text-white border border-white/10 text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
               >
                 Create Account
               </button>
@@ -382,21 +380,22 @@ export default function AccountPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Sidebar Navigation */}
             <aside className="lg:col-span-1 space-y-2">
-              <div className="bg-[#0e0a19] rounded-2xl border border-amber-500/20 p-2 space-y-1 shadow-xl">
+              {/* Mobile Horizontal Pill Bar / Desktop Vertical Menu */}
+              <div className="bg-white/[0.03] rounded-2xl border border-white/10 p-2 space-y-1 shadow-lg flex lg:flex-col overflow-x-auto no-scrollbar gap-1">
                 <button
                   onClick={() => setActiveTab('orders')}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition ${
+                  className={`flex-shrink-0 flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition cursor-pointer ${
                     activeTab === 'orders'
-                      ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-300 border border-amber-500/30'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-amber-500/15 text-[#E5C378] border border-[#D4AF37]/40'
+                      : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <Package className="w-4 h-4" />
-                    <span>Sacred Orders &amp; Tracking</span>
+                    <span>Orders &amp; Tracking</span>
                   </div>
                   {orders.length > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px]">
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-500/20 text-[#E5C378] text-[10px]">
                       {orders.length}
                     </span>
                   )}
@@ -404,33 +403,33 @@ export default function AccountPage() {
 
                 <button
                   onClick={() => setActiveTab('profile')}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition ${
+                  className={`flex-shrink-0 flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition cursor-pointer ${
                     activeTab === 'profile'
-                      ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-300 border border-amber-500/30'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-amber-500/15 text-[#E5C378] border border-[#D4AF37]/40'
+                      : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <User className="w-4 h-4" />
-                    <span>Collector Profile</span>
+                    <span>Profile Details</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-neutral-500" />
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-500 hidden lg:block" />
                 </button>
 
                 <button
                   onClick={() => setActiveTab('wishlist')}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition ${
+                  className={`flex-shrink-0 flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition cursor-pointer ${
                     activeTab === 'wishlist'
-                      ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-300 border border-amber-500/30'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-amber-500/15 text-[#E5C378] border border-[#D4AF37]/40'
+                      : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <Heart className="w-4 h-4" />
-                    <span>Sacred Wishlist</span>
+                    <span>Wishlist</span>
                   </div>
                   {wishlist.length > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px]">
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px]">
                       {wishlist.length}
                     </span>
                   )}
@@ -438,64 +437,33 @@ export default function AccountPage() {
 
                 <button
                   onClick={() => setActiveTab('addresses')}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition ${
+                  className={`flex-shrink-0 flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition cursor-pointer ${
                     activeTab === 'addresses'
-                      ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-300 border border-amber-500/30'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-amber-500/15 text-[#E5C378] border border-[#D4AF37]/40'
+                      : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <MapPin className="w-4 h-4" />
-                    <span>Saved Sanctuaries</span>
+                    <span>Saved Addresses</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-neutral-500" />
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-500 hidden lg:block" />
                 </button>
 
                 <button
                   onClick={() => setActiveTab('notifications')}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition ${
+                  className={`flex-shrink-0 flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold transition cursor-pointer ${
                     activeTab === 'notifications'
-                      ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-300 border border-amber-500/30'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-amber-500/15 text-[#E5C378] border border-[#D4AF37]/40'
+                      : 'text-stone-400 hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <Bell className="w-4 h-4" />
-                    <span>Notifications &amp; Vedic Alerts</span>
+                    <span>Notifications</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-neutral-500" />
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-500 hidden lg:block" />
                 </button>
-
-                {/* Prominent Sidebar Sign Out Option */}
-                <div className="pt-2 border-t border-white/10">
-                  <button
-                    onClick={() => {
-                      logout();
-                      router.push('/');
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono font-bold text-red-300 hover:text-red-200 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition shadow-sm"
-                  >
-                    <div className="flex items-center gap-3">
-                      <LogOut className="w-4 h-4 text-red-400" />
-                      <span>Sign Out</span>
-                    </div>
-                    <span className="text-[10px] text-red-400/80 font-mono">Exit Vault</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Founder Spiritual Note */}
-              <div className="p-5 rounded-2xl bg-[#0b0814] border border-amber-500/15 space-y-2.5">
-                <div className="flex items-center gap-2 text-amber-300 text-xs font-serif font-bold">
-                  <Award className="w-4 h-4 text-amber-400" />
-                  <span>Consecration Guarantee</span>
-                </div>
-                <p className="text-[11px] text-neutral-400 font-mono leading-relaxed">
-                  Every specimen is individually attuned with 432Hz Sound Bowls and Vedic sacred mantras before dispatch.
-                </p>
-                <div className="pt-1 text-[10px] text-amber-400/80 font-mono italic">
-                  — Soumya Naveen, Founder &amp; Healer
-                </div>
               </div>
             </aside>
 

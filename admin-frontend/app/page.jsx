@@ -15,6 +15,9 @@ import {
   updateSupabaseAnnouncement,
   getSupabaseServices,
   updateServiceStatusInSupabase,
+  saveServiceToSupabase,
+  resetServicesToDefault,
+  SERVICE_CATEGORIES,
   CANONICAL_SERVICES_DEFAULT,
   getSupabaseDeliverySettings,
   updateSupabaseDeliverySettings,
@@ -37,7 +40,9 @@ import RestockModal from '@/components/RestockModal';
 import OrderStatusModal from '@/components/OrderStatusModal';
 import ProductPreviewModal from '@/components/ProductPreviewModal';
 import AdminFilterManager from '@/components/AdminFilterManager';
+import AdminOccasionBannerManager from '@/components/AdminOccasionBannerManager';
 import AdminChatbotManager from '@/components/AdminChatbotManager';
+import AdminServiceEditorModal from '@/components/AdminServiceEditorModal';
 
 // Lucide Icons
 import {
@@ -121,6 +126,9 @@ export default function AdminDashboardPage() {
   const [savingAnnouncement, setSavingAnnouncement] = useState(false);
   const [servicesList, setServicesList] = useState(CANONICAL_SERVICES_DEFAULT);
   const [updatingServiceId, setUpdatingServiceId] = useState(null);
+  const [editingService, setEditingService] = useState(null);
+  const [isSavingService, setIsSavingService] = useState(false);
+  const [serviceCategoryFilter, setServiceCategoryFilter] = useState('all');
 
   // Toast System
   const [toasts, setToasts] = useState([]);
@@ -327,7 +335,7 @@ export default function AdminDashboardPage() {
   };
 
   // Bulk Actions
-  const handleBulkAction = async ({ type, ids = [], value, feature }) => {
+  const handleBulkAction = async ({ type, ids = [], value, feature, filters, mode }) => {
     if (ids.length === 0) return;
 
     if (type === 'STATUS') {
@@ -351,6 +359,49 @@ export default function AdminDashboardPage() {
         prev.map((p) => (ids.includes(p.id || p.slug) ? { ...p, [feature]: true } : p))
       );
       addToast(`✨ Feature badge applied to ${ids.length} specimens.`);
+    } else if (type === 'ASSIGN_FILTERS') {
+      const targetFilters = filters || [];
+      const assignMode = mode || 'merge';
+
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (!ids.includes(p.id || p.slug)) return p;
+          const currentFilters = p.assigned_filters || p.assignedFilters || p.tags || [];
+          const nextFilters =
+            assignMode === 'replace'
+              ? targetFilters
+              : Array.from(new Set([...currentFilters, ...targetFilters]));
+          return {
+            ...p,
+            assigned_filters: nextFilters,
+            assignedFilters: nextFilters,
+            tags: nextFilters,
+          };
+        })
+      );
+
+      for (const id of ids) {
+        const prod = products.find((p) => p.id === id || p.slug === id);
+        if (prod) {
+          const currentFilters = prod.assigned_filters || prod.assignedFilters || prod.tags || [];
+          const nextFilters =
+            assignMode === 'replace'
+              ? targetFilters
+              : Array.from(new Set([...currentFilters, ...targetFilters]));
+          const updated = {
+            ...prod,
+            assigned_filters: nextFilters,
+            assignedFilters: nextFilters,
+            tags: nextFilters,
+          };
+          try {
+            await saveProductToSupabase(updated);
+          } catch (e) {
+            console.warn('Filter persist warning for product:', id, e);
+          }
+        }
+      }
+      addToast(`✨ Filters successfully updated for ${ids.length} crystal specimens!`);
     }
   };
 
@@ -449,6 +500,76 @@ export default function AdminDashboardPage() {
     } finally {
       setUpdatingServiceId(null);
     }
+  };
+
+  // Open Service Editor Modal
+  const handleOpenEditService = (service) => {
+    setEditingService(service);
+  };
+
+  // Add New Custom Modality
+  const handleCreateNewService = () => {
+    setEditingService({
+      id: `service-${Date.now()}`,
+      name: '',
+      title: '',
+      shortTitle: '',
+      badge: 'Sacred Modality',
+      category: 'readings',
+      price: 999,
+      priceDisplay: '₹999',
+      status: 'available',
+      duration: '20–25 Minutes',
+      format: 'WhatsApp Audio / Video Call',
+      tagline: '',
+      description: '',
+      broadDescription: '',
+      keywords: ['Intuitive Guidance', 'Vedic Alignment'],
+      pricingTiers: [
+        { name: 'Standard Session', price: '₹999', details: 'Full personalized consultation' }
+      ],
+      whatWeAnalyse: ['Energetic state & subtle anatomy'],
+      howItWorks: ['1. Book by making pre-payment', '2. Share details on WhatsApp', '3. Receive personalized session'],
+      detailsRequired: ['Full Name', 'Date of Birth (DD/MM/YYYY)', 'Contact Details'],
+      importantNote: 'Advance booking is required. Intended for spiritual self-reflection.',
+    });
+  };
+
+  // Save Service Changes
+  const handleSaveService = async (serviceData) => {
+    setIsSavingService(true);
+    try {
+      const res = await saveServiceToSupabase(serviceData);
+      if (res.success) {
+        setServicesList((prev) => {
+          const idx = prev.findIndex((s) => s.id === serviceData.id);
+          if (idx >= 0) {
+            const next = [...prev];
+            next[idx] = res.service;
+            return next;
+          }
+          return [...prev, res.service];
+        });
+        addToast(`✨ Modality "${serviceData.title || serviceData.name}" saved & published!`);
+        setEditingService(null);
+      } else {
+        addToast(res.error || 'Failed to save service', 'error');
+      }
+    } catch (err) {
+      addToast('Error saving service: ' + err.message, 'error');
+    } finally {
+      setIsSavingService(false);
+    }
+  };
+
+  // Reset Services to Default
+  const handleResetServices = async () => {
+    if (!window.confirm('Are you sure you want to reset all 9 modalities to default descriptions and pricing? Any custom edits will revert.')) {
+      return;
+    }
+    const def = await resetServicesToDefault();
+    setServicesList(def);
+    addToast('All 9 sacred modalities restored to canonical descriptions and pricing.');
   };
 
   if (!mounted) {
@@ -557,7 +678,7 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="pt-2 text-center text-[11px] text-stone-500 border-t border-stone-800/80">
-            Protected under 256-bit AES cryptographic token security • Founder Access Only
+            Protected under secure cryptographic token authentication • Founder Access Only
           </div>
         </div>
       </div>
@@ -931,96 +1052,183 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* TAB 7: 9 METAPHYSICAL SERVICES */}
+          {/* TAB 7: 9 METAPHYSICAL SERVICES MANAGEMENT */}
           {activeTab === 'services' && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <div>
-                <h2 className="text-xl font-serif font-bold text-[#F3E5AB] flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-                  9 Sacred Modalities &amp; Energy Healing Services
-                </h2>
-                <p className="text-xs text-stone-400">
-                  Control live booking status and availability badges for all modalities channeled by Founder Soumyaa Naveen.
-                </p>
+              {/* Top Controls Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-stone-950/80 border border-stone-800 shadow-xl">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-serif font-bold text-[#F3E5AB] flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+                    9 Sacred Modalities &amp; Metaphysical Services
+                  </h2>
+                  <p className="text-xs text-stone-400">
+                    Full control over broad descriptions, pricing tiers, highlighted keywords, booking requirements, and live availability.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleResetServices}
+                    className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 text-xs font-mono uppercase tracking-wider transition border border-stone-700 cursor-pointer"
+                  >
+                    Restore Defaults
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateNewService}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-black text-xs font-mono font-bold uppercase tracking-wider shadow-lg flex items-center gap-1.5 hover:opacity-95 transition cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add New Modality</span>
+                  </button>
+                </div>
               </div>
 
+              {/* Category Filter Tabs */}
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { id: 'all', label: 'All Modalities' },
+                  { id: 'readings', label: 'Readings & Numerology' },
+                  { id: 'energy', label: 'Energy & Reiki Healing' },
+                  { id: 'crystals', label: 'Crystals & Consultations' },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setServiceCategoryFilter(cat.id)}
+                    className={`px-4 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition cursor-pointer ${
+                      serviceCategoryFilter === cat.id
+                        ? 'bg-[#D4AF37] text-black font-bold shadow-md'
+                        : 'bg-stone-900 text-stone-400 hover:text-stone-200 border border-stone-800'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Services Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {servicesList.map((service) => {
-                  const currentStatus = service.status || 'available';
-                  const isUpdating = updatingServiceId === service.id;
+                {servicesList
+                  .filter((s) => serviceCategoryFilter === 'all' || s.category === serviceCategoryFilter)
+                  .map((service) => {
+                    const currentStatus = service.status || 'available';
+                    const isUpdating = updatingServiceId === service.id;
 
-                  return (
-                    <div
-                      key={service.id}
-                      className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl ${
-                        currentStatus === 'available'
-                          ? 'bg-stone-900/60 border-emerald-500/30'
-                          : currentStatus === 'currently unavailable'
-                          ? 'bg-stone-900/40 border-rose-500/30'
-                          : 'bg-stone-900/40 border-purple-500/30'
-                      }`}
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37] font-semibold">
-                            {service.id}
-                          </span>
-                          {isUpdating && (
-                            <div className="w-3.5 h-3.5 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                    return (
+                      <div
+                        key={service.id}
+                        className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl ${
+                          currentStatus === 'available'
+                            ? 'bg-stone-900/60 border-emerald-500/30'
+                            : currentStatus === 'currently unavailable'
+                            ? 'bg-stone-900/40 border-rose-500/30'
+                            : 'bg-stone-900/40 border-purple-500/30'
+                        }`}
+                      >
+                        <div className="space-y-3">
+                          {/* Top Row: ID, Price Tag & Updating Spinner */}
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37] font-semibold bg-stone-950 px-2 py-0.5 rounded-md border border-stone-800">
+                              {service.badge || service.category}
+                            </span>
+                            <span className="text-xs font-mono font-bold text-[#F3E5AB]">
+                              {service.priceDisplay || `₹${service.price}`}
+                            </span>
+                            {isUpdating && (
+                              <div className="w-3.5 h-3.5 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                            )}
+                          </div>
+
+                          {/* Title */}
+                          <h4 className="text-base font-serif font-bold text-stone-100 leading-snug">
+                            {service.name || service.title}
+                          </h4>
+
+                          {/* Highlighted Keywords Badges */}
+                          {service.keywords && service.keywords.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {service.keywords.slice(0, 3).map((kw, kidx) => (
+                                <span
+                                  key={kidx}
+                                  className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-stone-950 border border-stone-800 text-stone-300"
+                                >
+                                  {kw}
+                                </span>
+                              ))}
+                              {service.keywords.length > 3 && (
+                                <span className="text-[10px] font-mono text-stone-500 self-center">
+                                  +{service.keywords.length - 3} more
+                                </span>
+                              )}
+                            </div>
                           )}
-                        </div>
-                        <h4 className="text-sm font-serif font-bold text-stone-100 leading-snug">
-                          {service.name || service.title}
-                        </h4>
-                        <p className="text-xs text-stone-400 line-clamp-2">
-                          {service.tagline || service.description || 'Vedic energy attunement session.'}
-                        </p>
-                      </div>
 
-                      {/* 3-State Switcher */}
-                      <div className="space-y-1.5 pt-3 border-t border-stone-800/80">
-                        <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider block">
-                          Current Availability:
-                        </span>
-                        <div className="grid grid-cols-3 gap-1 bg-stone-950 p-1 rounded-2xl border border-stone-800">
+                          {/* Narrative Description Preview */}
+                          <p className="text-xs text-stone-400 line-clamp-2">
+                            {service.broadDescription || service.description || service.tagline}
+                          </p>
+                        </div>
+
+                        {/* Bottom Actions: Edit Broad Description + Availability Switcher */}
+                        <div className="space-y-3 pt-3 border-t border-stone-800/80">
+                          {/* 3-State Availability Switcher */}
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider block">
+                              Availability:
+                            </span>
+                            <div className="grid grid-cols-3 gap-1 bg-stone-950 p-1 rounded-2xl border border-stone-800">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateServiceStatus(service.id, 'available')}
+                                className={`py-1.5 px-2 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                                  currentStatus === 'available'
+                                    ? 'bg-emerald-600 text-white shadow-md'
+                                    : 'text-stone-400 hover:text-stone-200'
+                                }`}
+                              >
+                                Active
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateServiceStatus(service.id, 'currently unavailable')}
+                                className={`py-1.5 px-2 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                                  currentStatus === 'currently unavailable'
+                                    ? 'bg-rose-600 text-white shadow-md'
+                                    : 'text-stone-400 hover:text-stone-200'
+                                }`}
+                              >
+                                Paused
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateServiceStatus(service.id, 'coming soon')}
+                                className={`py-1.5 px-2 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                                  currentStatus === 'coming soon'
+                                    ? 'bg-purple-600 text-white shadow-md'
+                                    : 'text-stone-400 hover:text-stone-200'
+                                }`}
+                              >
+                                Soon
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Edit Broad Description Button */}
                           <button
                             type="button"
-                            onClick={() => handleUpdateServiceStatus(service.id, 'available')}
-                            className={`py-1.5 px-2 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
-                              currentStatus === 'available'
-                                ? 'bg-emerald-600 text-white shadow-md'
-                                : 'text-stone-400 hover:text-stone-200'
-                            }`}
+                            onClick={() => handleOpenEditService(service)}
+                            className="w-full py-2 px-3 rounded-xl bg-stone-950 hover:bg-[#D4AF37] hover:text-black text-[#D4AF37] border border-[#D4AF37]/40 text-xs font-mono font-bold uppercase tracking-wider transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
                           >
-                            Active
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateServiceStatus(service.id, 'currently unavailable')}
-                            className={`py-1.5 px-2 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
-                              currentStatus === 'currently unavailable'
-                                ? 'bg-rose-600 text-white shadow-md'
-                                : 'text-stone-400 hover:text-stone-200'
-                            }`}
-                          >
-                            Paused
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateServiceStatus(service.id, 'coming soon')}
-                            className={`py-1.5 px-2 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
-                              currentStatus === 'coming soon'
-                                ? 'bg-purple-600 text-white shadow-md'
-                                : 'text-stone-400 hover:text-stone-200'
-                            }`}
-                          >
-                            Soon
+                            <span>Edit Description &amp; Details</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -1243,7 +1451,14 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* TAB 10: DYNAMIC FILTER MATRIX */}
+          {/* TAB 10: OCCASION & FESTIVE SALE BANNERS */}
+          {activeTab === 'occasion-banners' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <AdminOccasionBannerManager onToast={addToast} />
+            </div>
+          )}
+
+          {/* TAB 11: DYNAMIC FILTER MATRIX */}
           {activeTab === 'filters' && (
             <div className="space-y-6 animate-in fade-in duration-200">
               <AdminFilterManager onToast={addToast} />
@@ -1371,6 +1586,15 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* METAPHYSICAL SERVICE EDITOR MODAL */}
+      <AdminServiceEditorModal
+        service={editingService}
+        isOpen={Boolean(editingService)}
+        onClose={() => setEditingService(null)}
+        onSave={handleSaveService}
+        isSaving={isSavingService}
+      />
     </div>
   );
 }

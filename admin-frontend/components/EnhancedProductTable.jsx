@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Filter,
@@ -26,7 +26,12 @@ import {
   Tag,
   ArrowUpDown,
   SlidersHorizontal,
+  ChevronDown,
+  ChevronUp,
+  Check,
 } from 'lucide-react';
+import { getSupabaseStoreFilters, saveSupabaseStoreFilters } from '../lib/supabase';
+import { DISCOVERY_PILLARS } from '../lib/discoveryTaxonomy';
 
 export default function EnhancedProductTable({
   products = [],
@@ -53,9 +58,182 @@ export default function EnhancedProductTable({
   const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
+  // Filter Assignment Modal State
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filterModalTargetIds, setFilterModalTargetIds] = useState([]);
+  const [selectedFiltersForModal, setSelectedFiltersForModal] = useState([]);
+  const [filterModalSearch, setFilterModalSearch] = useState('');
+  const [filterModalMode, setFilterModalMode] = useState('merge'); // 'merge' | 'replace'
+  const [storeFilters, setStoreFilters] = useState(DISCOVERY_PILLARS);
+  const [newQuickFilterName, setNewQuickFilterName] = useState('');
+  const [newQuickFilterCategory, setNewQuickFilterCategory] = useState('purpose');
+  const [showQuickAddFilter, setShowQuickAddFilter] = useState(false);
+  const [isAddingNewFilter, setIsAddingNewFilter] = useState(false);
+  const [modalFeedback, setModalFeedback] = useState('');
+  const [openModalAccordions, setOpenModalAccordions] = useState({});
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // Load dynamic store filters on mount
+  const loadDynamicFilters = async () => {
+    try {
+      const data = await getSupabaseStoreFilters();
+      const base = DISCOVERY_PILLARS.map((p) => ({ ...p, options: [...p.options] }));
+      if (Array.isArray(data) && data.length > 0) {
+        data.forEach((cat) => {
+          const matched = base.find(
+            (b) => b.id === cat.id || b.id === cat.slug || b.name.toLowerCase() === (cat.name || '').toLowerCase()
+          );
+          if (matched) {
+            (cat.options || []).forEach((opt) => {
+              const optId = opt.id || `${matched.id}:${opt.value || opt.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+              if (!matched.options.some((o) => o.id === optId || o.value === opt.value)) {
+                matched.options.push({
+                  id: optId,
+                  label: opt.label,
+                  value: opt.value || optId,
+                  subGroup: 'Custom Added',
+                });
+              }
+            });
+          } else {
+            base.push({
+              id: cat.id || cat.slug,
+              name: cat.name,
+              subtitle: `Custom Filter Category (${(cat.options || []).length} options)`,
+              badgeColor: 'from-[#D4AF37]/20 to-[#B8860B]/10 border-[#D4AF37]/40 text-[#D4AF37]',
+              options: (cat.options || []).map((o) => ({
+                id: o.id || `${cat.id}:${o.value || o.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+                label: o.label,
+                value: o.value,
+                subGroup: 'Custom Added',
+              })),
+            });
+          }
+        });
+      }
+      setStoreFilters(base);
+    } catch (err) {
+      setStoreFilters(DISCOVERY_PILLARS);
+    }
+  };
+
+  useEffect(() => {
+    loadDynamicFilters();
+  }, []);
+
+  const handleOpenBulkFilterModal = () => {
+    if (selectedIds.length === 0) return;
+    setFilterModalTargetIds(selectedIds);
+    const selectedProds = products.filter((p) => selectedIds.includes(p.id || p.slug));
+    const allFilters = new Set();
+    selectedProds.forEach((p) => {
+      const tags = p.assigned_filters || p.assignedFilters || p.tags || [];
+      tags.forEach((t) => allFilters.add(t));
+    });
+    setSelectedFiltersForModal(Array.from(allFilters));
+    setFilterModalMode('merge');
+    setFilterModalSearch('');
+    setShowFilterModal(true);
+  };
+
+  const handleOpenSingleProductFilters = (prod) => {
+    const targetId = prod.id || prod.slug;
+    setFilterModalTargetIds([targetId]);
+    const tags = prod.assigned_filters || prod.assignedFilters || prod.tags || [];
+    setSelectedFiltersForModal([...tags]);
+    setFilterModalMode('replace');
+    setFilterModalSearch('');
+    setShowFilterModal(true);
+  };
+
+  const handleQuickAddFilterInModal = async () => {
+    if (!newQuickFilterName.trim()) return;
+    setIsAddingNewFilter(true);
+    setModalFeedback('');
+    try {
+      const cleanLabel = newQuickFilterName.trim();
+      const cleanValue = cleanLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const newFilterId = `${newQuickFilterCategory}:${cleanValue}`;
+      const newOption = {
+        id: newFilterId,
+        label: cleanLabel,
+        value: cleanValue,
+        subGroup: 'Custom Added',
+      };
+
+      setStoreFilters((prev) =>
+        prev.map((cat) => {
+          if (cat.id === newQuickFilterCategory) {
+            if (cat.options.some((o) => o.id === newFilterId || o.value === cleanValue)) return cat;
+            return { ...cat, options: [...cat.options, newOption] };
+          }
+          return cat;
+        })
+      );
+
+      setSelectedFiltersForModal((prev) => Array.from(new Set([...prev, newFilterId])));
+
+      const currentStoreFilters = await getSupabaseStoreFilters();
+      let updatedStoreFilters = [...currentStoreFilters];
+      const targetCategory = updatedStoreFilters.find(
+        (c) => c.id === newQuickFilterCategory || c.slug === newQuickFilterCategory
+      );
+      if (targetCategory) {
+        updatedStoreFilters = updatedStoreFilters.map((c) => {
+          if (c.id === targetCategory.id) {
+            const exists = (c.options || []).some((o) => o.id === newFilterId || o.value === cleanValue);
+            return exists
+              ? c
+              : {
+                  ...c,
+                  options: [
+                    ...(c.options || []),
+                    { id: newFilterId, label: cleanLabel, value: cleanValue, count: 1, isActive: true },
+                  ],
+                };
+          }
+          return c;
+        });
+      } else {
+        const catInfo = storeFilters.find((c) => c.id === newQuickFilterCategory);
+        updatedStoreFilters.push({
+          id: newQuickFilterCategory,
+          name: catInfo?.name || newQuickFilterCategory.toUpperCase(),
+          slug: newQuickFilterCategory,
+          type: 'sidebar',
+          options: [{ id: newFilterId, label: cleanLabel, value: cleanValue, count: 1, isActive: true }],
+        });
+      }
+      await saveSupabaseStoreFilters(updatedStoreFilters);
+
+      setModalFeedback(`✨ Added "${cleanLabel}" & checked in matrix!`);
+      setNewQuickFilterName('');
+      setShowQuickAddFilter(false);
+      setTimeout(() => setModalFeedback(''), 4000);
+    } catch (err) {
+      console.warn('Error quick adding filter:', err);
+    } finally {
+      setIsAddingNewFilter(false);
+    }
+  };
+
+  const handleApplyFilters = () => {
+    if (onBulkAction) {
+      onBulkAction({
+        type: 'ASSIGN_FILTERS',
+        ids: filterModalTargetIds,
+        filters: selectedFiltersForModal,
+        mode: filterModalMode,
+      });
+    }
+    setShowFilterModal(false);
+    if (filterModalTargetIds.length > 1) {
+      setSelectedIds([]);
+    }
+  };
 
   // Filter & Sort Pipeline
   const filteredAndSortedProducts = useMemo(() => {
@@ -361,6 +539,14 @@ export default function EnhancedProductTable({
             </button>
             <button
               type="button"
+              onClick={handleOpenBulkFilterModal}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#C59B27] to-[#B8860B] text-black text-xs font-bold hover:brightness-110 flex items-center gap-1.5 transition-all shadow-md shadow-[#D4AF37]/20"
+            >
+              <Tag className="w-3.5 h-3.5" />
+              <span>Assign Filters ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setShowBulkDeleteConfirm(true)}
               className="px-3 py-1.5 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-400 text-xs font-semibold hover:bg-rose-900/80 transition-colors"
             >
@@ -479,7 +665,7 @@ export default function EnhancedProductTable({
                           </div>
                         </td>
 
-                        {/* Category & Type */}
+                        {/* Category & Type & Filters */}
                         <td className="py-3 px-4">
                           <span className="inline-block px-2 py-0.5 rounded-md bg-stone-950 border border-stone-800 text-stone-300 text-[11px] font-medium">
                             {p.category || 'Energy Bands'}
@@ -489,6 +675,29 @@ export default function EnhancedProductTable({
                               {p.crystalType || p.crystal_type}
                             </div>
                           ) : null}
+                          <div className="mt-1">
+                            {(p.assigned_filters || p.assignedFilters || p.tags || []).length > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenSingleProductFilters(p)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#D4AF37]/10 hover:bg-[#D4AF37]/25 border border-[#D4AF37]/35 text-[#F3E5AB] text-[10px] font-medium transition cursor-pointer"
+                                title="Edit filters with checkboxes"
+                              >
+                                <Tag className="w-2.5 h-2.5 text-[#D4AF37]" />
+                                <span>{(p.assigned_filters || p.assignedFilters || p.tags || []).length} filters</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenSingleProductFilters(p)}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-500 hover:text-stone-300 text-[10px] transition cursor-pointer"
+                                title="Assign filters using checkboxes"
+                              >
+                                <Plus className="w-2.5 h-2.5" />
+                                <span>Add Filters</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
 
                         {/* Variants */}
@@ -621,8 +830,15 @@ export default function EnhancedProductTable({
 
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   <div>
-                    <div className="text-[10px] font-mono text-[#D4AF37] uppercase tracking-wider font-semibold">
-                      {p.category || 'Crystal Specimen'}
+                    <div className="flex items-center justify-between text-[10px] font-mono text-[#D4AF37] uppercase tracking-wider font-semibold">
+                      <span>{p.category || 'Crystal Specimen'}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenSingleProductFilters(p)}
+                        className="text-[9px] px-1.5 py-0.5 rounded bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#F3E5AB] hover:bg-[#D4AF37]/25 transition"
+                      >
+                        🏷️ {(p.assigned_filters || p.assignedFilters || p.tags || []).length} filters
+                      </button>
                     </div>
                     <h4 className="text-sm font-semibold text-stone-100 mt-0.5 line-clamp-1 group-hover:text-[#F3E5AB]">
                       {p.name || p.title}
@@ -727,6 +943,351 @@ export default function EnhancedProductTable({
               >
                 Confirm Bulk Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Dynamic Filter Assignment Modal (Supports both Bulk and Single Product) */}
+      {showFilterModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-200">
+          <div className="relative w-full max-w-4xl bg-[#141210] border border-[#D4AF37]/40 rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-stone-950 via-[#161310] to-stone-950 border-b border-[#D4AF37]/25 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#D4AF37]/20 to-[#B8860B]/10 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shadow-lg shadow-[#D4AF37]/10 flex-shrink-0">
+                  <Tag className="w-5 h-5" />
+                </div>
+                <div className="overflow-hidden">
+                  <h3 className="text-sm sm:text-base font-serif font-bold text-[#F3E5AB] truncate">
+                    Assign Filters to {filterModalTargetIds.length === 1 ? 'Specimen' : `${filterModalTargetIds.length} Selected Specimens`}
+                  </h3>
+                  <p className="text-[11px] text-stone-400 truncate">
+                    Check any filter options below to assign discovery pathways to the selected products.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowFilterModal(false)}
+                className="p-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Target Product(s) Strip */}
+            <div className="px-5 py-3 bg-stone-950/70 border-b border-stone-800 flex items-center gap-2 overflow-x-auto scrollbar-thin">
+              <span className="text-[11px] font-mono uppercase text-stone-400 whitespace-nowrap font-semibold">
+                Target Specimens ({filterModalTargetIds.length}):
+              </span>
+              {products
+                .filter((p) => filterModalTargetIds.includes(p.id || p.slug))
+                .slice(0, 5)
+                .map((p) => (
+                  <span
+                    key={p.id || p.slug}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-200 text-xs whitespace-nowrap"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
+                    <span className="truncate max-w-[140px]">{p.name || p.title}</span>
+                  </span>
+                ))}
+              {filterModalTargetIds.length > 5 && (
+                <span className="text-xs text-stone-500 whitespace-nowrap">
+                  +{filterModalTargetIds.length - 5} more
+                </span>
+              )}
+            </div>
+
+            {/* Controls Toolbar: Mode Selection, Search, and Quick Add */}
+            <div className="p-4 sm:p-5 bg-stone-950/40 border-b border-stone-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Assignment Mode (Merge vs Replace) */}
+                <div className="flex items-center gap-2 bg-stone-900/90 p-1 rounded-xl border border-stone-800 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setFilterModalMode('merge')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      filterModalMode === 'merge'
+                        ? 'bg-[#D4AF37] text-black shadow'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    Merge with Existing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterModalMode('replace')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      filterModalMode === 'replace'
+                        ? 'bg-[#D4AF37] text-black shadow'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    Replace All
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#F3E5AB] text-xs font-mono font-bold">
+                    {selectedFiltersForModal.length} Checked
+                  </span>
+                  {selectedFiltersForModal.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFiltersForModal([])}
+                      className="px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800 text-rose-300 text-[11px] font-medium transition"
+                    >
+                      Uncheck All
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickAddFilter((prev) => !prev)}
+                    className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black text-xs font-bold hover:brightness-110 flex items-center gap-1.5 transition shadow cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>{showQuickAddFilter ? 'Close' : '➕ Add Filter'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Add Filter Drawer */}
+              {showQuickAddFilter && (
+                <div className="p-4 rounded-xl bg-stone-950 border border-[#D4AF37]/40 shadow-xl space-y-3 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-serif font-bold text-[#F3E5AB] flex items-center gap-1.5">
+                      <Plus className="w-3.5 h-3.5 text-[#D4AF37]" /> Provision New Filter Tag
+                    </h4>
+                    <span className="text-[10px] text-stone-400">
+                      Saves to store matrix and checks it for these products
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                    <div className="sm:col-span-6">
+                      <input
+                        type="text"
+                        placeholder="Filter Name (e.g. Stress Relief, Aura Shield, Selenite Tower)..."
+                        value={newQuickFilterName}
+                        onChange={(e) => setNewQuickFilterName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleQuickAddFilterInModal();
+                          }
+                        }}
+                        className="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-[#D4AF37]"
+                      />
+                    </div>
+                    <div className="sm:col-span-4">
+                      <select
+                        value={newQuickFilterCategory}
+                        onChange={(e) => setNewQuickFilterCategory(e.target.value)}
+                        className="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-[#D4AF37]"
+                      >
+                        {storeFilters.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            Category: {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <button
+                        type="button"
+                        disabled={!newQuickFilterName.trim() || isAddingNewFilter}
+                        onClick={handleQuickAddFilterInModal}
+                        className="w-full h-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black text-xs font-bold hover:brightness-110 disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-1"
+                      >
+                        {isAddingNewFilter ? (
+                          <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                        )}
+                        <span>Save &amp; Check</span>
+                      </button>
+                    </div>
+                  </div>
+                  {modalFeedback && (
+                    <div className="text-xs text-emerald-400 flex items-center gap-1.5 pt-0.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{modalFeedback}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search any filter option (e.g. Wealth, Vastu, Mala, 8mm, Solar Plexus)..."
+                  value={filterModalSearch}
+                  onChange={(e) => setFilterModalSearch(e.target.value)}
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl pl-9 pr-8 py-2 text-xs text-stone-200 placeholder-stone-600 focus:outline-none focus:border-[#D4AF37]"
+                />
+                {filterModalSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterModalSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Filter Matrix Categories with Checkboxes */}
+            <div className="overflow-y-auto p-4 sm:p-6 space-y-4 flex-1 scrollbar-thin scrollbar-thumb-[#D4AF37]/20">
+              {storeFilters.map((cat) => {
+                const filteredOptions = filterModalSearch.trim()
+                  ? cat.options.filter(
+                      (opt) =>
+                        opt.label.toLowerCase().includes(filterModalSearch.toLowerCase()) ||
+                        opt.id.toLowerCase().includes(filterModalSearch.toLowerCase()) ||
+                        (opt.subGroup && opt.subGroup.toLowerCase().includes(filterModalSearch.toLowerCase()))
+                    )
+                  : cat.options;
+
+                if (filteredOptions.length === 0) return null;
+
+                const isOpen = openModalAccordions[cat.id] !== false;
+                const catOptionIds = cat.options.map((o) => o.id);
+                const selectedInCat = catOptionIds.filter((id) => selectedFiltersForModal.includes(id));
+                const allCatSelected = catOptionIds.length > 0 && selectedInCat.length === catOptionIds.length;
+
+                return (
+                  <div
+                    key={cat.id}
+                    className="rounded-2xl bg-stone-900/60 border border-stone-800 overflow-hidden"
+                  >
+                    {/* Category Header */}
+                    <div className="p-3.5 bg-stone-950/80 border-b border-stone-800 flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenModalAccordions((prev) => ({
+                            ...prev,
+                            [cat.id]: !isOpen,
+                          }))
+                        }
+                        className="flex items-center gap-2.5 text-left flex-1"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold font-serif text-stone-200 uppercase tracking-wider">
+                              {cat.name}
+                            </span>
+                            {selectedInCat.length > 0 && (
+                              <span className="px-2 py-0.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#F3E5AB] text-[10px] font-mono font-bold">
+                                {selectedInCat.length} selected
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-stone-400">
+                            {cat.subtitle || `${cat.options.length} discovery options`}
+                          </span>
+                        </div>
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (allCatSelected) {
+                              setSelectedFiltersForModal((prev) =>
+                                prev.filter((id) => !catOptionIds.includes(id))
+                              );
+                            } else {
+                              setSelectedFiltersForModal((prev) =>
+                                Array.from(new Set([...prev, ...catOptionIds]))
+                              );
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-[10px] font-semibold transition"
+                        >
+                          {allCatSelected ? 'Clear Pillar' : 'Select All'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Options Grid with Checkboxes */}
+                    {isOpen && (
+                      <div className="p-3.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {filteredOptions.map((opt) => {
+                          const isChecked = selectedFiltersForModal.includes(opt.id);
+
+                          return (
+                            <label
+                              key={opt.id}
+                              className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-start gap-2 select-none text-left relative ${
+                                isChecked
+                                  ? 'bg-[#D4AF37]/15 border-[#D4AF37] ring-1 ring-[#D4AF37]/30 text-[#F3E5AB]'
+                                  : 'bg-stone-950/80 border-stone-800 text-stone-400 hover:border-stone-700 hover:text-stone-200'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedFiltersForModal((prev) => [...prev, opt.id]);
+                                  } else {
+                                    setSelectedFiltersForModal((prev) =>
+                                      prev.filter((id) => id !== opt.id)
+                                    );
+                                  }
+                                }}
+                                className="mt-0.5 accent-[#D4AF37] rounded"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-medium leading-snug break-words">
+                                  {opt.label}
+                                </div>
+                                {opt.subGroup && (
+                                  <div className="text-[9px] text-stone-500 font-mono mt-0.5">
+                                    {opt.subGroup}
+                                  </div>
+                                )}
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-stone-950 border-t border-stone-800 flex items-center justify-between gap-3">
+              <div className="text-xs text-stone-400">
+                <strong className="text-[#F3E5AB] font-mono">{selectedFiltersForModal.length}</strong> filters checked to apply to{' '}
+                <strong className="text-stone-200 font-mono">{filterModalTargetIds.length}</strong> specimen(s)
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFilterModal(false)}
+                  className="px-4 py-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-xs font-semibold hover:bg-stone-800 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyFilters}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#C59B27] to-[#B8860B] text-black text-xs font-bold hover:brightness-110 shadow-lg shadow-[#D4AF37]/20 flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Apply Filters to Selected ({filterModalTargetIds.length})</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

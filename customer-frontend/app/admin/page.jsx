@@ -13,6 +13,7 @@ import {
   updateProductAvailabilityInSupabase,
 } from '@/lib/supabase';
 import AdminFilterManager from '@/components/AdminFilterManager';
+import AdminOccasionBannerManager from '@/components/AdminOccasionBannerManager';
 import {
   ShieldCheck,
   Lock,
@@ -848,7 +849,7 @@ export default function AdminPage() {
           </div>
 
           <div className="pt-2 text-center text-[10px] text-zinc-500 border-t border-zinc-900">
-            Protected under 256-bit AES cryptographic token security &bull; Founder Access Only
+            Protected under secure cryptographic token authentication &bull; Founder Access Only
           </div>
         </div>
       </div>
@@ -1043,6 +1044,18 @@ export default function AdminPage() {
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span>Filters Matrix</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('occasion-banners')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all ${
+              activeTab === 'occasion-banners'
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-orange-500/20'
+                : 'bg-zinc-900/70 text-zinc-400 hover:text-white hover:bg-zinc-800'
+            }`}
+          >
+            <Flame className="w-4 h-4 text-orange-400" />
+            <span>Occasion / Festival Sales</span>
           </button>
         </nav>
 
@@ -1668,6 +1681,15 @@ export default function AdminPage() {
         {activeTab === 'filters' && (
           <section className="space-y-6">
             <AdminFilterManager onToast={addToast} />
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 7: OCCASION & FESTIVAL SALE BANNER PROVISION                         */}
+        {/* ========================================================================= */}
+        {activeTab === 'occasion-banners' && (
+          <section className="space-y-6">
+            <AdminOccasionBannerManager onToast={addToast} />
           </section>
         )}
 

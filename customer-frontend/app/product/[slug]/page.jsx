@@ -14,12 +14,10 @@ import {
   Sparkles,
   Compass,
   Heart,
-  RotateCw,
   ShoppingBag,
   Check,
   ArrowRight,
   Star,
-  Truck,
   Zap,
   Lock,
   ChevronDown,
@@ -27,6 +25,12 @@ import {
   MapPin,
   Calendar,
   Share2,
+  Truck,
+  AlertTriangle,
+  MessageCircle,
+  Phone,
+  Clock,
+  Info,
 } from 'lucide-react';
 
 const CrystalShowcase = dynamic(() => import('../../../components/CrystalShowcase'), {
@@ -46,15 +50,17 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState('8mm Regular');
-  const [isEnergizedAddon, setIsEnergizedAddon] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeMediaTab, setActiveMediaTab] = useState('gallery'); // 'gallery' | '3d'
+  const [addedNotice, setAddedNotice] = useState(false);
+
+  // Express delivery checker states
   const [pincode, setPincode] = useState('');
   const [pincodeStatus, setPincodeStatus] = useState(null); // null | 'valid' | 'invalid'
   const [pincodeResult, setPincodeResult] = useState(null);
   const [isCheckingPincode, setIsCheckingPincode] = useState(false);
   const [deliverySettings, setDeliverySettings] = useState(DEFAULT_DELIVERY_SETTINGS);
-  const [addedNotice, setAddedNotice] = useState(false);
+  const [contactOwnerChecked, setContactOwnerChecked] = useState(false);
 
   // Load delivery settings from Supabase
   useEffect(() => {
@@ -181,11 +187,9 @@ export default function ProductDetailPage() {
     ? Number(selectedVariant.originalPrice)
     : Number(product.originalPrice || product.original_price || (basePrice > 0 ? Math.round(basePrice * 1.25) : 0));
 
-  const addonCost = isEnergizedAddon ? (Number(product.energizedPrice) || 100) : 0;
-  const unitPrice = basePrice + addonCost;
-  const originalUnitPrice = baseOriginalPrice + addonCost;
+  const unitPrice = basePrice;
+  const originalUnitPrice = baseOriginalPrice;
   const totalPrice = unitPrice * quantity;
-  const installmentPrice = Math.round(unitPrice / 3);
   const discountPercent =
     originalUnitPrice > unitPrice
       ? Math.round(((originalUnitPrice - unitPrice) / originalUnitPrice) * 100)
@@ -196,7 +200,7 @@ export default function ProductDetailPage() {
       productId: product.id,
       id: product.id,
       slug: product.slug,
-      name: `${product.name} - ${selectedVariant?.name || selectedSize} ${isEnergizedAddon ? '(Vedic Energized)' : ''}`,
+      name: `${product.name} - ${selectedVariant?.name || selectedSize}`,
       image: product.images?.[0] || product.image,
       variantLabel: selectedVariant?.name || selectedSize,
       price: unitPrice,
@@ -213,7 +217,7 @@ export default function ProductDetailPage() {
       productId: product.id,
       id: product.id,
       slug: product.slug,
-      name: `${product.name} - ${selectedVariant?.name || selectedSize} ${isEnergizedAddon ? '(Vedic Energized)' : ''}`,
+      name: `${product.name} - ${selectedVariant?.name || selectedSize}`,
       image: product.images?.[0] || product.image,
       variantLabel: selectedVariant?.name || selectedSize,
       price: unitPrice,
@@ -233,6 +237,9 @@ export default function ProductDetailPage() {
       const res = await calculateDeliveryFee(cleanPin, totalPrice, deliverySettings);
       setPincodeResult(res);
       setPincodeStatus(res.valid ? 'valid' : 'invalid');
+      if (Number(res.distanceKm || 0) > 300) {
+        setContactOwnerChecked(true);
+      }
     } catch (err) {
       console.warn('Pincode check error:', err);
     } finally {
@@ -269,37 +276,30 @@ export default function ProductDetailPage() {
           {/* LEFT COLUMN: PRODUCT MEDIA GALLERY */}
           <div className="lg:col-span-7 space-y-4 lg:sticky lg:top-28">
             {/* Media Mode Tabs */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveMediaTab('gallery')}
-                  className={`px-4 py-2 rounded-full text-xs font-option transition-all flex items-center gap-1.5 ${
-                    activeMediaTab === 'gallery'
-                      ? 'option-3d-light-active-gold text-black'
-                      : 'option-3d-light'
-                  }`}
-                >
-                  <span>Gallery Views</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveMediaTab('3d')}
-                  className={`px-4 py-2 rounded-full text-xs font-option transition-all flex items-center gap-1.5 ${
-                    activeMediaTab === '3d'
-                      ? 'option-3d-light-active-gold text-black'
-                      : 'option-3d-light'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] animate-pulse" />
-                  <span>3D Refraction Matrix</span>
-                </button>
-              </div>
-
-              <span className="text-[11px] font-mono text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>100% Lab Certified Authentic</span>
-              </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveMediaTab('gallery')}
+                className={`px-4 py-2 rounded-full text-xs font-option transition-all flex items-center gap-1.5 ${
+                  activeMediaTab === 'gallery'
+                    ? 'option-3d-light-active-gold text-black'
+                    : 'option-3d-light'
+                }`}
+              >
+                <span>Gallery Views</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveMediaTab('3d')}
+                className={`px-4 py-2 rounded-full text-xs font-option transition-all flex items-center gap-1.5 ${
+                  activeMediaTab === '3d'
+                    ? 'option-3d-light-active-gold text-black'
+                    : 'option-3d-light'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] animate-pulse" />
+                <span>3D Refraction Matrix</span>
+              </button>
             </div>
 
             {/* Main Image / 3D Canvas */}
@@ -320,7 +320,7 @@ export default function ProductDetailPage() {
                   {/* Floating Bead / Dimension Badge */}
                   <div className="absolute top-4 left-4 z-10">
                     <span className="px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[#8C6208] text-xs font-mono font-bold tracking-wider border border-[#D4AF37]/50 shadow-md">
-                      {selectedSize} &bull; Certified Stones
+                      {selectedSize} &bull; Natural Stones
                     </span>
                   </div>
 
@@ -403,35 +403,6 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              {/* Installments & COD callout */}
-              <p className="text-xs text-[#6B6357] font-sans-ui flex items-center gap-1.5">
-                <span>or 3 interest-free payments of</span>
-                <strong className="text-[#1F1A15] font-mono">₹{installmentPrice}</strong>
-                <span>with UPI / Debit / Credit Cards</span>
-              </p>
-            </div>
-
-            {/* Trust Badges */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#EDE6DA] flex items-start gap-2.5 shadow-sm">
-                <ShieldCheck className="w-5 h-5 text-[#B8860B] flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-editorial text-[#1F1A15] font-bold text-xs">100% Certified</h4>
-                  <p className="text-[10px] text-[#6B6357] mt-0.5 leading-tight">
-                    Authentic natural stones verified by lab test
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#EDE6DA] flex items-start gap-2.5 shadow-sm">
-                <RotateCw className="w-5 h-5 text-[#B8860B] flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-editorial text-[#1F1A15] font-bold text-xs">6-Month Warranty</h4>
-                  <p className="text-[10px] text-[#6B6357] mt-0.5 leading-tight">
-                    Free string replacement &amp; sound re-attunement
-                  </p>
-                </div>
-              </div>
             </div>
 
             {/* Dynamic Crystal Variant Selector (Flipkart-Style) */}
@@ -499,36 +470,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Spiritual Upsell Add-on Box: Vedic Consecration Ceremony (+₹100) */}
-            <div
-              onClick={() => setIsEnergizedAddon(!isEnergizedAddon)}
-              className={`p-4 rounded-2xl border transition-all duration-300 cursor-pointer flex items-start gap-3.5 select-none ${
-                isEnergizedAddon
-                  ? 'bg-gradient-to-r from-[#FFF9EE] via-[#FFF3D6] to-[#FFFFFF] border-[#D4AF37] shadow-md'
-                  : 'bg-[#FFFFFF] border-[#EDE6DA] hover:border-[#D4AF37]/50'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={isEnergizedAddon}
-                onChange={() => setIsEnergizedAddon(!isEnergizedAddon)}
-                className="accent-[#B8860B] w-4 h-4 rounded mt-0.5 cursor-pointer"
-              />
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-editorial text-xs font-bold text-[#1F1A15] flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] animate-pulse" />
-                    <span>Get Vedic Energized / Pran Pratishta (+₹100)</span>
-                  </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FFF0CE] text-[#8C6208] font-bold border border-[#D4AF37]/40">
-                    RECOMMENDED
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#6B6357] leading-relaxed font-sans-ui">
-                  Individually consecrated with Vedic Surya mantras &amp; sacred Solfeggio sound bowls by Reiki Master Soumyaa Naveen prior to dispatch.
-                </p>
-              </div>
-            </div>
+
 
             {/* Action Buttons: Stepper + Add to Cart + Terracotta Red "Order Now - COD" */}
             <div className="space-y-3 pt-2">
@@ -586,20 +528,35 @@ export default function ProductDetailPage() {
               </button>
             </div>
 
-            {/* Delivery & Pincode Checker */}
-            <div className="p-4 rounded-2xl store-card-light space-y-3">
-              <div className="flex items-center justify-between">
+            {/* Express Delivery & Pincode Checker */}
+            <div className="p-4 sm:p-5 rounded-2xl store-card-light space-y-3.5 border border-[#EDE6DA] shadow-sm">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <span className="text-xs font-option uppercase text-[#1F1A15] font-bold flex items-center gap-1.5">
                   <Truck className="w-4 h-4 text-[#B8860B]" />
                   <span>Check Express Delivery Date</span>
                 </span>
-                <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  {deliverySettings?.is_free_shipping_enabled
-                    ? `Free Shipping over ₹${Number(deliverySettings.free_shipping_threshold || 5000).toLocaleString('en-IN')}`
-                    : 'Insured Armored Transit'}
+                <span className="text-[10px] font-mono text-emerald-800 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                  <span>Shipping: 6&ndash;8 Working Days</span>
                 </span>
               </div>
 
+              {/* Delivery Guidelines Clause */}
+              <div className="text-[11px] text-[#6B6357] font-sans-ui space-y-1.5 bg-[#FFFBF4] p-3 rounded-xl border border-[#EDE6DA]/90">
+                <div className="flex items-start gap-1.5 text-[#4A4237]">
+                  <Clock className="w-3.5 h-3.5 text-[#B8860B] flex-shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Dispatch &amp; Transit:</strong> <strong>6&ndash;8 Working days</strong> required to ship and deliver the order.
+                  </span>
+                </div>
+                <div className="flex items-start gap-1.5 text-[#4A4237]">
+                  <MapPin className="w-3.5 h-3.5 text-[#B8860B] flex-shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Coverage:</strong> Delivery is only available to <strong>cities and taluk places</strong>, or to the nearest delivery agent office assigned.
+                  </span>
+                </div>
+              </div>
+
+              {/* Pincode Input Form */}
               <form onSubmit={handleCheckPincode} className="flex gap-2">
                 <input
                   type="text"
@@ -607,51 +564,128 @@ export default function ProductDetailPage() {
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="Enter 6-digit Pincode (e.g. 411001, 560001)"
-                  className="flex-1 px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#E0D7C7] text-xs text-[#1F1A15] placeholder:text-[#9E9589] focus:outline-none focus:border-[#D4AF37] font-mono shadow-inner"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E0D7C7] text-xs text-[#1F1A15] placeholder:text-[#9E9589] focus:outline-none focus:border-[#D4AF37] font-mono shadow-inner"
                 />
                 <button
                   type="submit"
                   disabled={isCheckingPincode || pincode.length < 6}
-                  className="cta-3d-gold px-5 py-2 rounded-xl text-xs font-bold text-white cursor-pointer disabled:opacity-50"
+                  className="cta-3d-gold px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer disabled:opacity-50 transition shadow-sm"
                 >
                   {isCheckingPincode ? 'Checking…' : 'Check'}
                 </button>
               </form>
 
+              {/* Result State: Valid */}
               {pincodeStatus === 'valid' && pincodeResult && (
-                <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-50 via-emerald-100/40 to-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1.5 animate-fade-in font-sans-ui shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 font-bold text-emerald-900">
-                      <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                      <span>
-                        {pincodeResult.city ? `${pincodeResult.city}, ${pincodeResult.state}` : pincodeResult.state}
+                <div className="space-y-3 pt-1 animate-fade-in">
+                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 via-emerald-100/40 to-emerald-50 border border-emerald-200 text-emerald-950 text-xs space-y-2 font-sans-ui shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+                        <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        <span>
+                          {pincodeResult.city ? `${pincodeResult.city}, ${pincodeResult.state}` : pincodeResult.state}
+                        </span>
+                      </div>
+                      <span className="text-[10.5px] font-mono px-2 py-0.5 rounded bg-emerald-200/70 font-bold text-emerald-800">
+                        ~{pincodeResult.distanceKm || 0} km from Pune Vault
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-200/60 font-bold text-emerald-800">
-                      {pincodeResult.tierName}
-                    </span>
+
+                    <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-emerald-200/60 text-emerald-900">
+                      <span>
+                        Estimated Arrival: <strong>6&ndash;8 Working Days</strong>
+                      </span>
+                      <span className="font-mono font-bold">
+                        {pincodeResult.isFree ? (
+                          <span className="text-emerald-700 font-bold">FREE DELIVERY</span>
+                        ) : (
+                          `₹${pincodeResult.fee} Delivery Fee`
+                        )}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] pt-1 border-t border-emerald-200/60 text-emerald-800">
-                    <span>
-                      Est. Arrival: <strong>{pincodeResult.estimatedDays}</strong>
-                    </span>
-                    <span className="font-mono font-bold">
-                      {pincodeResult.isFree ? (
-                        <span className="text-emerald-700 font-bold">FREE DELIVERY</span>
-                      ) : (
-                        `₹${pincodeResult.fee} Delivery Fee`
+
+                  {/* Distance Above 300 KMs: Contact Owner Checkbox & Direct Action */}
+                  {Number(pincodeResult.distanceKm || 0) > 300 && (
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-2.5 shadow-xs">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-amber-900">
+                            Location is above 300 km ({pincodeResult.distanceKm} km from Pune HQ)
+                          </p>
+                          <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                            Delivery is available to cities and taluk places or the nearest delivery agent office assigned. Please check the box below to coordinate with the owner.
+                          </p>
+                        </div>
+                      </div>
+
+                      <label className="flex items-start gap-2.5 p-2 rounded-lg bg-white/80 border border-amber-200 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={contactOwnerChecked}
+                          onChange={(e) => setContactOwnerChecked(e.target.checked)}
+                          className="w-4 h-4 accent-[#B8860B] rounded mt-0.5 cursor-pointer"
+                        />
+                        <span className="text-[11.5px] text-[#4A4237] leading-tight font-medium">
+                          <strong>Contact the Owner:</strong> Location is above 300 km range. Confirm city / taluk delivery agent routing.
+                        </span>
+                      </label>
+
+                      {contactOwnerChecked && (
+                        <div className="pt-1 flex flex-wrap items-center gap-2 animate-fade-in">
+                          <a
+                            href={`https://wa.me/919111716355?text=${encodeURIComponent(
+                              `Hello Soumyaa Naveen, I am ordering ${product.name} to Pincode ${pincode} (${pincodeResult.city}, ${pincodeResult.state} - ~${pincodeResult.distanceKm} km distance). Please confirm delivery availability to my city/taluk place or nearest agent office.`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm transition"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span>WhatsApp Owner (+91 91117 16355)</span>
+                          </a>
+
+                          <a
+                            href="tel:+919111716355"
+                            className="py-2 px-3 rounded-lg bg-[#1F1A15] hover:bg-black text-[#D4AF37] font-mono text-[11px] font-bold flex items-center gap-1.5 transition"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            <span>Call</span>
+                          </a>
+                        </div>
                       )}
-                    </span>
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Distance <= 300 KM Standard Note */}
+                  {Number(pincodeResult.distanceKm || 0) <= 300 && (
+                    <div className="flex items-center justify-between text-[11px] text-[#6B6357] px-1">
+                      <span>✓ Standard regional dispatch active (6&ndash;8 working days).</span>
+                      <a
+                        href={`https://wa.me/919111716355?text=${encodeURIComponent(
+                          `Hello Soumyaa, I have a delivery inquiry for Pincode ${pincode} (${product.name}).`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#8C6208] hover:underline font-mono font-semibold"
+                      >
+                        Contact Owner?
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
 
+              {/* Result State: Invalid */}
               {pincodeStatus === 'invalid' && (
                 <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2 font-sans-ui">
                   <span className="font-semibold">Please enter a valid 6-digit Indian PIN code.</span>
                 </div>
               )}
             </div>
+
+
 
             {/* Expandable Accordions: Benefits, Care */}
             <div className="space-y-3 pt-2">

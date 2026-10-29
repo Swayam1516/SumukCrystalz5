@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --bg-main: #0e0a1a;
-    --bg-card: rgba(26, 19, 44, 0.76);
-    --crystal-glow: rgba(168, 85, 247, 0.55);
-    --crystal-accent: #d8b4fe;
-    --crystal-border: rgba(216, 180, 254, 0.35);
-    --crystal-shadow: rgba(168, 85, 247, 0.35);
+    --bg-main: #FDFBF7;
+    --bg-card: rgba(255, 255, 255, 0.94);
+    --crystal-glow: rgba(212, 175, 55, 0.35);
+    --crystal-accent: #B45309;
+    --crystal-border: rgba(212, 175, 55, 0.28);
+    --crystal-shadow: rgba(180, 130, 40, 0.12);
     --pointer-x: 50%;
     --pointer-y: 50%;
 
-    /* Amethyst Sanctuary Theme Tokens */
-    --sanctuary-bg-image: url('/images/crystal-sanctuary-bg.jpg');
-    --sanctuary-overlay: rgba(12, 8, 22, 0.82);
-    --sanctuary-glass: rgba(255, 255, 255, 0.08);
-    --sanctuary-glass-border: rgba(255, 255, 255, 0.16);
-    --sanctuary-text-primary: #ffffff;
-    --sanctuary-text-secondary: #e9d5ff;
-    --sanctuary-accent-gold: #f59e0b;
-    --sanctuary-accent-amethyst: #a855f7;
+    /* Ivory Gold Light Luxury Theme Tokens (Matching Image 2) */
+    --sanctuary-bg-image: url('/images/luxury-crystal-sanctuary-light.jpg');
+    --sanctuary-overlay: rgba(253, 251, 247, 0.88);
+    --sanctuary-glass: rgba(255, 255, 255, 0.85);
+    --sanctuary-glass-border: rgba(212, 175, 55, 0.25);
+    --sanctuary-text-primary: #1F1A15;
+    --sanctuary-text-secondary: #5C5245;
+    --sanctuary-accent-gold: #B45309;
+    --sanctuary-accent-amethyst: #7E22CE;
 
     /* Light Spiritual Store Tokens */
-    --store-bg: #fcfaf6;
+    --store-bg: #FDFBF7;
     --store-card-bg: #ffffff;
-    --store-border: #ede6da;
-    --store-text-main: #1f1a15;
-    --store-text-muted: #6b6357;
-    --store-accent-red: #ba3c2a;
-    --store-accent-gold: #d4af37;
+    --store-border: #EAE3D5;
+    --store-text-main: #1F1A15;
+    --store-text-muted: #6B6357;
+    --store-accent-red: #BA3C2A;
+    --store-accent-gold: #D4AF37;
   }
 
   html {
@@ -39,17 +39,17 @@
   }
 
   body {
-    background-color: #0b0716;
+    background-color: #FAF7F2;
     background-image: 
-      radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.22) 0%, transparent 60%),
-      radial-gradient(ellipse at 50% 100%, rgba(212, 175, 55, 0.15) 0%, transparent 50%),
-      linear-gradient(180deg, rgba(12, 8, 22, 0.84) 0%, rgba(14, 9, 26, 0.92) 100%),
-      url('/images/crystal-sanctuary-bg.jpg');
+      radial-gradient(ellipse at 50% 0%, rgba(253, 230, 138, 0.22) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 100%, rgba(212, 175, 55, 0.12) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(250, 247, 242, 0.92) 0%, rgba(253, 251, 247, 0.96) 100%),
+      url('/images/luxury-crystal-sanctuary-light.jpg');
     background-size: cover;
     background-position: center top;
     background-attachment: fixed;
     background-repeat: no-repeat;
-    color: #f3f2fa;
+    color: #1F1A15;
     font-family: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     overflow-x: hidden;
     max-width: 100vw;
@@ -57,8 +57,8 @@
   }
 
   ::selection {
-    background-color: #f59e0b;
-    color: #000000;
+    background-color: #FBBF24;
+    color: #1F1A15;
   }
 }
 

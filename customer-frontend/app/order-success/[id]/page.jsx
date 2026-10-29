@@ -125,7 +125,7 @@ export default function OrderSuccessPage() {
                 ✓
               </div>
               <p className="font-bold text-xs text-white">Payment Verified</p>
-              <p className="text-[10px] text-emerald-400 font-mono">256-Bit Encrypted</p>
+              <p className="text-[10px] text-emerald-400 font-mono">Verified Gateway</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-400/40 text-center space-y-1.5 shadow-[0_0_20px_rgba(212,175,55,0.15)]">

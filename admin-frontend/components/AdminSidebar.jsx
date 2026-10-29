@@ -106,6 +106,14 @@ export default function AdminSidebar({
       section: 'SANCTUARY',
     },
     {
+      id: 'occasion-banners',
+      label: 'Occasion & Festive Sales',
+      icon: Flame,
+      badge: 'Diwali Active',
+      badgeColor: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+      section: 'SANCTUARY',
+    },
+    {
       id: 'filters',
       label: 'Dynamic Filter Matrix',
       icon: SlidersHorizontal,

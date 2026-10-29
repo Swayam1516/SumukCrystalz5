@@ -74,7 +74,7 @@ const INITIAL_FAQS = [
     category: 'Payment',
     question: 'What payment methods do you accept?',
     answer:
-      'We accept 100% secure 256-bit encrypted online payments via Razorpay, including UPI (Google Pay, PhonePe, Paytm, BHIM), all major Credit & Debit Cards (Visa, MasterCard, RuPay), and NetBanking. Cash on Delivery (COD) is available on selected catalog items.',
+      'We accept 100% secure encrypted online payments via Razorpay, including UPI (Google Pay, PhonePe, Paytm, BHIM), all major Credit & Debit Cards (Visa, MasterCard, RuPay), and NetBanking. Cash on Delivery (COD) is available on selected catalog items.',
     isActive: true,
   },
   {

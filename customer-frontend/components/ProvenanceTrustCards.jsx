@@ -1,57 +1,51 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, Globe, Sparkles, Compass } from 'lucide-react';
+import { ShieldCheck, Globe, Sparkles, PackageCheck } from 'lucide-react';
 
 export const PROVENANCE_FEATURES = [
   {
-    title: 'Museum Provenance',
-    description: 'Every crystal includes an individual gemological certificate of authenticity and origin.',
+    title: '100% Natural Minerals',
+    description: 'Authentic untreated gemstones and crystals sourced from proven geological deposits.',
     icon: ShieldCheck,
-    iconBg: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
   },
   {
-    title: 'Ethically Fair-Mined',
-    description: 'Direct partnerships with artisanal lapidary cooperatives across Brazil, South Africa, and Madagascar.',
+    title: 'Artisan Partnerships',
+    description: 'Direct ethical partnerships with lapidary stonecutters in Brazil, Madagascar, and India.',
     icon: Globe,
-    iconBg: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
   },
   {
-    title: 'Sacred Consecration',
-    description: 'Cleansed with pure high-frequency Himalayan sound bowls and sandalwood prior to dispatch.',
+    title: 'Sound Cleansed',
+    description: 'Mindfully cleansed with traditional singing bowls and sandalwood prior to dispatch.',
     icon: Sparkles,
-    iconBg: 'bg-pink-500/10 text-pink-400 border-pink-500/30',
   },
   {
-    title: 'Armored Courier',
-    description: 'Custom velvet-lined luxury packaging with zero-damage replacement guarantee.',
-    icon: Compass,
-    iconBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    title: 'Protective Packaging',
+    description: 'Reinforced cushioned packaging with a guaranteed transit damage replacement policy.',
+    icon: PackageCheck,
   },
 ];
 
 export default function ProvenanceTrustCards({ className = '' }) {
   return (
     <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 py-6 border-y border-stone-200/80 bg-white/60 backdrop-blur-md rounded-2xl">
         {PROVENANCE_FEATURES.map((item, idx) => {
           const IconComponent = item.icon;
           return (
             <div
               key={idx}
-              className="provenance-card group cursor-default"
+              className="flex items-start gap-3.5 p-3 sm:p-4 text-left group"
             >
-              <div
-                className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md ${item.iconBg}`}
-              >
-                <IconComponent className="w-5 h-5 stroke-[2]" />
+              <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center justify-center flex-shrink-0 text-[#B45309] shadow-xs">
+                <IconComponent className="w-4 h-4 stroke-[2]" />
               </div>
 
               <div className="space-y-1">
-                <h3 className="font-editorial text-sm font-bold text-white tracking-wide group-hover:text-amber-200 transition-colors">
+                <h4 className="font-editorial text-xs sm:text-sm font-bold text-stone-900 tracking-wide">
                   {item.title}
-                </h3>
-                <p className="text-[11.5px] font-sans-ui text-luxe-300 leading-relaxed font-light">
+                </h4>
+                <p className="text-[11.5px] font-sans-ui text-stone-600 leading-relaxed font-normal">
                   {item.description}
                 </p>
               </div>

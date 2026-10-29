@@ -47,9 +47,6 @@ export default function CartDrawer() {
   if (!isDrawerOpen) return null;
 
   const subtotal = getTotalPrice();
-  const freeShippingThreshold = Number(deliverySettings?.free_shipping_threshold || 5000);
-  const progressToFreeShipping = Math.min(100, (subtotal / freeShippingThreshold) * 100);
-  const remainingForFree = Math.max(0, freeShippingThreshold - subtotal);
 
   const totalSpecimens = items.reduce((s, i) => s + (Number(i.quantity) || 1), 0);
 
@@ -171,23 +168,7 @@ export default function CartDrawer() {
             </div>
           </div>
 
-          {/* 3. Free Shipping Progress Meter (Matching Reference Image 1) */}
-          <div className="px-5 pb-3 relative z-10 space-y-2">
-            <div className="flex items-center gap-1.5 text-xs text-[#1E1B4B] font-bold">
-              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>
-                {remainingForFree > 0
-                  ? `Add ₹${Number(remainingForFree || 0).toLocaleString('en-IN')} more for free insured shipping`
-                  : '✨ Complimentary Insured Shipping Unlocked!'}
-              </span>
-            </div>
-            <div className="w-full h-2 rounded-full bg-purple-100/90 overflow-hidden shadow-inner">
-              <div
-                className="h-full bg-gradient-to-r from-[#7C3AED] via-[#8B5CF6] to-[#9333EA] rounded-full transition-all duration-500 shadow-sm"
-                style={{ width: `${progressToFreeShipping}%` }}
-              />
-            </div>
-          </div>
+
 
           {/* 4. Items List */}
           <div className="flex-1 overflow-y-auto px-5 py-2 space-y-3.5 relative z-10">
@@ -321,10 +302,6 @@ export default function CartDrawer() {
               </div>
 
               <div className="space-y-1.5">
-                <div className="text-xs text-[#6B7280] flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-[#B8860B] flex-shrink-0" />
-                  <span>Certificate &amp; consecration included with every order</span>
-                </div>
                 <div className="text-[11px] text-purple-900 bg-purple-50/90 border border-purple-200/80 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 font-medium">
                   <span className="text-purple-600 font-bold">📦 Note:</span>
                   <span>Compulsory unboxing video required for returns. Contact owner for assistance.</span>
@@ -341,15 +318,8 @@ export default function CartDrawer() {
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-              {/* 3 Trust Badges Footer Row */}
-              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-purple-100 text-center">
-                <div className="flex flex-col items-center justify-center space-y-1">
-                  <div className="w-7 h-7 rounded-full bg-[#FAF5E6] border border-[#D4AF37]/40 flex items-center justify-center text-[#B8860B]">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-[#6B7280]">256-bit Encryption</span>
-                </div>
-
+              {/* Trust Badges Footer Row */}
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-purple-100 text-center">
                 <div className="flex flex-col items-center justify-center space-y-1">
                   <div className="w-7 h-7 rounded-full bg-[#FAF5E6] border border-[#D4AF37]/40 flex items-center justify-center text-[#B8860B]">
                     <Sparkles className="w-3.5 h-3.5" />

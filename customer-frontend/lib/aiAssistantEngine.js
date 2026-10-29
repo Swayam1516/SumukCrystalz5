@@ -60,7 +60,7 @@ export const DEFAULT_FAQS = [
     category: 'Payment',
     question: 'What payment methods do you accept?',
     answer:
-      'We accept 100% secure 256-bit encrypted online payments via Razorpay, including UPI (Google Pay, PhonePe, Paytm, BHIM), all major Credit & Debit Cards (Visa, MasterCard, RuPay), and NetBanking. Cash on Delivery (COD) is available on selected catalog items.',
+      'We accept 100% secure encrypted online payments via Razorpay, including UPI (Google Pay, PhonePe, Paytm, BHIM), all major Credit & Debit Cards (Visa, MasterCard, RuPay), and NetBanking. Cash on Delivery (COD) is available on selected catalog items.',
     isActive: true,
   },
   {
@@ -570,7 +570,7 @@ export async function processCustomerMessage({
     lower.includes('razorpay')
   ) {
     return {
-      reply: `**Secure Payment Methods**\n\nWe provide 256-bit bank-grade encrypted checkout powered by **Razorpay**:\n\n- **UPI Instant Transfer**: Google Pay, PhonePe, Paytm, BHIM, QR code\n- **Credit & Debit Cards**: Visa, MasterCard, RuPay, Maestro\n- **NetBanking**: 50+ major Indian banks\n- **Cash on Delivery (COD)**: Available on selected consecrated bands\n\nYour payment details are strictly processed over encrypted SSL gateways.`,
+      reply: `**Secure Payment Methods**\n\nWe provide bank-grade encrypted checkout powered by **Razorpay**:\n\n- **UPI Instant Transfer**: Google Pay, PhonePe, Paytm, BHIM, QR code\n- **Credit & Debit Cards**: Visa, MasterCard, RuPay, Maestro\n- **NetBanking**: 50+ major Indian banks\n- **Cash on Delivery (COD)**: Available on selected consecrated bands\n\nYour payment details are strictly processed over encrypted SSL gateways.`,
       products: [],
       quickReplies: ['How to Place an Order', 'Show Best Sellers', 'Delivery Rates'],
     };
@@ -739,7 +739,7 @@ export async function processCustomerMessage({
   // 9. HOW TO ORDER / WEBSITE NAVIGATION
   if (lower.includes('how to order') || lower.includes('how to buy') || lower.includes('add to cart') || lower.includes('checkout')) {
     return {
-      reply: `**How to Acquire Your Consecrated Crystal:**\n\n1. **Browse Catalog**: Visit our **[Sanctuary Shop](/shop)** or ask me for specific crystals.\n2. **Select Specimen**: Choose your preferred bead size (e.g. 6mm, 8mm, or 10mm).\n3. **Add to Vault**: Click **Add to Cart** or **Quick Add** with sacred consecration audio.\n4. **Secure Checkout**: Enter your shipping address and complete 256-bit encrypted payment via Razorpay UPI/Cards/NetBanking.\n5. **Blessing & Dispatch**: Your specimen is individually cleansed and shipped in armored velvet packaging.`,
+      reply: `**How to Acquire Your Consecrated Crystal:**\n\n1. **Browse Catalog**: Visit our **[Sanctuary Shop](/shop)** or ask me for specific crystals.\n2. **Select Specimen**: Choose your preferred bead size (e.g. 6mm, 8mm, or 10mm).\n3. **Add to Vault**: Click **Add to Cart** or **Quick Add** with sacred consecration audio.\n4. **Secure Checkout**: Enter your shipping address and complete bank-grade encrypted payment via Razorpay UPI/Cards/NetBanking.\n5. **Blessing & Dispatch**: Your specimen is individually cleansed and shipped in armored velvet packaging.`,
       products: [],
       quickReplies: ['Open Sanctuary Shop', 'Shipping Info', 'Payment Options'],
     };

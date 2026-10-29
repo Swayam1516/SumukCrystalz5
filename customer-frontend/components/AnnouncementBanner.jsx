@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sparkles, X, Megaphone } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { getSupabaseAnnouncement } from '@/lib/supabase';
 
 export default function AnnouncementBanner() {
+  const pathname = usePathname();
   const [announcement, setAnnouncement] = useState(null);
   const [dismissed, setDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -48,6 +50,7 @@ export default function AnnouncementBanner() {
     };
   }, []);
 
+  if (pathname === '/shop') return null;
   if (!mounted || dismissed || !announcement) return null;
   if (!announcement.is_active || !announcement.message || !announcement.message.trim()) {
     return null;

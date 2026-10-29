@@ -37,8 +37,7 @@ import {
 } from 'lucide-react';
 import LuxuryImageUploader from './LuxuryImageUploader';
 import LuxuryVariantBuilder from './LuxuryVariantBuilder';
-import ProductPreviewModal from './ProductPreviewModal';
-import { supabase, saveProductToSupabase } from '../lib/supabase';
+import { supabase, saveProductToSupabase, getSupabaseStoreFilters, saveSupabaseStoreFilters } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuth';
 import { DISCOVERY_PILLARS, formatProductMultiTags, getFilterLabel } from '../lib/discoveryTaxonomy';
 
@@ -113,7 +112,7 @@ export default function AdvancedProductWorkspace({
     description: '',
     healingBenefits: '',
     careInstructions: '',
-    authenticityNote: '100% Certified Authentic Natural Crystal & Consecrated by Founder Soumyaa Naveen.',
+    authenticityNote: 'Authentic Natural Crystal & Consecrated by Founder Soumyaa Naveen.',
     price: 699,
     originalPrice: 1299,
     costPrice: 350,
@@ -156,6 +155,132 @@ export default function AdvancedProductWorkspace({
     home_space: true,
   });
 
+  // Dynamic filter state
+  const [pillars, setPillars] = useState(DISCOVERY_PILLARS);
+  const [showAddFilterCard, setShowAddFilterCard] = useState(false);
+  const [newFilterName, setNewFilterName] = useState('');
+  const [newFilterPillarId, setNewFilterPillarId] = useState('purpose');
+  const [isAddingFilter, setIsAddingFilter] = useState(false);
+  const [filterSuccessMsg, setFilterSuccessMsg] = useState('');
+
+  // Fetch store filters and merge with discovery taxonomy
+  useEffect(() => {
+    let isMounted = true;
+    const loadDynamicFilters = async () => {
+      try {
+        const storeFilters = await getSupabaseStoreFilters();
+        if (storeFilters && Array.isArray(storeFilters) && storeFilters.length > 0 && isMounted) {
+          setPillars((prevPillars) => {
+            const merged = prevPillars.map((p) => ({ ...p, options: [...p.options] }));
+            storeFilters.forEach((cat) => {
+              const matchedPillar = merged.find(
+                (p) => p.id === cat.id || p.id === cat.slug || p.name.toLowerCase() === (cat.name || '').toLowerCase()
+              );
+              if (matchedPillar) {
+                (cat.options || []).forEach((opt) => {
+                  const optId = opt.id || `${matchedPillar.id}:${opt.value || opt.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+                  if (!matchedPillar.options.some((o) => o.id === optId || o.value === opt.value)) {
+                    matchedPillar.options.push({
+                      id: optId,
+                      label: opt.label,
+                      value: opt.value || optId,
+                      subGroup: 'Custom Added',
+                    });
+                  }
+                });
+              } else {
+                merged.push({
+                  id: cat.id || cat.slug,
+                  name: cat.name,
+                  subtitle: `Custom Filter Category (${(cat.options || []).length} options)`,
+                  badgeColor: 'from-[#D4AF37]/20 to-[#B8860B]/10 border-[#D4AF37]/40 text-[#D4AF37]',
+                  options: (cat.options || []).map((o) => ({
+                    id: o.id || `${cat.id}:${o.value || o.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+                    label: o.label,
+                    value: o.value,
+                    subGroup: 'Custom Added',
+                  })),
+                });
+              }
+            });
+            return merged;
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to merge dynamic store filters:', err);
+      }
+    };
+    loadDynamicFilters();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Quick Add Filter Handler
+  const handleAddFilter = async () => {
+    if (!newFilterName.trim()) return;
+    setIsAddingFilter(true);
+    setFilterSuccessMsg('');
+    try {
+      const cleanLabel = newFilterName.trim();
+      const cleanValue = cleanLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const newFilterId = `${newFilterPillarId}:${cleanValue}`;
+      
+      const newOption = {
+        id: newFilterId,
+        label: cleanLabel,
+        value: cleanValue,
+        subGroup: 'Custom Added',
+      };
+
+      // Add to pillars
+      setPillars((prev) =>
+        prev.map((p) => {
+          if (p.id === newFilterPillarId) {
+            if (p.options.some((o) => o.id === newFilterId || o.value === cleanValue)) return p;
+            return { ...p, options: [...p.options, newOption] };
+          }
+          return p;
+        })
+      );
+
+      // Automatically assign new filter to this specimen
+      if (!productData.assignedFilters.includes(newFilterId)) {
+        handleFieldChange('assignedFilters', [...productData.assignedFilters, newFilterId]);
+      }
+
+      // Persist to store_filters in Supabase & local storage
+      const currentStoreFilters = await getSupabaseStoreFilters();
+      let updatedStoreFilters = [...currentStoreFilters];
+      const targetCategory = updatedStoreFilters.find((c) => c.id === newFilterPillarId || c.slug === newFilterPillarId);
+      if (targetCategory) {
+        updatedStoreFilters = updatedStoreFilters.map((c) => {
+          if (c.id === targetCategory.id) {
+            const exists = (c.options || []).some((o) => o.id === newFilterId || o.value === cleanValue);
+            return exists ? c : { ...c, options: [...(c.options || []), { id: newFilterId, label: cleanLabel, value: cleanValue, count: 1, isActive: true }] };
+          }
+          return c;
+        });
+      } else {
+        const pillarInfo = pillars.find((p) => p.id === newFilterPillarId);
+        updatedStoreFilters.push({
+          id: newFilterPillarId,
+          name: pillarInfo?.name || newFilterPillarId.toUpperCase(),
+          slug: newFilterPillarId,
+          type: 'sidebar',
+          options: [{ id: newFilterId, label: cleanLabel, value: cleanValue, count: 1, isActive: true }],
+        });
+      }
+      await saveSupabaseStoreFilters(updatedStoreFilters);
+
+      setFilterSuccessMsg(`✨ Added "${cleanLabel}" & checked for this specimen!`);
+      setNewFilterName('');
+      setTimeout(() => setFilterSuccessMsg(''), 4000);
+    } catch (err) {
+      console.warn('Error adding filter:', err);
+    } finally {
+      setIsAddingFilter(false);
+    }
+  };
+
   const [validationError, setValidationError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -165,6 +290,12 @@ export default function AdvancedProductWorkspace({
   // Hydrate on mount/change of initialProduct
   useEffect(() => {
     if (initialProduct) {
+      const initialAssigned = Array.isArray(initialProduct.assignedFilters) && initialProduct.assignedFilters.length > 0
+        ? initialProduct.assignedFilters
+        : (Array.isArray(initialProduct.assigned_filters) && initialProduct.assigned_filters.length > 0
+            ? initialProduct.assigned_filters
+            : (Array.isArray(initialProduct.tags) ? initialProduct.tags : []));
+
       setProductData({
         id: initialProduct.id,
         slug: initialProduct.slug,
@@ -180,7 +311,7 @@ export default function AdvancedProductWorkspace({
         description: initialProduct.description || '',
         healingBenefits: initialProduct.healingBenefits || initialProduct.healing_benefits || '',
         careInstructions: initialProduct.careInstructions || initialProduct.care_instructions || '',
-        authenticityNote: initialProduct.authenticityNote || initialProduct.authenticity_info || '100% Certified Authentic Natural Crystal & Consecrated by Founder Soumyaa Naveen.',
+        authenticityNote: initialProduct.authenticityNote || initialProduct.authenticity_info || 'Authentic Natural Crystal & Consecrated by Founder Soumyaa Naveen.',
         price: Number(initialProduct.price || initialProduct.selling_price || 699),
         originalPrice: Number(initialProduct.originalPrice || initialProduct.original_price || 1299),
         costPrice: Number(initialProduct.costPrice || initialProduct.cost_price || 350),
@@ -203,7 +334,7 @@ export default function AdvancedProductWorkspace({
           : (initialProduct.image || initialProduct.hero_image ? [initialProduct.image || initialProduct.hero_image] : []),
         variants: initialProduct.variants || initialProduct.product_variants || [],
         customAttributes: initialProduct.customAttributes || [],
-        assignedFilters: initialProduct.assignedFilters || [],
+        assignedFilters: initialAssigned,
       });
       setIsDirty(false);
     }
@@ -942,6 +1073,14 @@ export default function AdvancedProductWorkspace({
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddFilterCard((prev) => !prev)}
+                      className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black text-xs font-bold hover:brightness-110 flex items-center gap-1.5 transition shadow"
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>{showAddFilterCard ? 'Close' : '➕ Add Filter'}</span>
+                    </button>
                     <span className="px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#F3E5AB] text-xs font-mono font-bold">
                       {productData.assignedFilters.length} Filters Assigned
                     </span>
@@ -956,6 +1095,71 @@ export default function AdvancedProductWorkspace({
                     )}
                   </div>
                 </div>
+
+                {/* Provision New Filter Bar */}
+                {showAddFilterCard && (
+                  <div className="p-4 rounded-xl bg-stone-950 border border-[#D4AF37]/40 shadow-xl space-y-3 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-serif font-bold text-[#F3E5AB] flex items-center gap-1.5">
+                        <Plus className="w-3.5 h-3.5 text-[#D4AF37]" /> Add New Filter for Products
+                      </h4>
+                      <span className="text-[10px] text-stone-400">
+                        Creates filter in store taxonomy and assigns it to this specimen
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                      <div className="sm:col-span-6">
+                        <input
+                          type="text"
+                          placeholder="Filter Name (e.g. Stress Relief, Aura Shield, Selenite Tower)..."
+                          value={newFilterName}
+                          onChange={(e) => setNewFilterName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddFilter();
+                            }
+                          }}
+                          className="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-[#D4AF37]"
+                        />
+                      </div>
+                      <div className="sm:col-span-4">
+                        <select
+                          value={newFilterPillarId}
+                          onChange={(e) => setNewFilterPillarId(e.target.value)}
+                          className="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-[#D4AF37]"
+                        >
+                          {pillars.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              Category: {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <button
+                          type="button"
+                          disabled={!newFilterName.trim() || isAddingFilter}
+                          onClick={handleAddFilter}
+                          className="w-full h-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black text-xs font-bold hover:brightness-110 disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-1"
+                        >
+                          {isAddingFilter ? (
+                            <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          )}
+                          <span>Save &amp; Check</span>
+                        </button>
+                      </div>
+                    </div>
+                    {filterSuccessMsg && (
+                      <div className="text-xs text-emerald-400 flex items-center gap-1.5 pt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>{filterSuccessMsg}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Search Bar Across All 6 Pillars */}
                 <div className="relative">
@@ -1002,7 +1206,7 @@ export default function AdvancedProductWorkspace({
 
               {/* 6 PILLAR ACCORDIONS & OPTION MATRICES */}
               <div className="space-y-4">
-                {DISCOVERY_PILLARS.map((pillar) => {
+                {pillars.map((pillar) => {
                   const filteredOptions = filterSearch.trim()
                     ? pillar.options.filter(
                         (opt) =>

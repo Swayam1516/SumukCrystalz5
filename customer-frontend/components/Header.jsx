@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCartStore } from '../store/useCart';
 import { useAuthStore } from '../store/useAuth';
 import AuthModal from './AuthModal';
@@ -84,6 +85,7 @@ function SparkleStar({ className = 'w-4 h-4 text-amber-300' }) {
 }
 
 export default function Header() {
+  const pathname = usePathname();
   const { openDrawer, getTotalCount } = useCartStore();
   const { user, isAdmin, openAuthModal, logout, initAuth } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -123,6 +125,11 @@ export default function Header() {
     logout();
   };
 
+  // On /shop, yield to the dedicated storefront header matching the mobile/app layout
+  if (pathname === '/shop') {
+    return null;
+  }
+
   return (
     <>
       <header className="sticky top-0 z-50 w-full transition-all duration-300 px-3 sm:px-6 pt-3 pb-2">
@@ -134,21 +141,21 @@ export default function Header() {
           <SparkleStar className="w-2.5 h-2.5 text-amber-200" />
         </div>
 
-        {/* Translucent Floating Glass Header Bar */}
-        <div className="max-w-7xl mx-auto rounded-2xl bg-[#090812]/80 backdrop-blur-xl border border-amber-500/25 shadow-[0_8px_32px_rgba(0,0,0,0.6)] px-4 sm:px-7 h-16 sm:h-20 flex items-center justify-between relative">
+        {/* Translucent Floating Glass Header Bar (Light Luxury Theme Matching Image 2 & 4) */}
+        <div className="max-w-7xl mx-auto rounded-2xl bg-white/92 backdrop-blur-xl border border-amber-300/40 shadow-[0_4px_24px_rgba(180,130,40,0.08)] px-3 sm:px-7 h-16 sm:h-20 flex items-center justify-between relative">
           {/* Subtle Golden Glow Line at top/bottom border */}
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none rounded-t-2xl" />
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent pointer-events-none rounded-b-2xl" />
 
           {/* LEFT: Crystal Logo + Brand Name + Sparkle Divider */}
-          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group flex-shrink-0 whitespace-nowrap">
               <GoldenCrystalLogo />
-              <span className="font-serif text-xs sm:text-sm md:text-base font-semibold tracking-[0.16em] sm:tracking-[0.2em] text-[#e8c97c] group-hover:text-white transition-colors uppercase whitespace-nowrap">
+              <span className="font-serif text-xs sm:text-sm md:text-base font-bold tracking-[0.16em] sm:tracking-[0.2em] text-[#8C6208] group-hover:text-amber-900 transition-colors uppercase whitespace-nowrap">
                 SUMUK CRYSTALZ 5
               </span>
             </Link>
-            <SparkleStar className="w-3.5 h-3.5 text-amber-300/80 hidden sm:block ml-0.5 flex-shrink-0" />
+            <SparkleStar className="w-3.5 h-3.5 text-amber-500/80 hidden sm:block ml-0.5 flex-shrink-0" />
           </div>
 
           {/* CENTER / NAVIGATION LINKS */}
@@ -163,14 +170,14 @@ export default function Header() {
               <Link
                 href="/shop"
                 onClick={() => setShopDropdownOpen(false)}
-                className="text-[#e8c97c] font-bold hover:text-white transition-all duration-200 py-2.5 px-2 flex items-center gap-1.5 cursor-pointer rounded-lg hover:bg-white/[0.04]"
+                className="text-[#8C6208] font-bold hover:text-amber-900 transition-all duration-200 py-2.5 px-2 flex items-center gap-1.5 cursor-pointer rounded-lg hover:bg-amber-50/60"
               >
                 <span>SHOP</span>
               </Link>
               <button
                 type="button"
                 onClick={() => setShopDropdownOpen(!shopDropdownOpen)}
-                className="p-1.5 text-amber-400/80 hover:text-amber-300 cursor-pointer outline-none rounded-md hover:bg-white/[0.04]"
+                className="p-1.5 text-amber-600 hover:text-amber-800 cursor-pointer outline-none rounded-md hover:bg-amber-50/60"
                 aria-label="Toggle Shop Category Menu"
               >
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180' : ''}`} />
@@ -178,19 +185,19 @@ export default function Header() {
 
               {shopDropdownOpen && (
                 <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 w-[520px] max-w-[92vw] z-50 animate-fade-in text-left pointer-events-auto">
-                  <div className="p-4 bg-[#0c0915] border border-amber-500/35 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl">
+                  <div className="p-4 bg-white/98 border border-amber-300/50 rounded-2xl shadow-[0_20px_50px_rgba(180,130,40,0.15)] backdrop-blur-2xl">
                     {/* Top Bar with All Store Link */}
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-stone-200">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-amber-400" />
-                        <span className="font-serif text-xs font-bold text-amber-200 tracking-wider uppercase">
+                        <Sparkles className="w-4 h-4 text-amber-600" />
+                        <span className="font-serif text-xs font-bold text-amber-900 tracking-wider uppercase">
                           6-Pillar Discovery Vault
                         </span>
                       </div>
                       <Link
                         href="/shop"
                         onClick={() => setShopDropdownOpen(false)}
-                        className="text-[11px] text-amber-400 hover:text-white font-mono flex items-center gap-1 transition"
+                        className="text-[11px] text-amber-700 hover:text-amber-900 font-mono font-bold flex items-center gap-1 transition"
                       >
                         <span>Explore All Products</span>
                         <ArrowRight className="w-3 h-3" />
@@ -204,15 +211,15 @@ export default function Header() {
                           key={item.label}
                           href={item.href}
                           onClick={() => setShopDropdownOpen(false)}
-                          className="p-2.5 rounded-xl hover:bg-white/[0.06] border border-transparent hover:border-amber-500/25 transition group block"
+                          className="p-2.5 rounded-xl hover:bg-amber-50/80 border border-transparent hover:border-amber-300/40 transition group block"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-neutral-200 group-hover:text-amber-300 transition">
+                            <span className="text-xs font-bold text-stone-800 group-hover:text-amber-800 transition">
                               {item.label}
                             </span>
-                            <span className="text-[10px] text-amber-500/60 group-hover:text-amber-400">&rarr;</span>
+                            <span className="text-[10px] text-amber-600 group-hover:text-amber-800">&rarr;</span>
                           </div>
-                          <p className="text-[10px] text-neutral-400 group-hover:text-neutral-300 truncate mt-0.5">
+                          <p className="text-[10px] text-stone-500 group-hover:text-stone-700 truncate mt-0.5 font-sans">
                             {item.description}
                           </p>
                         </Link>
@@ -225,14 +232,14 @@ export default function Header() {
 
             <Link
               href="/services"
-              className="text-white/85 hover:text-[#e8c97c] transition-all duration-200"
+              className="text-stone-700 hover:text-[#8C6208] font-bold transition-all duration-200"
             >
               SERVICES
             </Link>
 
             <Link
               href="/about"
-              className="text-white/85 hover:text-[#e8c97c] transition-all duration-200"
+              className="text-stone-700 hover:text-[#8C6208] font-bold transition-all duration-200"
             >
               FOUNDER STORY
             </Link>
@@ -258,14 +265,14 @@ export default function Header() {
                 </button>
 
                 {userDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-3 w-64 py-2 bg-[#0d0a17] border border-amber-500/30 rounded-2xl shadow-2xl z-50 text-xs font-mono space-y-1 backdrop-blur-2xl animate-fade-in">
-                    <div className="px-4 py-2.5 border-b border-white/10">
-                      <p className="font-bold text-white truncate">{currentUser.name || 'Sacred Patron'}</p>
-                      <p className="text-[10px] text-neutral-400 truncate">{currentUser.email}</p>
+                  <div className="absolute right-0 top-full mt-3 w-64 py-2 bg-white border border-amber-300/50 rounded-2xl shadow-2xl z-50 text-xs font-mono space-y-1 backdrop-blur-2xl animate-fade-in text-stone-800">
+                    <div className="px-4 py-2.5 border-b border-stone-100 font-sans">
+                      <p className="font-bold text-stone-900 truncate">{currentUser.name || 'Sacred Patron'}</p>
+                      <p className="text-[10px] text-stone-500 truncate font-mono">{currentUser.email}</p>
                       <span className={`inline-block mt-1 text-[9px] px-2 py-0.5 rounded font-bold ${
                         isCurrentAdmin
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                          : 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : 'bg-purple-100 text-purple-900 border border-purple-300'
                       }`}>
                         {isCurrentAdmin ? '👑 Founder Admin' : '✨ Crystal Patron'}
                       </span>
@@ -274,18 +281,18 @@ export default function Header() {
                     <Link
                       href="/account"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-white/5 flex items-center gap-2.5 text-white transition"
+                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 flex items-center gap-2.5 text-stone-800 transition"
                     >
-                      <User className="w-3.5 h-3.5 text-amber-300" />
+                      <User className="w-3.5 h-3.5 text-amber-600" />
                       <span>My Account &amp; Orders</span>
                     </Link>
 
                     <Link
                       href="/admin"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-white/5 flex items-center gap-2.5 text-[#e8c97c] font-bold transition"
+                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 flex items-center gap-2.5 text-amber-800 font-bold transition"
                     >
-                      <Crown className="w-3.5 h-3.5 text-amber-400" />
+                      <Crown className="w-3.5 h-3.5 text-amber-600" />
                       <span>Admin Control Center</span>
                     </Link>
 
@@ -295,9 +302,9 @@ export default function Header() {
                         setUserDropdownOpen(false);
                         openAuthModal('register');
                       }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-white/5 flex items-center gap-2.5 text-amber-300 transition"
+                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 flex items-center gap-2.5 text-amber-700 transition"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                       <span>Create New Account</span>
                     </button>
 
@@ -307,22 +314,22 @@ export default function Header() {
                         setUserDropdownOpen(false);
                         openAuthModal('login');
                       }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-white/5 flex items-center gap-2.5 text-neutral-300 transition"
+                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 flex items-center gap-2.5 text-stone-600 transition"
                     >
-                      <User className="w-3.5 h-3.5 text-neutral-400" />
+                      <User className="w-3.5 h-3.5 text-stone-500" />
                       <span>Switch Account</span>
                     </button>
 
-                    <div className="border-t border-white/10 my-1.5" />
+                    <div className="border-t border-stone-100 my-1.5" />
 
                     {/* Prominent Sign Out Button */}
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 flex items-center gap-2.5 text-red-300 font-bold transition rounded-lg mx-auto"
+                      className="w-full text-left px-4 py-2.5 bg-red-50 hover:bg-red-100 flex items-center gap-2.5 text-red-700 font-bold transition rounded-lg mx-auto"
                     >
-                      <LogOut className="w-4 h-4 text-red-400" />
-                      <span>Sign Out (Disconnect Vault)</span>
+                      <LogOut className="w-4 h-4 text-red-500" />
+                      <span>Sign Out</span>
                     </button>
                   </div>
                 )}
@@ -332,18 +339,18 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => openAuthModal('login')}
-                  className="text-white/80 hover:text-[#e8c97c] transition-all duration-200 text-xs font-mono tracking-wider uppercase"
+                  className="px-3.5 py-1.5 rounded-full border border-stone-300 bg-white hover:bg-stone-50 text-stone-800 transition-all duration-200 text-xs font-semibold tracking-wider shadow-xs"
                 >
-                  SIGN IN
+                  Sign In
                 </button>
 
                 <button
                   type="button"
                   onClick={() => openAuthModal('register')}
-                  className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-[11px] tracking-wider uppercase shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5"
+                  className="px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs tracking-wider shadow-sm transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5"
                 >
-                  <Sparkles className="w-3 h-3 text-black" />
-                  <span>SIGN UP</span>
+                  <Sparkles className="w-3 h-3 text-white" />
+                  <span>Sign Up</span>
                 </button>
               </div>
             )}
@@ -351,38 +358,58 @@ export default function Header() {
             {isCurrentAdmin && (
               <Link
                 href="/admin"
-                className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 text-[#e8c97c] hover:text-white font-bold transition-all text-[10px] flex items-center gap-1 shadow-[0_0_10px_rgba(212,175,55,0.2)]"
+                className="px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 hover:bg-amber-200 font-bold transition-all text-[10px] flex items-center gap-1 shadow-xs"
               >
-                <Crown className="w-3 h-3 text-amber-400" />
+                <Crown className="w-3 h-3 text-amber-700" />
                 <span>ADMIN</span>
               </Link>
             )}
           </nav>
 
           {/* RIGHT: Golden Shopping Cart + Twinkles + Mobile Menu Toggle */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Auth Buttons matching Image 4 */}
+            {!currentUser && (
+              <div className="flex md:hidden items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('login')}
+                  className="px-2.5 py-1 rounded-full border border-stone-300 bg-white text-stone-800 text-[11px] font-semibold"
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('register')}
+                  className="px-3 py-1 rounded-full bg-amber-600 text-white text-[11px] font-bold shadow-xs"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={openDrawer}
-              className="relative p-2 text-[#e8c97c] hover:text-white transition-all group flex items-center justify-center"
+              className="relative p-2 text-stone-800 hover:text-amber-800 transition-all group flex items-center justify-center"
               aria-label="View Shopping Cart"
             >
-              <ShoppingCart className="w-6 h-6 stroke-[1.9] group-hover:scale-105 transition-transform" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#d4af37] text-black font-extrabold text-[9px] flex items-center justify-center shadow-md">
+              <ShoppingCart className="w-6 h-6 stroke-[1.9] group-hover:scale-105 transition-transform text-stone-800" />
+              <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-[#D4AF37] text-stone-950 font-extrabold text-[10px] flex items-center justify-center shadow-md border-2 border-white">
                 {cartCount}
               </span>
             </button>
 
             {/* Subtle Right Sparkle */}
             <div className="hidden sm:block pointer-events-none opacity-60">
-              <SparkleStar className="w-3 h-3 text-amber-300" />
+              <SparkleStar className="w-3 h-3 text-amber-500" />
             </div>
 
             {/* Mobile menu toggle */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl bg-white/5 border border-amber-500/30 text-[#e8c97c] hover:text-white"
+              className="md:hidden p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 transition-colors"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -391,7 +418,7 @@ export default function Header() {
 
         {/* Mobile Nav Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-2 max-w-7xl mx-auto rounded-2xl px-6 pt-4 pb-6 bg-[#090812]/95 backdrop-blur-2xl border border-amber-500/30 space-y-3 animate-fade-in shadow-2xl">
+          <div className="md:hidden mt-2 max-w-7xl mx-auto rounded-2xl px-6 pt-4 pb-6 bg-white/98 backdrop-blur-2xl border border-amber-300/40 space-y-3 animate-fade-in shadow-2xl text-stone-900">
             {isCurrentAdmin && (
               <Link
                 href="/admin"

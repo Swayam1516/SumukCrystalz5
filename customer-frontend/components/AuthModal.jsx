@@ -682,10 +682,10 @@ export default function AuthModal() {
             <div className="relative z-10 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-purple-200/90 font-mono">
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Supabase 256-bit Auth</span>
+                <span>Secure Cloud Auth</span>
               </span>
               <span>•</span>
-              <span>100% Genuine</span>
+              <span>Genuine Crystals</span>
             </div>
           </div>
         )}

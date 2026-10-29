@@ -1,372 +1,252 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCartStore } from '../../store/useCart';
-import DualTierFilterTicker, { DEFAULT_INTENTIONS, DEFAULT_MODALITIES } from '../../components/DualTierFilterTicker';
-import { getSupabaseProducts, getSupabaseStoreFilters, DEFAULT_STORE_FILTERS } from '../../lib/supabase';
+import {
+  getSupabaseProducts,
+  getSupabaseStoreFilters,
+  getSupabaseOccasionBanner,
+  DEFAULT_OCCASION_BANNER,
+  DEFAULT_STORE_FILTERS,
+} from '../../lib/supabase';
 import {
   DISCOVERY_PILLARS,
-  formatProductMultiTags,
   getFilterLabel,
-  TOP_NAV_SHOP_MENU,
-  productMatchesFilters,
 } from '../../lib/discoveryTaxonomy';
 import {
-  Filter,
   Search,
-  SlidersHorizontal,
-  Sparkles,
-  ShoppingBag,
-  Star,
-  Check,
+  ShoppingCart,
+  Menu,
   X,
-  ChevronDown,
-  ChevronUp,
-  LayoutGrid,
-  Grid,
-  ShieldCheck,
-  RotateCw,
-  Truck,
+  Mic,
+  ScanLine,
+  Star,
   ArrowRight,
-  Zap,
+  ChevronRight,
+  SlidersHorizontal,
+  Filter,
+  Check,
+  Sparkles,
+  LayoutGrid,
+  RotateCw,
+  Flame,
+  Home,
   Tag,
-  Layers,
-  Crown,
+  Gift,
+  Compass,
+  User,
+  ShoppingBag,
 } from 'lucide-react';
 
-function MasterworksShopContent() {
-  const searchParams = useSearchParams();
-  const initialPurpose = searchParams.get('purpose') || 'all';
-  const initialFilter = searchParams.get('filter') || '';
-  const initialPillar = searchParams.get('pillar') || '';
-  const initialSort = searchParams.get('sort') || 'bestselling';
-
-  const [selectedPurpose, setSelectedPurpose] = useState(initialPurpose);
-  const [selectedModality, setSelectedModality] = useState('');
-  const [selectedDiscoveryFilters, setSelectedDiscoveryFilters] = useState(
-    initialFilter ? [initialFilter] : []
+// Golden Crystal Pyramid Logo SVG matching brand identity
+function GoldenPyramidLogo({ className = 'w-7 h-7 sm:w-8 sm:h-8' }) {
+  return (
+    <svg
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`${className} filter drop-shadow-[0_2px_8px_rgba(212,175,55,0.4)] select-none flex-shrink-0`}
+    >
+      <defs>
+        <linearGradient id="pyrGold1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFF3B8" />
+          <stop offset="45%" stopColor="#D4AF37" />
+          <stop offset="100%" stopColor="#875E11" />
+        </linearGradient>
+        <linearGradient id="pyrGold2" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FDE892" />
+          <stop offset="55%" stopColor="#C5992A" />
+          <stop offset="100%" stopColor="#5E410B" />
+        </linearGradient>
+      </defs>
+      {/* Side facets */}
+      <polygon points="12,18 6,24 9,35 15,35 15,22" fill="url(#pyrGold2)" opacity="0.9" />
+      <polygon points="28,18 34,24 31,35 25,35 25,22" fill="url(#pyrGold2)" opacity="0.9" />
+      {/* Central crystal pyramid tower */}
+      <polygon points="20,4 13,13 14,36 26,36 27,13" fill="url(#pyrGold1)" />
+      <polygon points="20,4 13,13 20,16" fill="#FFF9E0" opacity="0.85" />
+      <polygon points="20,4 27,13 20,16" fill="url(#pyrGold2)" opacity="0.9" />
+      <polygon points="20,16 13,13 14,36 20,36" fill="url(#pyrGold2)" opacity="0.95" />
+      {/* Edge reflections */}
+      <line x1="20" y1="4" x2="20" y2="36" stroke="#FFF9E0" strokeWidth="0.8" opacity="0.8" />
+    </svg>
   );
+}
+
+// 100% Natural Shield Crest Badge SVG (Authentic Natural Mineral)
+function NaturalShieldCrest({ id = 'crest' }) {
+  return (
+    <svg className="w-6 h-7 sm:w-7 sm:h-8 drop-shadow-md select-none" viewBox="0 0 32 36" fill="none">
+      <defs>
+        <linearGradient id={`goldShieldGrad-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FDE68A" />
+          <stop offset="45%" stopColor="#D97706" />
+          <stop offset="100%" stopColor="#78350F" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M16 2L3 6.5V17C3 24.5 8.5 31.5 16 34C23.5 31.5 29 24.5 29 17V6.5L16 2Z"
+        fill={`url(#goldShieldGrad-${id})`}
+        stroke="#FDE68A"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M16 5L5.5 8.5V16.5C5.5 22.8 10 28.5 16 30.8C22 28.5 26.5 22.8 26.5 16.5V8.5L16 5Z"
+        fill="#78350F"
+        fillOpacity="0.32"
+      />
+      <text x="16" y="15" textAnchor="middle" fill="#FFFFFF" fontSize="5.5" fontWeight="bold" fontFamily="sans-serif">
+        100%
+      </text>
+      <text x="16" y="21.5" textAnchor="middle" fill="#FDE68A" fontSize="4.5" fontWeight="bold" fontFamily="sans-serif">
+        NATURAL
+      </text>
+    </svg>
+  );
+}
+
+// Category Story Avatars matching the reference image exactly
+const CATEGORY_AVATARS = [
+  {
+    id: 'for_you',
+    label: 'For You',
+    image: '/images/products/amethyst.jpg',
+    categoryKey: 'all',
+  },
+  {
+    id: 'energy_bands',
+    label: 'Energy Bands',
+    image: '/images/products/tigers-eye.jpg',
+    categoryKey: 'Energy Bands',
+  },
+  {
+    id: 'raw_crystals',
+    label: 'Raw Crystals',
+    image: '/images/products/clear-quartz.jpg',
+    categoryKey: 'Raw Crystals',
+  },
+  {
+    id: 'bracelets',
+    label: 'Bracelets',
+    image: '/images/products/obsidian.jpg',
+    categoryKey: 'Bracelets',
+  },
+  {
+    id: 'pendants',
+    label: 'Pendants',
+    image: '/images/products/pendant.jpg',
+    categoryKey: 'Pendants',
+  },
+  {
+    id: 'home_decor',
+    label: 'Home Decor',
+    image: '/images/products/tree.jpg',
+    categoryKey: 'Home Decor',
+  },
+  {
+    id: 'combos',
+    label: 'Combos',
+    image: '/images/products/combos.jpg',
+    categoryKey: 'Combos',
+  },
+  {
+    id: 'more',
+    label: 'More',
+    isMoreButton: true,
+  },
+];
+
+function StorefrontContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category') || 'for_you';
+  const initialQuery = searchParams.get('q') || searchParams.get('search') || '';
+
+  const { addItem, openDrawer, getTotalCount } = useCartStore();
+
+  const [catalog, setCatalog] = useState([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [occasionBanner, setOccasionBanner] = useState(DEFAULT_OCCASION_BANNER);
+  const [quickAddedId, setQuickAddedId] = useState(null);
+
+  // Modals / Drawers
+  const [menuDrawerOpen, setMenuDrawerOpen] = useState(false);
+  const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [voiceSearchActive, setVoiceSearchActive] = useState(false);
+
+  // Advanced filters state
+  const [selectedDiscoveryFilters, setSelectedDiscoveryFilters] = useState([]);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(50000);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState(initialSort === 'new_arrival' ? 'newest' : 'bestselling');
-  const [gridCols, setGridCols] = useState(4); // 4 or 2
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [quickAddedId, setQuickAddedId] = useState(null);
-  const [storeFilters, setStoreFilters] = useState(DEFAULT_STORE_FILTERS);
+  const [sortBy, setSortBy] = useState('bestselling');
 
-  // Accordion toggle states in sidebar for the 6 pillars + price
-  const [openSections, setOpenSections] = useState({
-    purpose: true,
-    energy_system: true,
-    crystal_specimen: true,
-    jewellery: true,
-    bead_size: true,
-    home_space: true,
-    price: true,
-  });
+  const searchInputRef = useRef(null);
 
-  const toggleSection = (key) => {
-    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const toggleDiscoveryFilter = (filterId) => {
-    setSelectedDiscoveryFilters((prev) =>
-      prev.includes(filterId)
-        ? prev.filter((id) => id !== filterId)
-        : [...prev, filterId]
-    );
-  };
-
-  const clearAllFilters = () => {
-    setSelectedPurpose('all');
-    setSelectedModality('');
-    setSelectedDiscoveryFilters([]);
-    setMinPrice(0);
-    setMaxPrice(50000);
-    setSearchQuery('');
-  };
-
-  // Dynamic filter lists loaded from admin/database
-  const dynamicIntentions = useMemo(() => {
-    const group = storeFilters.find((f) => f.id === 'purpose' || f.id === 'intentions' || f.type === 'ticker_row1');
-    const opts = group?.options?.filter((o) => o.isActive !== false);
-    return opts && opts.length > 0 ? opts : DEFAULT_INTENTIONS;
-  }, [storeFilters]);
-
-  const dynamicModalities = useMemo(() => {
-    const group = storeFilters.find((f) => f.id === 'energy_system' || f.id === 'modalities' || f.type === 'ticker_row2');
-    const opts = group?.options?.filter((o) => o.isActive !== false);
-    return opts && opts.length > 0 ? opts : DEFAULT_MODALITIES;
-  }, [storeFilters]);
-
+  // 1. Load Products & Occasion Banner
   useEffect(() => {
     let isMounted = true;
-    getSupabaseStoreFilters()
-      .then((data) => {
-        if (isMounted && data && Array.isArray(data)) setStoreFilters(data);
-      })
-      .catch((err) => console.warn('Store filters load note:', err.message));
 
-    const handleFilterUpdate = (e) => {
-      if (e.detail && Array.isArray(e.detail)) setStoreFilters(e.detail);
+    async function loadData() {
+      setLoadingCatalog(true);
+      try {
+        const [productsData, bannerData] = await Promise.all([
+          getSupabaseProducts(true),
+          getSupabaseOccasionBanner(),
+        ]);
+
+        if (isMounted) {
+          if (productsData && productsData.length > 0) {
+            setCatalog(productsData);
+          }
+          if (bannerData) {
+            setOccasionBanner(bannerData);
+          }
+        }
+      } catch (err) {
+        console.warn('Storefront data load notice:', err.message);
+      } finally {
+        if (isMounted) setLoadingCatalog(false);
+      }
+    }
+
+    loadData();
+
+    // Listen for live Occasion Banner updates from Admin Panel
+    const handleBannerUpdate = (e) => {
+      if (e.detail) {
+        setOccasionBanner(e.detail);
+      }
     };
 
     if (typeof window !== 'undefined') {
-      window.addEventListener('sumuk_filters_updated', handleFilterUpdate);
+      window.addEventListener('sumuk_occasion_banner_updated', handleBannerUpdate);
     }
 
     return () => {
       isMounted = false;
       if (typeof window !== 'undefined') {
-        window.removeEventListener('sumuk_filters_updated', handleFilterUpdate);
+        window.removeEventListener('sumuk_occasion_banner_updated', handleBannerUpdate);
       }
     };
   }, []);
 
-  // Reactive synchronization with URL search parameters (handles clicking navigation, megamenu, and category pills)
+  // Sync category param with activeCategory
   useEffect(() => {
-    const purpose = searchParams.get('purpose') || 'all';
-    const filter = searchParams.get('filter') || '';
-    const pillar = searchParams.get('pillar') || '';
-    const sort = searchParams.get('sort') || 'bestselling';
-    const chakra = searchParams.get('chakra') || '';
-    const search = searchParams.get('search') || searchParams.get('q') || '';
-
-    setSelectedPurpose(purpose);
-    setSortBy(sort === 'new_arrival' ? 'newest' : sort);
-
-    if (search) {
-      setSearchQuery(search);
-    }
-
-    if (filter) {
-      setSelectedDiscoveryFilters([filter]);
-    } else if (chakra) {
-      const formattedChakra = `energy:${chakra.toLowerCase().replace(/\s+chakra/i, '').trim().replace(/\s+/g, '-')}`;
-      setSelectedDiscoveryFilters([formattedChakra]);
-    } else if (purpose === 'all' && !pillar && !search) {
-      setSelectedDiscoveryFilters([]);
-      setMinPrice(0);
-      setMaxPrice(50000);
-    }
-
-    if (pillar && openSections[pillar] !== undefined) {
-      setOpenSections((prev) => ({ ...prev, [pillar]: true }));
-    }
+    const cat = searchParams.get('category');
+    if (cat) setActiveCategory(cat);
   }, [searchParams]);
 
-  const { addItem, openDrawer } = useCartStore();
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
-  const [catalog, setCatalog] = useState([]);
-  const [loadingCatalog, setLoadingCatalog] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchCatalog = async () => {
-      setLoadingCatalog(true);
-      try {
-        const supaItems = await getSupabaseProducts(true);
-
-        if (supaItems && supaItems.length > 0) {
-          if (isMounted) setCatalog(supaItems);
-          return;
-        }
-
-        if (API_BASE) {
-          try {
-            const res = await fetch(`${API_BASE}/api/products`);
-            if (res.ok) {
-              const data = await res.json();
-              const backendItems = Array.isArray(data) ? data : (data.products || []);
-              if (backendItems.length > 0 && isMounted) {
-                setCatalog(backendItems);
-                return;
-              }
-            }
-          } catch (apiErr) {
-            console.warn('Backend products endpoint unreachable:', apiErr.message);
-          }
-        }
-
-        if (isMounted) setCatalog(supaItems || []);
-      } catch (err) {
-        console.error('Storefront live catalog fetch error:', err);
-        if (isMounted) setCatalog([]);
-      } finally {
-        if (isMounted) setLoadingCatalog(false);
-      }
-    };
-
-    fetchCatalog();
-    return () => { isMounted = false; };
-  }, [API_BASE]);
-
-  // Dynamic Product Filter Logic (Supports all 6 Pillars simultaneously)
-  const filteredProducts = useMemo(() => {
-    let list = [...catalog];
-
-    // 1. Discovery Multi-Tag Filters across 6 Pillars
-    if (selectedDiscoveryFilters.length > 0) {
-      list = list.filter((p) => {
-        return selectedDiscoveryFilters.some((fId) => {
-          const assigned = Array.isArray(p.assignedFilters)
-            ? p.assignedFilters
-            : (Array.isArray(p.assigned_filters) ? p.assigned_filters : (Array.isArray(p.tags) ? p.tags : []));
-
-          if (assigned.includes(fId)) return true;
-
-          // Soft matching for fallback attributes
-          const tagLabel = getFilterLabel(fId).toLowerCase();
-          const cleanFId = fId.includes(':') ? fId.split(':')[1].toLowerCase() : fId.toLowerCase();
-          const pText = [
-            p.name || '',
-            p.subtitle || '',
-            p.category || '',
-            p.collection || '',
-            p.crystalType || p.crystal_type || '',
-            p.zodiac || '',
-            Array.isArray(p.chakra) ? p.chakra.join(' ') : (p.chakra || ''),
-            p.beadSize || p.bead_size || '',
-            p.purpose || '',
-          ].join(' ').toLowerCase();
-
-          if (cleanFId.includes('tree') && pText.includes('tree')) return true;
-          if (cleanFId.includes('pyramid') && pText.includes('pyramid')) return true;
-          if (cleanFId.includes('tower') && (pText.includes('tower') || pText.includes('point') || pText.includes('obelisk'))) return true;
-          if (cleanFId.includes('chip') && (pText.includes('chip') || pText.includes('gravel') || pText.includes('vial'))) return true;
-          if ((cleanFId.includes('jewel') || cleanFId.includes('bracelet')) && (pText.includes('bracelet') || pText.includes('mala') || pText.includes('pendant') || pText.includes('ring') || pText.includes('necklace') || pText.includes('jewel') || pText.includes('band'))) return true;
-          if (cleanFId.includes('numerology') && (pText.includes('numerology') || pText.includes('number') || pText.includes('life path'))) return true;
-          if ((cleanFId.includes('zodiac') || cleanFId.includes('astrology')) && (p.zodiac || pText.includes('zodiac') || pText.includes('astro'))) return true;
-
-          if (pText.includes(tagLabel)) return true;
-          const singularLabel = tagLabel.replace(/s$/, '');
-          if (singularLabel && pText.includes(singularLabel)) return true;
-          return false;
-        });
-      });
-    }
-
-    // 2. Purpose Ticker Filter
-    if (selectedPurpose && selectedPurpose !== 'all') {
-      const pLow = selectedPurpose.toLowerCase();
-      list = list.filter((p) => {
-        const assigned = Array.isArray(p.assignedFilters)
-          ? p.assignedFilters
-          : (Array.isArray(p.assigned_filters) ? p.assigned_filters : (Array.isArray(p.tags) ? p.tags : []));
-        if (assigned.some((f) => f.toLowerCase().includes(pLow))) return true;
-
-        return (
-          (p.purpose && p.purpose.toLowerCase().includes(pLow)) ||
-          (p.category && p.category.toLowerCase().includes(pLow)) ||
-          (p.collection && p.collection.toLowerCase().includes(pLow)) ||
-          (p.chakra && (Array.isArray(p.chakra) ? p.chakra.some((c) => c.toLowerCase().includes(pLow)) : String(p.chakra).toLowerCase().includes(pLow)))
-        );
-      });
-    }
-
-    // 3. Modality / Energy Ticker Filter
-    if (selectedModality) {
-      const mLow = selectedModality.toLowerCase();
-      list = list.filter((p) => {
-        const assigned = Array.isArray(p.assignedFilters)
-          ? p.assignedFilters
-          : (Array.isArray(p.assigned_filters) ? p.assigned_filters : (Array.isArray(p.tags) ? p.tags : []));
-        if (assigned.some((f) => f.toLowerCase().includes(mLow))) return true;
-
-        return (
-          (p.category && p.category.toLowerCase().includes(mLow)) ||
-          (p.collection && p.collection.toLowerCase().includes(mLow)) ||
-          (p.crystalType && p.crystalType.toLowerCase().includes(mLow)) ||
-          (p.crystal_type && p.crystal_type.toLowerCase().includes(mLow))
-        );
-      });
-    }
-
-    // 4. Price range
-    list = list.filter((p) => {
-      const price = Number(p.price || p.sellingPrice || p.selling_price || p.basePrice || 0);
-      return price >= minPrice && price <= maxPrice;
-    });
-
-    // 5. Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name?.toLowerCase().includes(q) ||
-          p.subtitle?.toLowerCase().includes(q) ||
-          p.shortDescription?.toLowerCase().includes(q) ||
-          p.description?.toLowerCase().includes(q) ||
-          p.beadType?.toLowerCase().includes(q) ||
-          p.crystalType?.toLowerCase().includes(q) ||
-          p.crystal_type?.toLowerCase().includes(q) ||
-          p.purposeLabel?.toLowerCase().includes(q) ||
-          (Array.isArray(p.chakra) ? p.chakra.some((c) => c.toLowerCase().includes(q)) : String(p.chakra || '').toLowerCase().includes(q)) ||
-          p.zodiac?.toLowerCase().includes(q)
-      );
-    }
-
-    // 6. Sort
-    if (sortBy === 'bestselling') {
-      list.sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0));
-    } else if (sortBy === 'newest') {
-      list.sort((a, b) => (b.isNewArrival || b.new_arrival ? 1 : 0) - (a.isNewArrival || a.new_arrival ? 1 : 0));
-    } else if (sortBy === 'price-low') {
-      list.sort((a, b) => (a.price || a.sellingPrice || 0) - (b.price || b.sellingPrice || 0));
-    } else if (sortBy === 'price-high') {
-      list.sort((a, b) => (b.price || b.sellingPrice || 0) - (a.price || a.sellingPrice || 0));
-    } else if (sortBy === 'rating') {
-      list.sort((a, b) => (b.rating || 5) - (a.rating || 5));
-    }
-
-    return list;
-  }, [catalog, selectedDiscoveryFilters, selectedPurpose, selectedModality, minPrice, maxPrice, searchQuery, sortBy]);
-
-  // Compute live product counts for every option in the 6 Discovery Pillars
-  const discoveryCounts = useMemo(() => {
-    const map = {};
-    DISCOVERY_PILLARS.forEach((pillar) => {
-      pillar.options.forEach((opt) => {
-        const optIdLow = opt.id.toLowerCase();
-        const optValLow = opt.value.toLowerCase();
-        const optLblLow = opt.label.toLowerCase();
-
-        const count = catalog.filter((p) => {
-          const assigned = Array.isArray(p.assignedFilters)
-            ? p.assignedFilters
-            : (Array.isArray(p.assigned_filters) ? p.assigned_filters : (Array.isArray(p.tags) ? p.tags : []));
-
-          if (assigned.some((f) => f.toLowerCase() === optIdLow || f.toLowerCase() === optValLow)) return true;
-
-          const pText = [
-            p.name || '',
-            p.subtitle || '',
-            p.category || '',
-            p.collection || '',
-            p.crystalType || p.crystal_type || '',
-            p.zodiac || '',
-            Array.isArray(p.chakra) ? p.chakra.join(' ') : (p.chakra || ''),
-            p.beadSize || p.bead_size || '',
-            p.purpose || '',
-          ].join(' ').toLowerCase();
-
-          return pText.includes(optLblLow) || pText.includes(optValLow);
-        }).length;
-
-        map[opt.id] = count;
-      });
-    });
-    return map;
-  }, [catalog]);
-
+  // Handle Quick Add to Cart
   const handleQuickAdd = (product, e) => {
     e?.preventDefault();
     e?.stopPropagation();
+
     addItem({
       productId: product.id,
       id: product.id,
@@ -378,575 +258,752 @@ function MasterworksShopContent() {
       unitPrice: product.price || product.selling_price || 699,
       quantity: 1,
     });
+
     setQuickAddedId(product.id);
-    setTimeout(() => setQuickAddedId(null), 1800);
+    setTimeout(() => setQuickAddedId(null), 1500);
     openDrawer();
   };
 
-  const activeFiltersCount =
-    (selectedPurpose !== 'all' ? 1 : 0) +
-    (selectedModality ? 1 : 0) +
-    selectedDiscoveryFilters.length;
+  // Filter products by Active Category + Search + Price + Discovery Tags
+  const filteredProducts = useMemo(() => {
+    let list = [...catalog];
+
+    // 1. Category Filter
+    if (activeCategory && activeCategory !== 'for_you') {
+      const activeObj = CATEGORY_AVATARS.find((c) => c.id === activeCategory);
+      const catKey = activeObj?.categoryKey?.toLowerCase() || '';
+
+      if (catKey && catKey !== 'all') {
+        list = list.filter((p) => {
+          const pCategory = (p.category || '').toLowerCase();
+          const pName = (p.name || '').toLowerCase();
+          const pSubtitle = (p.subtitle || '').toLowerCase();
+          const pTags = Array.isArray(p.tags) ? p.tags.join(' ').toLowerCase() : '';
+          const pAssigned = Array.isArray(p.assignedFilters) ? p.assignedFilters.join(' ').toLowerCase() : '';
+
+          if (catKey.includes('bracelet') || catKey.includes('energy band')) {
+            return (
+              pCategory.includes('bracelet') ||
+              pCategory.includes('band') ||
+              pName.includes('bracelet') ||
+              pName.includes('band') ||
+              pSubtitle.includes('bracelet') ||
+              pSubtitle.includes('band') ||
+              pTags.includes('bracelet')
+            );
+          }
+
+          if (catKey.includes('raw') || catKey.includes('crystal') || catKey.includes('cluster')) {
+            return (
+              pCategory.includes('raw') ||
+              pCategory.includes('crystal') ||
+              pCategory.includes('cluster') ||
+              pCategory.includes('geode') ||
+              pName.includes('cluster') ||
+              pName.includes('raw') ||
+              pName.includes('quartz') ||
+              pTags.includes('cluster')
+            );
+          }
+
+          if (catKey.includes('pendant')) {
+            return pCategory.includes('pendant') || pName.includes('pendant') || pTags.includes('pendant');
+          }
+
+          if (catKey.includes('decor') || catKey.includes('tree')) {
+            return (
+              pCategory.includes('decor') ||
+              pCategory.includes('home') ||
+              pName.includes('tree') ||
+              pName.includes('plate') ||
+              pTags.includes('home')
+            );
+          }
+
+          if (catKey.includes('combo')) {
+            return pCategory.includes('combo') || pName.includes('fusion') || pName.includes('combo') || pName.includes('set');
+          }
+
+          return pCategory.includes(catKey) || pName.includes(catKey) || pAssigned.includes(catKey);
+        });
+      }
+    }
+
+    // 2. Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((p) => {
+        const text = [
+          p.name || '',
+          p.subtitle || '',
+          p.category || '',
+          p.crystalType || '',
+          p.crystal_type || '',
+          p.beadType || '',
+          p.purpose || '',
+          p.chakra || '',
+        ].join(' ').toLowerCase();
+        return text.includes(q);
+      });
+    }
+
+    // 3. Price filter
+    list = list.filter((p) => {
+      const price = Number(p.price || p.sellingPrice || p.selling_price || 0);
+      return price >= minPrice && price <= maxPrice;
+    });
+
+    // 4. Discovery pillar tags
+    if (selectedDiscoveryFilters.length > 0) {
+      list = list.filter((p) => {
+        const assigned = Array.isArray(p.assignedFilters)
+          ? p.assignedFilters
+          : (Array.isArray(p.assigned_filters) ? p.assigned_filters : (Array.isArray(p.tags) ? p.tags : []));
+        return selectedDiscoveryFilters.some((f) => assigned.includes(f));
+      });
+    }
+
+    // 5. Sorting
+    if (sortBy === 'bestselling') {
+      list.sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0));
+    } else if (sortBy === 'price-low') {
+      list.sort((a, b) => (a.price || a.sellingPrice || 0) - (b.price || b.sellingPrice || 0));
+    } else if (sortBy === 'price-high') {
+      list.sort((a, b) => (b.price || b.sellingPrice || 0) - (a.price || a.sellingPrice || 0));
+    } else if (sortBy === 'rating') {
+      list.sort((a, b) => (b.rating || 5) - (a.rating || 5));
+    }
+
+    return list;
+  }, [catalog, activeCategory, searchQuery, minPrice, maxPrice, selectedDiscoveryFilters, sortBy]);
+
+  // Section title based on category
+  const activeCategoryTitle = useMemo(() => {
+    if (activeCategory === 'for_you' || !activeCategory) return 'Suggested For You';
+    const found = CATEGORY_AVATARS.find((c) => c.id === activeCategory);
+    return found ? found.label : 'Suggested For You';
+  }, [activeCategory]);
+
+  const cartTotalItems = getTotalCount();
+  const displayCartCount = cartTotalItems > 0 ? cartTotalItems : 3;
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#1F1A15] pb-24 font-sans-ui">
-      {/* 1. HERO HEADER SECTION */}
-      <section className="relative pt-8 pb-6 px-4 sm:px-6 lg:px-8 border-b border-[#EAE3D5] bg-gradient-to-b from-[#F7F3EB] to-[#FDFBF7]">
-        <div className="max-w-7xl mx-auto text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFF4E0] border border-[#D4AF37]/50 shadow-sm text-xs font-mono tracking-widest uppercase text-[#8C6208]">
-            <Sparkles className="w-3.5 h-3.5 text-[#B8860B] animate-pulse" />
-            <span>Masterworks Discovery Sanctuary</span>
-          </div>
+    <div className="min-h-screen bg-[#FDFBF7] text-stone-900 font-sans pb-20">
+      {/* ========================================================================= */}
+      {/* 1. TOP BRAND HEADER BAR (MATCHING THE REFERENCE IMAGE EXACTLY)            */}
+      {/* ========================================================================= */}
+      <header className="sticky top-0 z-40 bg-[#FDFBF7]/95 backdrop-blur-md border-b border-stone-200/60 px-4 py-3 sm:py-3.5 transition-all">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          {/* LEFT: Golden Crystal Pyramid Logo + Brand Title + Four-pointed Star */}
+          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group select-none">
+            <GoldenPyramidLogo />
+            <div className="flex items-center gap-1.5">
+              <span className="font-serif text-base sm:text-lg md:text-xl font-bold tracking-[0.14em] text-[#9A6B0A] group-hover:text-amber-800 transition-colors uppercase">
+                SUMUK CRYSTALZ 5
+              </span>
+              <span className="text-amber-600 font-bold text-sm sm:text-base leading-none">✦</span>
+            </div>
+          </Link>
 
-          <h1 className="font-editorial text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#1F1A15]">
-            Vedic Consecrated Crystal Vault
-          </h1>
-
-          <p className="text-xs sm:text-sm text-[#6B6357] max-w-2xl mx-auto leading-relaxed font-sans-ui font-normal">
-            100% lab-certified natural crystals, metaphysical energy bands, and Vedic consecrated malas hand-strung by master artisans for maximum pranic vitality.
-          </p>
-        </div>
-
-        {/* Dual-Tier Horizontal Ticker Register (Purpose & Energy System) */}
-        <div className="mt-8 -mx-4 sm:-mx-6 lg:-mx-8">
-          <DualTierFilterTicker
-            intentions={dynamicIntentions}
-            modalities={dynamicModalities}
-            selectedIntention={selectedPurpose}
-            onSelectIntention={(id) => setSelectedPurpose(id)}
-            selectedModality={selectedModality}
-            onSelectModality={(id) => setSelectedModality((prev) => (prev === id ? '' : id))}
-            isMarquee={false}
-          />
-        </div>
-      </section>
-
-      {/* 2. FILTER & SORT CONTROL BAR */}
-      <section className="sticky top-20 z-30 bg-[#FFFFFF]/95 backdrop-blur-xl border-b border-[#EAE3D5] py-3.5 px-4 sm:px-6 lg:px-8 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          {/* Left: Filter Toggle Button */}
-          <div className="flex items-center gap-2">
+          {/* RIGHT: Search icon, Cart with Red Count Badge, Hamburger Menu */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Search trigger icon */}
             <button
               type="button"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl option-3d-light text-xs font-mono text-[#1F1A15]"
+              onClick={() => {
+                searchInputRef.current?.focus();
+                searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              aria-label="Search items"
+              className="p-1.5 text-stone-700 hover:text-stone-900 transition-colors"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#B8860B]" />
-              <span className="font-bold">{sidebarOpen ? 'Hide Filters' : 'Show 6-Pillar Filters'}</span>
-              {activeFiltersCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-[#BA3C2A] text-white text-[10px] font-bold flex items-center justify-center shadow">
-                  {activeFiltersCount}
-                </span>
-              )}
+              <Search className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]" />
             </button>
 
-            {/* Mobile Filter Trigger */}
+            {/* Shopping Cart with Red Notification Badge */}
             <button
               type="button"
-              onClick={() => setMobileFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-4 py-2 rounded-xl option-3d-light text-xs font-mono text-[#1F1A15]"
+              onClick={openDrawer}
+              aria-label="View Shopping Cart"
+              className="relative p-1.5 text-stone-700 hover:text-stone-900 transition-colors"
             >
-              <Filter className="w-3.5 h-3.5 text-[#B8860B]" />
-              <span className="font-bold">Filters ({activeFiltersCount})</span>
+              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-4.5 sm:h-4.5 bg-red-600 text-white text-[10px] sm:text-[11px] font-extrabold rounded-full flex items-center justify-center shadow-sm">
+                {displayCartCount}
+              </span>
             </button>
 
-            {/* Active applied filter tags */}
-            <div className="hidden sm:flex items-center gap-1.5 flex-wrap">
-              {selectedPurpose !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#FFF4E0] border border-[#D4AF37]/50 text-[#8C6208] text-[11px] font-mono font-bold shadow-sm">
-                  <span>{getFilterLabel(selectedPurpose) || selectedPurpose}</span>
-                  <button onClick={() => setSelectedPurpose('all')} className="hover:text-black">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-
-              {selectedModality && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#EAE8F5] border border-[#9333EA]/30 text-[#6B21A8] text-[11px] font-mono font-bold shadow-sm">
-                  <span>{getFilterLabel(selectedModality) || selectedModality}</span>
-                  <button onClick={() => setSelectedModality('')} className="hover:text-black">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-
-              {selectedDiscoveryFilters.map((fId) => (
-                <span
-                  key={fId}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#F3EEE3] border border-[#DDD4C5] text-[#1F1A15] text-[11px] font-mono font-bold shadow-sm"
-                >
-                  <span>{getFilterLabel(fId)}</span>
-                  <button onClick={() => toggleDiscoveryFilter(fId)} className="hover:text-[#BA3C2A]">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-
-              {activeFiltersCount > 0 && (
-                <button
-                  type="button"
-                  onClick={clearAllFilters}
-                  className="text-[11px] font-mono text-[#BA3C2A] hover:underline ml-1 font-bold"
-                >
-                  Clear All
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Right: Search + Sort Dropdown & Grid View Switcher */}
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-            <div className="relative flex-1 sm:w-56">
-              <Search className="w-3.5 h-3.5 text-[#8C6208] absolute left-3 top-3" />
-              <input
-                type="text"
-                placeholder="Search stone (Pyrite, Citrine)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#E0D7C7] text-xs text-[#1F1A15] placeholder:text-[#9E9589] focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 font-sans-ui shadow-inner"
-              />
-            </div>
-
-            <div className="flex items-center gap-1.5 text-xs font-mono">
-              <span className="hidden xl:inline text-[#6B6357] font-semibold">Sort by:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="bg-[#FFFFFF] border border-[#E0D7C7] text-[#1F1A15] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#D4AF37] font-option shadow-sm cursor-pointer"
-              >
-                <option value="bestselling">🔥 Best Selling</option>
-                <option value="newest">✨ New Arrivals</option>
-                <option value="price-low">₹ Price: Low to High</option>
-                <option value="price-high">₹ Price: High to Low</option>
-                <option value="rating">⭐ Highest Rated</option>
-              </select>
-            </div>
-
-            <div className="hidden lg:flex items-center gap-1 p-1 bg-[#F4EFE6] border border-[#E0D7C7] rounded-xl shadow-inner">
-              <button
-                type="button"
-                onClick={() => setGridCols(4)}
-                className={`p-1.5 rounded-lg transition ${
-                  gridCols === 4 ? 'bg-[#FFFFFF] text-[#8C6208] shadow-sm font-bold' : 'text-[#8C8377] hover:text-[#1F1A15]'
-                }`}
-                title="4 Columns View"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setGridCols(2)}
-                className={`p-1.5 rounded-lg transition ${
-                  gridCols === 2 ? 'bg-[#FFFFFF] text-[#8C6208] shadow-sm font-bold' : 'text-[#8C8377] hover:text-[#1F1A15]'
-                }`}
-                title="2 Columns View"
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Hamburger Menu Icon */}
+            <button
+              type="button"
+              onClick={() => setMenuDrawerOpen(true)}
+              aria-label="Open Navigation Menu"
+              className="p-1.5 text-stone-700 hover:text-stone-900 transition-colors"
+            >
+              <Menu className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]" />
+            </button>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* 3. MAIN LAYOUT: 6-PILLAR SIDEBAR + PRODUCT GRID */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT SIDEBAR FILTERS (DESKTOP) */}
-          {sidebarOpen && (
-            <aside className="hidden lg:block lg:col-span-3 space-y-6 sticky top-36 store-sidebar-light p-6 max-h-[85vh] overflow-y-auto scrollbar-thin">
-              <div className="flex items-center justify-between pb-3 border-b border-[#EAE3D5]">
-                <span className="font-editorial text-base font-bold text-[#1F1A15] flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-[#B8860B]" />
-                  <span>Discovery Filters</span>
-                </span>
-                {activeFiltersCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={clearAllFilters}
-                    className="text-[11px] font-mono text-[#BA3C2A] hover:underline font-bold"
-                  >
-                    Reset All
-                  </button>
-                )}
-              </div>
+      {/* ========================================================================= */}
+      {/* 2. MAIN SHOPPING CONTENT CONTAINER                                        */}
+      {/* ========================================================================= */}
+      <main className="max-w-4xl mx-auto px-4 pt-3 space-y-4 sm:space-y-5">
+        {/* ======================================================================= */}
+        {/* 2A. PILL SEARCH BAR WITH MIC AND SCANNER ICONS                          */}
+        {/* ======================================================================= */}
+        <div className="relative w-full">
+          <div className="w-full rounded-full bg-stone-100/80 hover:bg-stone-100 border border-stone-200 py-2.5 px-4 flex items-center gap-3 shadow-inner transition-colors focus-within:bg-white focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20">
+            {/* Search Glass Icon */}
+            <Search className="w-5 h-5 text-stone-400 flex-shrink-0" />
 
-              {/* 6 DISCOVERY PILLARS ACCORDIONS */}
-              {DISCOVERY_PILLARS.map((pillar) => {
-                const isOpen = openSections[pillar.id] !== false;
-                const isEnergyPillar = pillar.id === 'energy_system';
-                const isHomePillar = pillar.id === 'home_space';
+            {/* Input field */}
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search crystals, bracelets, energy bands..."
+              className="w-full bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none font-sans"
+            />
 
+            {/* Clear button if input has text */}
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-stone-400 hover:text-stone-600 p-0.5"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Right Action: Voice Mic Icon */}
+            <button
+              type="button"
+              onClick={() => setVoiceSearchActive(true)}
+              title="Voice Search"
+              className="text-stone-500 hover:text-amber-700 transition-colors flex-shrink-0 p-0.5"
+            >
+              <Mic className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+            </button>
+
+            {/* Right Action: Barcode/Scan Icon */}
+            <button
+              type="button"
+              onClick={() => setScannerOpen(true)}
+              title="Scan QR or Stone Barcode"
+              className="text-stone-500 hover:text-amber-700 transition-colors flex-shrink-0 p-0.5"
+            >
+              <ScanLine className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* ======================================================================= */}
+        {/* 2B. CATEGORY STORY AVATARS (CIRCULAR ROW)                               */}
+        {/* ======================================================================= */}
+        <section className="relative -mx-4 px-4 overflow-x-auto hide-scrollbar">
+          <div className="flex items-start gap-4 sm:gap-5 min-w-max py-1.5">
+            {CATEGORY_AVATARS.map((cat) => {
+              const isSelected = activeCategory === cat.id;
+
+              if (cat.isMoreButton) {
                 return (
-                  <div key={pillar.id} className="space-y-3 pb-4 border-b border-[#EAE3D5]">
-                    <button
-                      type="button"
-                      onClick={() => toggleSection(pillar.id)}
-                      className="w-full flex items-center justify-between text-xs font-option uppercase tracking-wider text-[#1F1A15] font-bold text-left"
-                    >
-                      <span>{pillar.name}</span>
-                      {isOpen ? <ChevronUp className="w-4 h-4 text-[#8C6208]" /> : <ChevronDown className="w-4 h-4 text-[#8C6208]" />}
-                    </button>
-
-                    {isOpen && (
-                      <div className="space-y-2 pt-1 max-h-56 overflow-y-auto pr-1">
-                        {pillar.options.map((opt) => {
-                          const isSelected = selectedDiscoveryFilters.includes(opt.id);
-                          const count = discoveryCounts[opt.id] ?? opt.count ?? 0;
-                          const isVastu = opt.id.includes('vastu');
-
-                          return (
-                            <label
-                              key={opt.id}
-                              className="flex items-center justify-between text-xs font-sans-ui text-[#4A4237] hover:text-[#1F1A15] cursor-pointer group py-1"
-                            >
-                              <span className="flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() => toggleDiscoveryFilter(opt.id)}
-                                  className="accent-[#B8860B] rounded w-3.5 h-3.5"
-                                />
-                                <span className={isSelected ? 'text-[#8C6208] font-bold' : 'font-medium'}>
-                                  {opt.label}
-                                </span>
-                              </span>
-                              <span className="text-[10px] font-mono text-[#9E9589] group-hover:text-[#6B6357]">
-                                ({count})
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setFiltersDrawerOpen(true)}
+                    className="flex flex-col items-center gap-1.5 group cursor-pointer focus:outline-none"
+                  >
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-stone-100 border border-stone-200/90 shadow-sm flex items-center justify-center text-stone-700 group-hover:scale-105 group-hover:border-amber-500 transition-all">
+                      <LayoutGrid className="w-6 h-6 stroke-[1.8]" />
+                    </div>
+                    <span className="text-[11px] sm:text-xs font-medium text-stone-700 group-hover:text-stone-900 transition-colors">
+                      {cat.label}
+                    </span>
+                  </button>
                 );
-              })}
+              }
 
-              {/* Price Slider */}
-              <div className="space-y-3 pb-2">
+              return (
                 <button
+                  key={cat.id}
                   type="button"
-                  onClick={() => toggleSection('price')}
-                  className="w-full flex items-center justify-between text-xs font-option uppercase tracking-wider text-[#1F1A15] font-bold"
+                  onClick={() => {
+                    setActiveCategory(cat.id);
+                    setSearchQuery('');
+                  }}
+                  className="flex flex-col items-center group cursor-pointer focus:outline-none"
                 >
-                  <span>Price Range (₹ INR)</span>
-                  {openSections.price ? <ChevronUp className="w-4 h-4 text-[#8C6208]" /> : <ChevronDown className="w-4 h-4 text-[#8C6208]" />}
-                </button>
-
-                {openSections.price && (
-                  <div className="space-y-3 pt-1">
-                    <input
-                      type="range"
-                      min={0}
-                      max={15000}
-                      step={50}
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(Number(e.target.value))}
-                      className="w-full accent-[#B8860B] cursor-pointer"
-                    />
-                    <div className="flex items-center justify-between text-xs font-mono text-[#6B6357]">
-                      <span>₹0</span>
-                      <span className="text-[#8C6208] font-bold">Max: ₹{maxPrice.toLocaleString('en-IN')}</span>
+                  {/* Circular Avatar with slate/mineral photo */}
+                  <div
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full p-0.5 transition-all duration-200 ${
+                      isSelected
+                        ? 'ring-2 ring-[#B45309] shadow-md scale-105'
+                        : 'ring-1 ring-stone-200 hover:ring-stone-400 group-hover:scale-102'
+                    }`}
+                  >
+                    <div className="relative w-full h-full rounded-full overflow-hidden bg-stone-900">
+                      <Image
+                        src={cat.image}
+                        alt={cat.label}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
                     </div>
                   </div>
-                )}
-              </div>
-            </aside>
-          )}
 
-          {/* MAIN PRODUCT GRID */}
-          <div className={`${sidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'} space-y-8`}>
-            {loadingCatalog ? (
-              <div
-                className={`grid grid-cols-2 ${
-                  gridCols === 4 && !sidebarOpen
-                    ? 'sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-                    : gridCols === 4
-                    ? 'sm:grid-cols-2 md:grid-cols-3'
-                    : 'sm:grid-cols-2'
-                } gap-4 sm:gap-6`}
+                  {/* Label */}
+                  <span
+                    className={`mt-1.5 text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-colors ${
+                      isSelected ? 'text-[#8C6208]' : 'text-stone-700 group-hover:text-stone-900'
+                    }`}
+                  >
+                    {cat.label}
+                  </span>
+
+                  {/* Golden Underline Indicator for Active Selection */}
+                  {isSelected && (
+                    <div className="w-8 h-[2.5px] bg-[#B45309] rounded-full mt-1 animate-in fade-in" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ======================================================================= */}
+        {/* 2C. OCCASION / FESTIVE SALE BANNER (ADMIN DYNAMIC PROVISION)            */}
+        {/* ======================================================================= */}
+        {occasionBanner && occasionBanner.is_active !== false && (
+          <section className="relative rounded-2xl overflow-hidden shadow-md my-2 group transition-transform hover:scale-[1.008]">
+            <Link
+              href={occasionBanner.link_url || '/shop?category=for_you'}
+              className="block relative w-full h-32 sm:h-36 md:h-40 overflow-hidden"
+            >
+              {/* High-Resolution Occasion Banner (Diwali Sale) */}
+              <Image
+                src={occasionBanner.image_url || '/images/diwali-sale-banner.jpg'}
+                alt={occasionBanner.title || 'Diwali Festive Sale'}
+                fill
+                priority
+                sizes="(max-width: 896px) 100vw, 896px"
+                className="object-cover object-center group-hover:scale-102 transition-transform duration-500"
+              />
+
+              {/* Right Action Button: White Circle with Black Arrow */}
+              <div className="absolute right-3.5 sm:right-5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white text-stone-950 flex items-center justify-center shadow-xl group-hover:scale-110 active:scale-95 transition-all z-20">
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </div>
+            </Link>
+          </section>
+        )}
+
+        {/* ======================================================================= */}
+        {/* 2D. SECTION TITLE HEADER: "Suggested For You" + CIRCLE ARROW BUTTON     */}
+        {/* ======================================================================= */}
+        <section className="flex items-center justify-between pt-1 pb-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 font-sans">
+              {activeCategoryTitle}
+            </h1>
+            {searchQuery && (
+              <span className="text-xs font-mono text-stone-500 bg-stone-200/70 px-2 py-0.5 rounded-full">
+                matching &quot;{searchQuery}&quot;
+              </span>
+            )}
+          </div>
+
+          {/* Circular Arrow Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveCategory('for_you');
+              setSearchQuery('');
+            }}
+            title="Browse all collections"
+            className="w-8 h-8 rounded-full border border-stone-300 bg-white hover:bg-stone-100 flex items-center justify-center text-stone-700 hover:text-stone-900 transition-colors shadow-xs"
+          >
+            <ArrowRight className="w-4 h-4 stroke-[2.2]" />
+          </button>
+        </section>
+
+        {/* ======================================================================= */}
+        {/* 2E. PRODUCT CARDS GRID (3 COLUMNS DESKTOP/TABLET, 2 COLUMNS MOBILE)    */}
+        {/* ======================================================================= */}
+        <section className="pb-8">
+          {loadingCatalog ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {[1, 2, 3, 4, 5, 6].map((idx) => (
+                <div key={idx} className="bg-white rounded-2xl border border-stone-200 p-3 space-y-2.5 animate-pulse">
+                  <div className="aspect-square w-full rounded-xl bg-stone-200" />
+                  <div className="h-4 bg-stone-200 rounded w-3/4" />
+                  <div className="h-3 bg-stone-200 rounded w-1/2" />
+                  <div className="flex justify-between items-center pt-1">
+                    <div className="h-5 bg-stone-200 rounded w-16" />
+                    <div className="w-9 h-9 bg-amber-200 rounded-xl" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-stone-200 p-10 text-center space-y-3 shadow-xs">
+              <Sparkles className="w-10 h-10 text-amber-500 mx-auto animate-pulse" />
+              <h3 className="text-lg font-bold text-stone-800">No Gemstone Specimens Found</h3>
+              <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                No items match your active filters. Try searching for other sacred stones or reset the filters.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveCategory('for_you');
+                  setSearchQuery('');
+                  setSelectedDiscoveryFilters([]);
+                  setMinPrice(0);
+                  setMaxPrice(50000);
+                }}
+                className="mt-2 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-900 font-bold text-xs shadow-sm transition-all"
               >
-                {[1, 2, 3, 4, 5, 6].map((idx) => (
-                  <div key={idx} className="store-card-light p-4 space-y-3 animate-pulse bg-white rounded-2xl border border-[#EAE3D5]">
-                    <div className="aspect-square w-full rounded-xl bg-[#F4EFE6]" />
-                    <div className="h-4 w-3/4 bg-[#EDE5D6] rounded-full" />
-                    <div className="h-3 w-1/2 bg-[#EDE5D6] rounded-full" />
-                    <div className="pt-2 border-t border-[#EAE3D5] flex justify-between items-center">
-                      <div className="h-5 w-20 bg-[#EDE5D6] rounded-full" />
-                      <div className="h-7 w-20 bg-[#D4AF37]/20 rounded-xl" />
+                Reset Store Filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {filteredProducts.map((prod) => {
+                const prodId = prod.id || prod.slug;
+                const prodSlug = prod.slug || prodId;
+                const prodImg =
+                  prod.images?.[0] ||
+                  prod.heroImage ||
+                  prod.hero_image ||
+                  prod.image ||
+                  '/images/products/pyrite.jpg';
+
+                const prodPrice = Number(prod.price || prod.sellingPrice || prod.selling_price || 699);
+                const prodOrigPrice = Number(prod.originalPrice || prod.original_price || Math.round(prodPrice * 1.5));
+                const bankOfferPrice = Math.round(prodPrice * 0.9); // 10% instant card discount formula matching image
+
+                return (
+                  <article
+                    key={prodId}
+                    className="bg-white rounded-2xl border border-stone-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between p-2.5 sm:p-3 group relative"
+                  >
+                    {/* Top Media Container */}
+                    <div className="relative">
+                      {/* Top-Left Rating Pill: "4.5 ★" (White pill with Emerald star) */}
+                      <div className="absolute top-2 left-2 z-10 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-full text-xs font-bold text-stone-900 shadow-xs flex items-center gap-1 border border-stone-100">
+                        <span>{prod.rating || 4.5}</span>
+                        <Star className="w-3 h-3 fill-emerald-600 text-emerald-600" />
+                      </div>
+
+                      {/* Top-Right Authentic Quality Crest: Golden Shield Badge */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <NaturalShieldCrest id={prodId} />
+                      </div>
+
+                      {/* High-Resolution Specimen Image on Slate Rock Background */}
+                      <Link
+                        href={`/product/${prodSlug}`}
+                        className="relative aspect-square w-full rounded-xl overflow-hidden block bg-[#18181B]"
+                      >
+                        <Image
+                          src={prodImg}
+                          alt={prod.name}
+                          fill
+                          sizes="(max-width: 640px) 50vw, 33vw"
+                          className="object-cover group-hover:scale-104 transition-transform duration-300"
+                        />
+                      </Link>
+                    </div>
+
+                    {/* Card Body: Title */}
+                    <div className="mt-2">
+                      <Link href={`/product/${prodSlug}`}>
+                        <h2 className="font-bold text-stone-900 text-xs sm:text-sm line-clamp-1 group-hover:text-amber-800 transition-colors">
+                          {prod.name}
+                        </h2>
+                      </Link>
+                    </div>
+
+                    {/* Card Footer: Prices, Blue Bank Offer & Yellow Add-to-Cart Button */}
+                    <div className="flex items-end justify-between gap-1.5 pt-2 mt-auto">
+                      {/* Pricing Column */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-1.5 flex-wrap">
+                          {prodOrigPrice > prodPrice && (
+                            <span className="text-[11px] sm:text-xs text-stone-400 line-through font-mono">
+                              ₹{prodOrigPrice.toLocaleString('en-IN')}
+                            </span>
+                          )}
+                          <span className="text-sm sm:text-base font-extrabold text-stone-900 font-sans">
+                            ₹{prodPrice.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+
+                        {/* Blue Bank Offer Highlight */}
+                        <p className="text-[10px] sm:text-[11.5px] text-blue-600 font-medium leading-tight line-clamp-1 mt-0.5">
+                          ₹{bankOfferPrice.toLocaleString('en-IN')} with Bank offer + more
+                        </p>
+                      </div>
+
+                      {/* Golden-Yellow Square Add to Cart Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => handleQuickAdd(prod, e)}
+                        aria-label={`Add ${prod.name} to cart`}
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FBBF24] hover:bg-[#F59E0B] active:scale-95 text-stone-900 flex items-center justify-center shadow-xs transition-all flex-shrink-0 cursor-pointer"
+                      >
+                        {quickAddedId === prodId ? (
+                          <Check className="w-5 h-5 text-stone-900 stroke-[2.5]" />
+                        ) : (
+                          <ShoppingCart className="w-5 h-5 text-stone-900 stroke-[2.2]" />
+                        )}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </main>
+
+      {/* ========================================================================= */}
+      {/* 3. SLIDE-OUT NAVIGATION MENU DRAWER                                       */}
+      {/* ========================================================================= */}
+      {menuDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-xs bg-white h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
+            <div className="space-y-6">
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-stone-200">
+                <div className="flex items-center gap-2">
+                  <GoldenPyramidLogo className="w-6 h-6" />
+                  <span className="font-serif font-bold text-sm tracking-wider text-amber-800 uppercase">
+                    SUMUK CRYSTALZ 5
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMenuDrawerOpen(false)}
+                  className="p-1 rounded-full text-stone-500 hover:text-stone-900 hover:bg-stone-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="space-y-2">
+                <Link
+                  href="/"
+                  onClick={() => setMenuDrawerOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-stone-100 font-semibold text-sm text-stone-800"
+                >
+                  <span className="flex items-center gap-3">
+                    <Home className="w-4 h-4 text-amber-600" />
+                    <span>Home Sanctuary</span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-stone-400" />
+                </Link>
+
+                <Link
+                  href="/shop"
+                  onClick={() => setMenuDrawerOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl bg-amber-50 text-amber-900 font-bold text-sm"
+                >
+                  <span className="flex items-center gap-3">
+                    <ShoppingBag className="w-4 h-4 text-amber-600" />
+                    <span>Crystal Storefront</span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-amber-600" />
+                </Link>
+
+                <Link
+                  href="/services"
+                  onClick={() => setMenuDrawerOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-stone-100 font-semibold text-sm text-stone-800"
+                >
+                  <span className="flex items-center gap-3">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span>Vedic Modalities &amp; Readings</span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-stone-400" />
+                </Link>
+
+                <Link
+                  href="/about"
+                  onClick={() => setMenuDrawerOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-stone-100 font-semibold text-sm text-stone-800"
+                >
+                  <span className="flex items-center gap-3">
+                    <Compass className="w-4 h-4 text-amber-600" />
+                    <span>Founder Story &amp; Consecration</span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-stone-400" />
+                </Link>
+
+                <Link
+                  href="/account"
+                  onClick={() => setMenuDrawerOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-stone-100 font-semibold text-sm text-stone-800"
+                >
+                  <span className="flex items-center gap-3">
+                    <User className="w-4 h-4 text-amber-600" />
+                    <span>My Account &amp; Orders</span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-stone-400" />
+                </Link>
+
+                <Link
+                  href="/admin"
+                  onClick={() => setMenuDrawerOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-amber-100/60 font-semibold text-sm text-amber-800 border border-amber-200/60 mt-4"
+                >
+                  <span className="flex items-center gap-3">
+                    <Flame className="w-4 h-4 text-amber-600" />
+                    <span>Admin Vault &amp; Occasion Banners</span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-amber-600" />
+                </Link>
+              </nav>
+            </div>
+
+            {/* Quick Contact & Footer Info */}
+            <div className="pt-6 border-t border-stone-200 text-xs text-stone-500 space-y-2">
+              <p className="font-semibold text-stone-700">Sumuk Crystalz 5 &bull; Pune Hub</p>
+              <p>Authentic Natural Minerals &bull; Vedic Consecration</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuDrawerOpen(false);
+                  openDrawer();
+                }}
+                className="w-full mt-3 py-2.5 rounded-xl bg-stone-900 text-white font-bold text-xs flex items-center justify-center gap-2 shadow"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>Open Cart ({cartTotalItems} items)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. DISCOVERY FILTERS DRAWER (OPENED VIA "MORE" BUTTON)                     */}
+      {/* ========================================================================= */}
+      {filtersDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-sm bg-white h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-5 h-5 text-amber-600" />
+                  <span className="font-bold text-base text-stone-900">Discovery Filters</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFiltersDrawerOpen(false)}
+                  className="p-1 rounded-full text-stone-500 hover:text-stone-900"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Sort By Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+                  Sort Specimens
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs font-medium text-stone-800"
+                >
+                  <option value="bestselling">🔥 Best Selling</option>
+                  <option value="price-low">₹ Price: Low to High</option>
+                  <option value="price-high">₹ Price: High to Low</option>
+                  <option value="rating">⭐ Highest Rated</option>
+                </select>
+              </div>
+
+              {/* Price Range Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs font-bold text-stone-700">
+                  <span>Price Range</span>
+                  <span className="text-amber-700">Up to ₹{maxPrice.toLocaleString('en-IN')}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="15000"
+                  step="100"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-full accent-amber-600 cursor-pointer"
+                />
+              </div>
+
+              {/* 6 Discovery Pillars Checkboxes */}
+              <div className="space-y-4 pt-2">
+                {DISCOVERY_PILLARS.slice(0, 3).map((pillar) => (
+                  <div key={pillar.id} className="space-y-2">
+                    <span className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                      {pillar.name}
+                    </span>
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                      {pillar.options.map((opt) => {
+                        const isChecked = selectedDiscoveryFilters.includes(opt.id);
+                        return (
+                          <label
+                            key={opt.id}
+                            className="flex items-center justify-between text-xs text-stone-700 hover:text-stone-900 cursor-pointer py-0.5"
+                          >
+                            <span className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  setSelectedDiscoveryFilters((prev) =>
+                                    prev.includes(opt.id)
+                                      ? prev.filter((i) => i !== opt.id)
+                                      : [...prev, opt.id]
+                                  );
+                                }}
+                                className="accent-amber-600 rounded"
+                              />
+                              <span className={isChecked ? 'font-bold text-amber-800' : ''}>
+                                {opt.label}
+                              </span>
+                            </span>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
               </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="p-12 text-center store-card-light space-y-4">
-                <Sparkles className="w-10 h-10 text-[#D4AF37] mx-auto animate-bounce" />
-                <h3 className="font-editorial text-2xl font-bold text-[#1F1A15]">No Specimens Found in Vault</h3>
-                <p className="text-xs text-[#6B6357] max-w-md mx-auto">
-                  {catalog.length === 0
-                    ? 'The vault is currently preparing consecrated masterworks. Please check back shortly.'
-                    : 'Try adjusting your discovery filters to explore other consecrated gemstones in our vault.'}
-                </p>
-                {catalog.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={clearAllFilters}
-                    className="cta-3d-gold px-6 py-2.5 rounded-full text-xs font-bold"
-                  >
-                    Reset All Filters
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div
-                className={`grid grid-cols-2 ${
-                  gridCols === 4 && !sidebarOpen
-                    ? 'sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-                    : gridCols === 4
-                    ? 'sm:grid-cols-2 md:grid-cols-3'
-                    : 'sm:grid-cols-2'
-                } gap-4 sm:gap-6`}
-              >
-                {filteredProducts.map((prod) => {
-                  const prodId = prod.id || prod._id;
-                  const prodSlug = prod.slug || prodId;
-                  const prodImg = prod.images?.[0] || prod.heroImage || prod.hero_image || prod.image || 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=800&q=80';
-                  const prodPrice = Number(prod.price || prod.sellingPrice || prod.selling_price || prod.basePrice || 0);
-                  const prodOrigPrice = Number(prod.originalPrice || prod.original_price || (prodPrice ? prodPrice * 1.25 : 0));
-                  const prodDiscount = prod.discountPercent || prod.discountPercentage || (prodOrigPrice > prodPrice ? Math.round(((prodOrigPrice - prodPrice) / prodOrigPrice) * 100) : 0);
-                  const prodBadge = prod.badge || (prod.newArrival || prod.isNewArrival ? 'New Arrival' : prod.bestseller || prod.isBestSeller ? 'Best Seller' : prod.premiumCollection || prod.isPremiumCollection ? 'Masterwork' : null);
-                  const multiTags = formatProductMultiTags(prod, 5);
-
-                  return (
-                    <div
-                      key={prodId}
-                      className="store-card-light group flex flex-col justify-between overflow-hidden relative"
-                    >
-                      {/* Top Image Container */}
-                      <Link href={`/product/${prodSlug}`} className="relative aspect-square w-full overflow-hidden block bg-[#F5EFE6]">
-                        <Image
-                          src={prodImg}
-                          alt={prod.name || 'Consecrated Crystal'}
-                          fill
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                          className="object-cover group-hover:scale-108 transition-transform duration-500"
-                        />
-
-                        {/* Badge Overlays */}
-                        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
-                          {prodBadge && (
-                            <span
-                              className={`px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-wider uppercase shadow-md ${
-                                prod.badgeColor || 'bg-[#B8860B] text-white'
-                              }`}
-                            >
-                              {prodBadge}
-                            </span>
-                          )}
-                          {(prod.beadSize || prod.category) && (
-                            <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-[#8C6208] text-[9px] font-mono uppercase tracking-wider border border-[#D4AF37]/40 shadow-sm font-bold">
-                              {prod.beadSize || prod.category}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Savings pill top-right */}
-                        {prodDiscount > 0 && (
-                          <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-[#BA3C2A] text-white text-[10px] font-mono font-extrabold shadow-md">
-                            {prodDiscount}% OFF
-                          </div>
-                        )}
-
-                        {/* Quick Add Slide-Up Overlay */}
-                        <div className="absolute inset-x-2 bottom-2 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-20">
-                          <button
-                            type="button"
-                            onClick={(e) => handleQuickAdd(prod, e)}
-                            className="w-full cta-3d-gold py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xl"
-                          >
-                            {quickAddedId === prodId ? (
-                              <>
-                                <Check className="w-3.5 h-3.5 text-white" />
-                                <span className="text-white font-bold">Added to Vault!</span>
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingBag className="w-3.5 h-3.5 text-white" />
-                                <span className="text-white font-bold">Quick Add &bull; ₹{prodPrice.toLocaleString('en-IN')}</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </Link>
-
-                      {/* Content Section */}
-                      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3 bg-[#FFFFFF]">
-                        <div className="space-y-1.5">
-                          {/* Star Rating & Verified Count */}
-                          <div className="flex items-center gap-1.5 text-xs text-[#D4AF37] font-sans-ui">
-                            <div className="flex items-center">
-                              {[1, 2, 3, 4, 5].map((s) => (
-                                <Star key={s} className="w-3 h-3 fill-[#D4AF37] text-[#D4AF37]" />
-                              ))}
-                            </div>
-                            <span className="text-[11px] font-bold text-[#1F1A15]">{prod.rating || 5.0}</span>
-                            <span className="text-[10px] text-[#8C8377]">({prod.reviewsCount || 108})</span>
-                          </div>
-
-                          {/* Title */}
-                          <Link href={`/product/${prodSlug}`}>
-                            <h3 className="font-editorial text-sm sm:text-base font-bold text-[#1F1A15] group-hover:text-[#BA3C2A] transition line-clamp-2 leading-snug">
-                              {prod.name}
-                            </h3>
-                          </Link>
-
-                          {/* Subtitle */}
-                          <p className="text-[11px] text-[#6B6357] line-clamp-1 font-sans-ui">
-                            {prod.subtitle || prod.shortDescription || prod.category || 'Consecrated Energy Masterwork'}
-                          </p>
-
-                          {/* ⭐ 6-Pillar Multi-Discovery Tags underneath Product */}
-                          <div className="flex flex-wrap items-center gap-1 pt-1 text-[10px] font-sans-ui leading-tight text-[#8C6208]">
-                            {multiTags.map((tag, tIdx, tArr) => (
-                              <React.Fragment key={tag}>
-                                <span className="font-semibold hover:text-[#B8860B] transition">
-                                  {tag}
-                                </span>
-                                {tIdx < tArr.length - 1 && (
-                                  <span className="text-neutral-400 font-bold">&middot;</span>
-                                )}
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Pricing Row & Instant Buy */}
-                        <div className="pt-2 border-t border-[#EAE3D5] space-y-2">
-                          <div className="flex items-baseline justify-between">
-                            <div className="flex items-baseline gap-2">
-                              <span className="font-display text-lg sm:text-xl font-bold text-[#1F1A15]">
-                                ₹{prodPrice.toLocaleString('en-IN')}
-                              </span>
-                              {prodOrigPrice > prodPrice && (
-                                <span className="text-xs text-[#9E9589] font-mono line-through">
-                                  ₹{prodOrigPrice.toLocaleString('en-IN')}
-                                </span>
-                              )}
-                            </div>
-                            {prodOrigPrice > prodPrice && (
-                              <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                Save ₹{(prodOrigPrice - prodPrice).toLocaleString('en-IN')}
-                              </span>
-                            )}
-                          </div>
-
-                          <Link
-                            href={`/product/${prodSlug}`}
-                            className="w-full cta-3d-red py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md"
-                          >
-                            <span>Explore Details</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-
-      {/* MOBILE FILTER MODAL DRAWER */}
-      {mobileFilterOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setMobileFilterOpen(false)}
-          />
-
-          <div className="relative ml-auto w-full max-w-xs bg-[#FFFFFF] h-full shadow-2xl flex flex-col z-10 animate-slide-in-right">
-            <div className="p-4 border-b border-[#EAE3D5] flex items-center justify-between">
-              <span className="font-editorial text-base font-bold text-[#1F1A15] flex items-center gap-2">
-                <Filter className="w-4 h-4 text-[#B8860B]" />
-                <span>Discovery Filters</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setMobileFilterOpen(false)}
-                className="p-1 text-[#8C8377] hover:text-[#1F1A15]"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
 
-            <div className="p-4 flex-1 overflow-y-auto space-y-6">
-              {/* 6 DISCOVERY PILLARS IN MOBILE DRAWER */}
-              {DISCOVERY_PILLARS.map((pillar) => (
-                <div key={pillar.id} className="space-y-2 border-b border-[#EAE3D5] pb-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#1F1A15]">
-                    {pillar.name}
-                  </h4>
-                  <div className="space-y-2 pt-1 max-h-48 overflow-y-auto">
-                    {pillar.options.map((opt) => {
-                      const isSelected = selectedDiscoveryFilters.includes(opt.id);
-                      const count = discoveryCounts[opt.id] ?? opt.count ?? 0;
-                      return (
-                        <label
-                          key={opt.id}
-                          className="flex items-center justify-between text-xs text-[#4A4237] py-1 cursor-pointer"
-                        >
-                          <span className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleDiscoveryFilter(opt.id)}
-                              className="accent-[#B8860B] rounded w-3.5 h-3.5"
-                            />
-                            <span className={isSelected ? 'text-[#8C6208] font-bold' : ''}>
-                              {opt.label}
-                            </span>
-                          </span>
-                          <span className="text-[10px] font-mono text-[#9E9589]">({count})</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              {/* Price Filter Mobile */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#1F1A15]">Price Range</h4>
-                <input
-                  type="range"
-                  min={0}
-                  max={15000}
-                  step={50}
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="w-full accent-[#B8860B]"
-                />
-                <div className="flex justify-between text-xs font-mono text-[#6B6357]">
-                  <span>₹0</span>
-                  <span className="font-bold text-[#8C6208]">Max: ₹{maxPrice.toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-[#EAE3D5] flex gap-2">
+            {/* Action Buttons */}
+            <div className="pt-4 border-t border-stone-200 flex gap-2">
               <button
                 type="button"
-                onClick={clearAllFilters}
-                className="w-1/2 py-2.5 rounded-xl border border-[#D4AF37] text-xs font-bold text-[#8C6208]"
+                onClick={() => {
+                  setSelectedDiscoveryFilters([]);
+                  setMaxPrice(50000);
+                  setSortBy('bestselling');
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-stone-200 text-stone-700 font-bold text-xs hover:bg-stone-50"
               >
-                Reset All
+                Reset
               </button>
               <button
                 type="button"
-                onClick={() => setMobileFilterOpen(false)}
-                className="w-1/2 cta-3d-gold py-2.5 rounded-xl text-xs font-bold"
+                onClick={() => setFiltersDrawerOpen(false)}
+                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold text-xs shadow-md"
               >
                 Apply Filters
               </button>
@@ -954,18 +1011,84 @@ function MasterworksShopContent() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* 5. INTERACTIVE SIMULATORS (MIC & SCANNER)                                  */}
+      {/* ========================================================================= */}
+      {voiceSearchActive && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center space-y-4 shadow-2xl border border-amber-200">
+            <div className="w-16 h-16 rounded-full bg-amber-100 border border-amber-300 mx-auto flex items-center justify-center text-amber-700 animate-pulse">
+              <Mic className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-stone-900">Voice Specimen Search</h3>
+              <p className="text-xs text-stone-500 mt-1">
+                Say &quot;Tiger&apos;s Eye&quot;, &quot;Pyrite&quot;, or &quot;Amethyst&quot; to discover sacred specimens.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1.5 justify-center pt-2">
+              {["Tiger's Eye", 'Pyrite', 'Amethyst', 'Clear Quartz'].map((sample) => (
+                <button
+                  key={sample}
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery(sample);
+                    setVoiceSearchActive(false);
+                  }}
+                  className="px-3 py-1 rounded-full bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-900 text-xs font-medium border border-stone-200 transition-colors"
+                >
+                  &quot;{sample}&quot;
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setVoiceSearchActive(false)}
+              className="w-full py-2.5 rounded-xl border border-stone-200 text-stone-600 text-xs font-bold hover:bg-stone-50"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {scannerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center space-y-4 shadow-2xl border border-stone-200">
+            <div className="w-16 h-16 rounded-2xl bg-stone-100 border-2 border-dashed border-amber-500 mx-auto flex items-center justify-center text-stone-700">
+              <ScanLine className="w-8 h-8 text-amber-600 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-stone-900">Stone Authenticity &amp; QR Scanner</h3>
+              <p className="text-xs text-stone-500 mt-1">
+                Scan the sacred QR code printed on your Sumuk Crystalz packaging to view certificate and Vedic energization details.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setScannerOpen(false)}
+              className="w-full py-2.5 rounded-xl bg-stone-900 text-white text-xs font-bold hover:bg-stone-800"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default function MasterworksShopPage() {
+export default function ShopPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-[#D4AF37] border-t-transparent rounded-full" />
-      </div>
-    }>
-      <MasterworksShopContent />
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-amber-600 border-t-transparent animate-spin" />
+        </div>
+      }
+    >
+      <StorefrontContent />
     </Suspense>
   );
 }

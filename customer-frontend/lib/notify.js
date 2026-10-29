@@ -177,7 +177,7 @@ export function generateWelcomeEmailHtml(data) {
 
     <!-- Spiritual Guarantee Message -->
     <div style="background-color: #161616; border: 1px solid #222222; border-radius: 12px; padding: 14px; text-align: center; font-size: 12px; color: #C5BBAF; line-height: 1.5;">
-      Every crystal specimen in our treasury is 100% natural, lab-certified, and attuned with sacred Solfeggio sound bowls by Soumyaa Naveen for maximum pranic energy.
+      Every crystal specimen in our treasury is 100% natural, authentic, and attuned with sacred Solfeggio sound bowls by Soumyaa Naveen for maximum pranic energy.
     </div>
   `;
 

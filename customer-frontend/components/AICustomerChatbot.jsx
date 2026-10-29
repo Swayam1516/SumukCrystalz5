@@ -135,6 +135,7 @@ export default function AICustomerChatbot() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [quickAddedId, setQuickAddedId] = useState(null);
@@ -424,30 +425,30 @@ export default function AICustomerChatbot() {
   return (
     <>
       {/* 1. FLOATING LUXURY TRIGGER BUTTON (WHEN CLOSED) */}
-      {!isOpen && (
-        <div className="fixed bottom-5 right-5 z-40 animate-fade-in group">
+      {!isOpen && !isDismissed && (
+        <div className="fixed bottom-20 right-3.5 md:bottom-6 md:right-6 z-40 animate-fade-in group flex items-center gap-2">
           <button
             type="button"
             onClick={() => {
               setIsOpen(true);
               setIsMinimized(false);
             }}
-            className="relative flex items-center gap-3 px-4 py-3 rounded-full bg-white/95 hover:bg-white border border-[#7026B5]/25 hover:border-[#7026B5]/50 shadow-[0_10px_35px_rgba(112,38,181,0.18)] transition-all duration-300 active:scale-95 cursor-pointer backdrop-blur-xl"
+            className="relative flex items-center gap-2.5 p-2.5 md:px-4 md:py-3 rounded-full bg-white/95 hover:bg-white border border-[#7026B5]/25 hover:border-[#7026B5]/50 shadow-[0_8px_30px_rgba(112,38,181,0.2)] transition-all duration-300 active:scale-95 cursor-pointer backdrop-blur-xl"
             aria-label="Open Sumuk Crystalz AI Assistant"
           >
             {/* Crystal Emblem Avatar */}
-            <div className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-[#F6F0FF] to-white border border-[#7026B5]/20 flex items-center justify-center shadow-sm">
+            <div className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-[#F6F0FF] to-white border border-[#7026B5]/20 flex items-center justify-center shadow-sm flex-shrink-0">
               <LuxuryCrystalIcon className="w-5 h-5" glowing />
             </div>
 
-            {/* Label */}
-            <div className="flex flex-col text-left pr-1.5">
+            {/* Label (Hidden on mobile for ultra-compact luxury look) */}
+            <div className="hidden md:flex flex-col text-left pr-1">
               <span className="text-[12px] font-['Cormorant_Garamond',serif] font-bold text-[#171522] tracking-wider flex items-center gap-1.5">
                 <span>SUMUK ASSISTANT</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               </span>
-              <span className="text-[10.5px] text-[#6F6879] font-sans">
-                Sacred Consecrated AI Guide
+              <span className="text-[10px] text-[#6F6879] font-sans">
+                Curated Crystal Guide
               </span>
             </div>
 
@@ -455,6 +456,20 @@ export default function AICustomerChatbot() {
             {hasUnread && (
               <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#7026B5] border-2 border-white animate-bounce" />
             )}
+          </button>
+
+          {/* Dismiss button for mobile/desktop to completely clear screen if needed */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDismissed(true);
+            }}
+            className="w-6 h-6 rounded-full bg-white/80 hover:bg-white text-stone-400 hover:text-stone-700 border border-stone-200/60 shadow-xs flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            title="Hide assistant"
+            aria-label="Hide assistant button"
+          >
+            <X className="w-3 h-3" />
           </button>
         </div>
       )}

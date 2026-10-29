@@ -88,10 +88,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Provenance Trust Cards (Matching Image 3) */}
-        <div className="mt-14">
-          <ProvenanceTrustCards />
-        </div>
+
       </section>
 
       {/* 2. FOUNDER STORY SPOTLIGHT */}

@@ -6,6 +6,7 @@ import AuthModal from '../components/AuthModal';
 import ServiceWorkerCleaner from '../components/ServiceWorkerCleaner';
 import AnnouncementBanner from '../components/AnnouncementBanner';
 import AICustomerChatbot from '../components/AICustomerChatbot';
+import MobileBottomNav from '../components/MobileBottomNav';
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sumukcrystalz.com'),
@@ -78,7 +79,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: '#0e0a1a',
+  themeColor: '#FAF7F2',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -119,7 +120,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" className="light scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -132,7 +133,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-screen flex flex-col text-[#f3f2fa] antialiased overflow-x-hidden w-full max-w-full">
+      <body className="min-h-screen flex flex-col text-[#1F1A15] antialiased overflow-x-hidden w-full max-w-full pb-16 md:pb-0">
         <ServiceWorkerCleaner />
         <AnnouncementBanner />
         <Header />
@@ -141,6 +142,7 @@ export default function RootLayout({ children }) {
         <CartDrawer />
         <AuthModal />
         <AICustomerChatbot />
+        <MobileBottomNav />
       </body>
     </html>
   );

@@ -213,7 +213,7 @@ export async function calculateDeliveryFee(
       message: geo.message || 'Invalid PIN code',
       fee: Number(settings.interstate_fee || 150),
       tierName: 'Standard Shipping',
-      estimatedDays: '3-5 Business Days',
+      estimatedDays: '6-8 Working Days',
       isFree: false,
     };
   }
@@ -227,29 +227,29 @@ export async function calculateDeliveryFee(
 
   let baseTierFee = Number(settings.interstate_fee || 150);
   let tierName = 'Interstate Express';
-  let estimatedDays = '3-5 Business Days';
+  let estimatedDays = '6-8 Working Days';
 
   if (!isInterstate) {
     // Within Maharashtra
     if (distance <= Number(settings.tier_1_max_km || 50)) {
       baseTierFee = Number(settings.tier_1_fee || 50);
       tierName = `Tier 1: ${settings.origin_city || 'Pune'} Local (≤ ${settings.tier_1_max_km} km)`;
-      estimatedDays = '1-2 Business Days';
+      estimatedDays = '6-8 Working Days';
     } else if (distance <= Number(settings.tier_2_max_km || 150)) {
       baseTierFee = Number(settings.tier_2_fee || 100);
       tierName = `Tier 2: Maharashtra Regional (≤ ${settings.tier_2_max_km} km)`;
-      estimatedDays = '2-3 Business Days';
+      estimatedDays = '6-8 Working Days';
     } else {
       // Over Tier 2 limit within state
       baseTierFee = Number(settings.interstate_fee || 150);
       tierName = `Maharashtra Outer Region (${distance} km)`;
-      estimatedDays = '3-4 Business Days';
+      estimatedDays = '6-8 Working Days';
     }
   } else {
     // Interstate outside origin state
     baseTierFee = Number(settings.interstate_fee || 150);
     tierName = `Interstate: ${geo.state}`;
-    estimatedDays = '3-5 Business Days';
+    estimatedDays = '6-8 Working Days';
   }
 
   const finalFee = isFreeEligible ? 0 : baseTierFee;
