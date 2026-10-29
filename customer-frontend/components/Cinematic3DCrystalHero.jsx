@@ -75,9 +75,9 @@ export default function Cinematic3DCrystalHero() {
   };
 
   return (
-    <section className="relative w-full min-h-[92vh] bg-[#08060B] text-white overflow-hidden flex flex-col justify-between pt-10 sm:pt-16 pb-8 px-4 sm:px-8 lg:px-12 select-none">
+    <section className="relative w-full min-h-[92vh] bg-[#000000] text-white overflow-hidden flex flex-col justify-between pt-10 sm:pt-16 pb-8 px-4 sm:px-8 lg:px-12 select-none">
       {/* Background Subtle Ambiance (Deep violet purple rim aura behind specimen) */}
-      <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-purple-900/25 rounded-full blur-[160px] pointer-events-none" />
+      <div className="absolute top-1/4 right-1/4 w-[550px] h-[550px] bg-purple-900/30 rounded-full blur-[160px] pointer-events-none" />
       <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-amber-700/10 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Main Responsive Hero Grid */}
@@ -129,8 +129,8 @@ export default function Cinematic3DCrystalHero() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: The Glowing Amethyst Crystal Specimen on Dark Rock */}
-        <div className="lg:col-span-5 relative w-full h-[360px] sm:h-[420px] lg:h-[480px] flex items-center justify-center">
+        {/* RIGHT COLUMN: The 4K Glowing Amethyst Crystal Specimen on Dark Rock */}
+        <div className="lg:col-span-5 relative w-full h-[380px] sm:h-[460px] lg:h-[520px] flex items-center justify-center">
           {show3DInteractive && hasWebGL ? (
             /* Interactive Three.js 3D Mode */
             <div className="w-full h-full relative cursor-grab active:cursor-grabbing rounded-3xl overflow-hidden bg-black/40 border border-white/10">
@@ -151,7 +151,7 @@ export default function Cinematic3DCrystalHero() {
                   onClick={() => setShow3DInteractive(false)}
                   className="px-3 py-1 rounded-full bg-black/60 border border-white/20 text-[10px] font-mono uppercase tracking-wider text-stone-300 hover:text-white transition"
                 >
-                  View Photo
+                  View 4K Photo
                 </button>
               </div>
 
@@ -163,16 +163,17 @@ export default function Cinematic3DCrystalHero() {
               </div>
             </div>
           ) : (
-            /* Exact Specimen Visual Matching the Screenshot */
+            /* Pristine Ultra 4K Specimen Visual (Matching Image 1) */
             <div className="relative w-full h-full flex items-center justify-center group">
-              <div className="relative w-full h-full max-w-[480px] max-h-[460px] flex items-center justify-center">
+              <div className="relative w-full h-full max-w-[620px] max-h-[520px] flex items-center justify-center">
                 <Image
-                  src="/images/hero-amethyst-crystal.jpg"
-                  alt="Authentic Glowing Amethyst Natural Specimen - Sumuk Crystalz 5"
+                  src="/images/hero-amethyst-4k.jpg"
+                  alt="Authentic 4K Glowing Amethyst Natural Specimen - Sumuk Crystalz 5"
                   fill
                   priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 480px"
-                  className="object-contain filter drop-shadow-[0_15px_35px_rgba(147,51,234,0.35)] transition-transform duration-700 group-hover:scale-102"
+                  quality={98}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 620px"
+                  className="object-contain filter drop-shadow-[0_20px_50px_rgba(147,51,234,0.45)] transition-transform duration-700 group-hover:scale-102"
                 />
 
                 {/* 3D Spin Toggle Button */}
@@ -180,7 +181,7 @@ export default function Cinematic3DCrystalHero() {
                   <button
                     type="button"
                     onClick={() => setShow3DInteractive(true)}
-                    className="absolute bottom-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-black/70 hover:bg-black/90 border border-white/20 text-stone-300 hover:text-white text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md shadow-lg transition-all cursor-pointer opacity-80 hover:opacity-100"
+                    className="absolute bottom-3 right-3 z-20 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black border border-white/20 text-stone-300 hover:text-white text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md shadow-lg transition-all cursor-pointer opacity-85 hover:opacity-100"
                     title="Rotate 3D Crystal Model"
                   >
                     <RotateCw className="w-3 h-3 text-[#E5C378]" />
