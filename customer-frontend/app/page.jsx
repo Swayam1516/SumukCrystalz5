@@ -191,7 +191,7 @@ export default function HomePage() {
             className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[9/14] rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-2xl group cursor-pointer flex-shrink-0"
           >
             <Image
-              src="/images/welcome-ganesha-intro.jpg"
+              src="/images/ganesha-opening-mobile.jpg"
               alt="Welcome to Sumuk Crystalz 5 - Sacred Ganesha Blessing"
               fill
               sizes="(max-width: 768px) 280px, 320px"
