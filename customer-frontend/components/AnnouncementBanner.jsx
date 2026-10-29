@@ -51,10 +51,17 @@ export default function AnnouncementBanner() {
   }, []);
 
   if (pathname === '/shop') return null;
-  if (!mounted || dismissed || !announcement) return null;
-  if (!announcement.is_active || !announcement.message || !announcement.message.trim()) {
-    return null;
-  }
+  if (!mounted || dismissed) return null;
+
+  const displayMessage = announcement?.is_active && announcement?.message?.trim()
+    ? announcement.message
+    : 'WELCOME TO SUMUK CRYSTALZ 5 — Consecrated by Usui Reiki Master Soumyaa Naveen';
+
+  const handleOpenBlessing = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-sacred-intro'));
+    }
+  };
 
   const handleDismiss = () => {
     setDismissed(true);
@@ -75,15 +82,24 @@ export default function AnnouncementBanner() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.12)_0%,transparent_75%)] pointer-events-none" />
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#ffd978]/60 to-transparent pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-4 text-xs sm:text-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-3 text-xs sm:text-sm">
         {/* Banner Content */}
-        <div className="flex-1 flex items-center justify-center gap-2.5 sm:gap-3 text-center pr-2">
+        <div className="flex-1 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-center">
           <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#ffd978] flex-shrink-0 animate-pulse">
             <Sparkles className="w-3 h-3" />
           </div>
-          <span className="font-sans font-medium tracking-wide text-[#f7e8c3] leading-snug">
-            {announcement.message}
+          <span className="font-sans font-medium tracking-wide text-[#f7e8c3] leading-snug text-xs sm:text-[13px]">
+            {displayMessage}
           </span>
+          <button
+            type="button"
+            onClick={handleOpenBlessing}
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 hover:bg-[#D4AF37]/35 border border-[#D4AF37]/45 text-[#ffd978] text-[10px] font-mono uppercase tracking-wider font-bold transition-all cursor-pointer shadow-xs"
+            title="Open Welcome Blessing Artwork"
+          >
+            <span>View Blessing</span>
+            <Sparkles className="w-2.5 h-2.5 text-amber-300" />
+          </button>
         </div>
 
         {/* Close Button */}

@@ -5,6 +5,7 @@ import CartDrawer from '../components/CartDrawer';
 import AuthModal from '../components/AuthModal';
 import ServiceWorkerCleaner from '../components/ServiceWorkerCleaner';
 import AnnouncementBanner from '../components/AnnouncementBanner';
+import IntroductorySacredBanner from '../components/IntroductorySacredBanner';
 import AICustomerChatbot from '../components/AICustomerChatbot';
 import MobileBottomNav from '../components/MobileBottomNav';
 
@@ -135,6 +136,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-screen flex flex-col text-[#1F1A15] antialiased overflow-x-hidden w-full max-w-full pb-16 md:pb-0">
         <ServiceWorkerCleaner />
+        <IntroductorySacredBanner />
         <AnnouncementBanner />
         <Header />
         <main className="flex-1 w-full max-w-full overflow-x-hidden">{children}</main>

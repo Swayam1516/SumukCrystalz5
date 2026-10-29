@@ -142,6 +142,72 @@ export default function HomePage() {
       <Cinematic3DCrystalHero />
 
       {/* ══════════════════════════════════════════════════════════
+          SACRED SANCTUARY WELCOME BANNER
+          Featuring Lord Ganesha Consecrated Welcome Artwork
+         ══════════════════════════════════════════════════════════ */}
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 z-20">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#0C0812] via-[#1A1224] to-[#0C0812] border border-[#D4AF37]/35 shadow-[0_15px_50px_rgba(212,175,55,0.15)] flex flex-col md:flex-row items-center justify-between p-6 sm:p-10 gap-8">
+          {/* Left Text */}
+          <div className="space-y-4 max-w-xl text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#E5C378] text-xs font-mono uppercase tracking-widest font-bold">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Consecrated Sanctuary Initiation</span>
+            </div>
+            <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+              Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FFF0C2] to-[#D4AF37]">Sumuk Crystalz 5</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-300 font-sans leading-relaxed">
+              Every masterwork specimen in our vault is purified and consecrated with Vedic mantras under divine auspices, radiating harmonic peace, protection, and boundless manifestation into your sacred space.
+            </p>
+            <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('open-sacred-intro'));
+                  }
+                }}
+                className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#B38F24] hover:from-[#c59e2f] hover:to-[#dfbe52] text-stone-950 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              >
+                <span>View Full Blessing Banner</span>
+                <Sparkles className="w-3.5 h-3.5 text-stone-950" />
+              </button>
+              <Link
+                href="/shop"
+                className="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-mono font-medium uppercase tracking-wider transition-all"
+              >
+                <span>Explore Vault</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Image Container */}
+          <div
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('open-sacred-intro'));
+              }
+            }}
+            className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[9/14] rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-2xl group cursor-pointer flex-shrink-0"
+          >
+            <Image
+              src="/images/welcome-ganesha-intro.jpg"
+              alt="Welcome to Sumuk Crystalz 5 - Sacred Ganesha Blessing"
+              fill
+              sizes="(max-width: 768px) 280px, 320px"
+              className="object-cover group-hover:scale-105 transition-transform duration-700"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-4">
+              <span className="text-[11px] font-mono text-amber-200 uppercase tracking-widest flex items-center gap-1.5 opacity-90 group-hover:opacity-100">
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Tap to Expand Blessing</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
           2. INTERACTIVE 3D FEATURED COLLECTION
           Perspective Cover-Flow Carousel (Tiger's Eye, Amethyst, Pyrite, etc.)
          ══════════════════════════════════════════════════════════ */}
