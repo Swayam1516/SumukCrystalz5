@@ -70,20 +70,20 @@ export default function ServicesPage() {
         <div className="absolute top-40 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto text-center space-y-6 relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-3d">
-            <Sparkles className="w-3.5 h-3.5 text-gold-400" />
-            <span className="text-[11px] font-mono tracking-widest text-gold-300 uppercase font-bold">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <span className="text-[11px] font-mono tracking-widest uppercase font-bold">
               Sumuk Crystalz 5 &bull; Services by Soumyaa
             </span>
           </div>
 
-          <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white max-w-5xl mx-auto leading-[1.12] text-3d-title">
+          <h1 className="font-editorial text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1F1A15] max-w-5xl mx-auto leading-[1.15]">
             Sacred Energy Healing &amp; <br />
-            <span className="gold-gradient-text">Metaphysical Consultations.</span>
+            <span className="text-[#B45309]">Metaphysical Consultations.</span>
           </h1>
 
-          <p className="text-sm sm:text-base text-luxe-300 leading-relaxed max-w-3xl mx-auto">
-            Step into profound balance with personalized healing sessions, intuitive readings, and bespoke mineral curations guided by Usui Reiki Master &amp; Metaphysical Practitioner <strong className="text-white">Soumyaa Naveen</strong>.
+          <p className="text-sm sm:text-base text-[#5C5245] leading-relaxed max-w-3xl mx-auto font-sans-ui">
+            Step into profound balance with personalized healing sessions, intuitive readings, and bespoke mineral curations guided by Usui Reiki Master &amp; Metaphysical Practitioner <strong className="text-[#1F1A15] font-semibold">Soumyaa Naveen</strong>.
           </p>
 
         </div>
@@ -104,16 +104,16 @@ export default function ServicesPage() {
 
       {/* 3. HOW A SESSION WORKS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="glass-panel-3d p-8 sm:p-14 border border-white/10 relative overflow-hidden">
+        <div className="rounded-3xl bg-gradient-to-br from-[#1A1124] to-[#120B1A] text-white p-8 sm:p-14 border border-white/10 relative overflow-hidden shadow-xl">
           <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-3d text-gold-400 text-[11px] font-mono uppercase tracking-widest font-semibold">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-[#D4AF37]/30 text-[#E5C378] text-[11px] font-mono uppercase tracking-widest font-semibold">
               <Compass className="w-3.5 h-3.5" />
               <span>The Healing Protocol</span>
             </div>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white text-3d-title">
+            <h2 className="font-editorial text-2xl sm:text-4xl font-bold text-white tracking-tight">
               How Your Session Unfolds
             </h2>
-            <p className="text-xs sm:text-sm text-luxe-400">
+            <p className="text-xs sm:text-sm text-stone-300 font-sans-ui">
               A structured, compassionate sacred journey designed to honor your energetic sovereignty.
             </p>
           </div>
@@ -122,16 +122,16 @@ export default function ServicesPage() {
             {steps.map((item, idx) => (
               <div
                 key={idx}
-                className="card-3d-animatic p-6 rounded-2xl glass-card-3d border border-white/10 flex flex-col justify-between space-y-4 relative"
+                className="p-6 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col justify-between space-y-4 relative"
               >
                 <div className="space-y-3">
-                  <span className="font-serif text-3xl font-bold text-gold-400/50 block">
+                  <span className="font-mono text-3xl font-bold text-[#E5C378]/60 block">
                     {item.step}
                   </span>
-                  <h3 className="font-serif text-lg font-bold text-white leading-snug">
+                  <h3 className="font-editorial text-base font-bold text-white leading-snug">
                     {item.title}
                   </h3>
-                  <p className="text-xs text-luxe-300 leading-relaxed">
+                  <p className="text-xs text-stone-300 leading-relaxed font-sans-ui">
                     {item.desc}
                   </p>
                 </div>
@@ -144,11 +144,11 @@ export default function ServicesPage() {
       {/* 4. FREQUENTLY ASKED QUESTIONS */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10 space-y-3">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-3d text-gold-400 text-[11px] font-mono uppercase tracking-widest font-semibold">
-            <HelpCircle className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 text-[11px] font-mono uppercase tracking-widest font-semibold">
+            <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
             <span>Clarity &amp; Guidance</span>
           </div>
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white text-3d-title">
+          <h2 className="font-editorial text-2xl sm:text-4xl font-bold text-[#1F1A15] tracking-tight">
             Frequently Asked Questions
           </h2>
         </div>
@@ -157,13 +157,13 @@ export default function ServicesPage() {
           {faqs.map((faq, idx) => (
             <div
               key={idx}
-              className="p-6 rounded-2xl glass-card-3d border border-white/10 space-y-2 hover:border-gold-500/30 transition"
+              className="p-6 rounded-2xl bg-white border border-stone-200/90 shadow-xs space-y-2 hover:border-amber-300 transition"
             >
-              <h3 className="font-serif text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
-                <span className="text-gold-400 font-mono text-sm">Q.</span>
+              <h3 className="font-editorial text-base sm:text-lg font-bold text-[#1F1A15] flex items-center gap-2.5">
+                <span className="text-[#B45309] font-mono text-sm">Q.</span>
                 <span>{faq.q}</span>
               </h3>
-              <p className="text-xs sm:text-sm text-luxe-300 leading-relaxed pl-6 font-light">
+              <p className="text-xs sm:text-sm text-[#5C5245] leading-relaxed pl-6 font-sans-ui">
                 {faq.a}
               </p>
             </div>

@@ -53,36 +53,36 @@ export default function AboutPage() {
         <div className="absolute top-40 right-1/4 w-[450px] h-[450px] bg-amethyst-600/10 rounded-full blur-[140px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto text-center space-y-5 relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-3d">
-            <Sparkles className="w-3.5 h-3.5 text-gold-400" />
-            <span className="text-[11px] font-mono tracking-widest text-gold-300 uppercase">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <span className="text-[11px] font-mono tracking-widest uppercase font-bold">
               The Story Behind Sumuk Crystalz 5
             </span>
           </div>
 
-          <h1 className="font-serif text-4xl sm:text-6xl font-bold tracking-tight text-white max-w-4xl mx-auto leading-[1.15] text-3d-title">
+          <h1 className="font-editorial text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1F1A15] max-w-4xl mx-auto leading-[1.15]">
             Where Beauty Meets <br />
-            <span className="gold-gradient-text">Sacred Intention.</span>
+            <span className="text-[#B45309]">Sacred Intention.</span>
           </h1>
 
-          <p className="text-sm sm:text-base text-luxe-300 leading-relaxed max-w-2xl mx-auto">
-            Discover the passion, holistic healing mastery, and conscious energy alignment behind <strong className="text-white">Sumuk Crystalz 5</strong> and founder <strong className="text-white">Soumyaa Naveen</strong>.
+          <p className="text-sm sm:text-base text-[#5C5245] leading-relaxed max-w-2xl mx-auto font-sans-ui">
+            Discover the passion, holistic healing mastery, and conscious energy alignment behind <strong className="text-[#1F1A15] font-semibold">Sumuk Crystalz 5</strong> and founder <strong className="text-[#1F1A15] font-semibold">Soumyaa Naveen</strong>.
           </p>
 
           <div className="flex flex-wrap justify-center items-center gap-4 pt-3">
             <a
               href="#services"
-              className="btn-pill-primary text-xs px-8 py-3.5 rounded-full flex items-center gap-2 shadow-[0_4px_25px_rgba(212,175,55,0.4)]"
+              className="px-8 py-3.5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#C59B27] text-stone-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-md transition hover:brightness-105"
             >
-              <Sparkles className="w-4 h-4 text-black" />
+              <Sparkles className="w-4 h-4 text-stone-950" />
               <span>EXPLORE SERVICES BY SOUMYAA</span>
-              <ArrowRight className="w-3.5 h-3.5 text-black" />
+              <ArrowRight className="w-3.5 h-3.5 text-stone-950" />
             </a>
             <Link
               href="/shop"
-              className="btn-pill-secondary text-xs px-8 py-3.5 rounded-full flex items-center gap-2"
+              className="px-8 py-3.5 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-stone-900 font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition shadow-xs"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
               <span>BROWSE MASTERWORKS</span>
             </Link>
           </div>
@@ -140,18 +140,18 @@ export default function AboutPage() {
 
             {/* Right: The Narrative */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full badge-3d text-gold-400 text-[11px] font-mono uppercase tracking-widest font-semibold">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.06] border border-[#D4AF37]/30 text-[#E5C378] text-[11px] font-mono uppercase tracking-widest font-semibold">
                 <Award className="w-3.5 h-3.5" />
                 <span>Meet the Founder</span>
               </div>
 
-              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white leading-snug text-3d-title">
+              <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-snug tracking-tight">
                 &ldquo;Every crystal tells an ancient story—mined from the Earth, chosen with intention.&rdquo;
               </h2>
 
-              <div className="space-y-4 text-sm sm:text-base text-luxe-200 leading-relaxed font-light">
+              <div className="space-y-4 text-sm sm:text-base text-stone-300 leading-relaxed font-light">
                 <p>
-                  <strong className="text-white font-medium">Welcome to Sumuk Crystalz 5.</strong> I’m <strong className="text-white font-semibold">Soumyaa Naveen</strong>, an Usui Reiki Master, Aura Analyst, Numerologist, and intuitive practitioner dedicated to natural crystals and conscious energetic alignment.
+                  <strong className="text-white font-medium">Welcome to Sumuk Crystalz 5.</strong> I’m <strong className="text-[#E5C378] font-semibold">Soumyaa Naveen</strong>, an Usui Reiki Master, Aura Analyst, Numerologist, and intuitive practitioner dedicated to natural crystals and conscious energetic alignment.
                 </p>
 
                 <p>
@@ -191,16 +191,16 @@ export default function AboutPage() {
 
       {/* 4. THE 3 CORE OFFERINGS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" id="intention">
-        <div className="glass-panel-3d p-8 sm:p-12 border border-white/10 relative overflow-hidden">
+        <div className="rounded-3xl bg-gradient-to-br from-[#1A1124] to-[#120B1A] text-white p-8 sm:p-12 border border-white/10 relative overflow-hidden shadow-xl">
           <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-3d text-gold-400 text-[11px] font-mono uppercase tracking-widest font-semibold">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-[#D4AF37]/30 text-[#E5C378] text-[11px] font-mono uppercase tracking-widest font-semibold">
               <Compass className="w-3.5 h-3.5" />
               <span>Curation Spectrum</span>
             </div>
-            <h2 className="font-serif text-3xl font-bold text-white text-3d-title">
+            <h2 className="font-editorial text-2xl sm:text-4xl font-bold text-white tracking-tight">
               Curated for Your Mindful Sanctuary
             </h2>
-            <p className="text-xs sm:text-sm text-luxe-400">
+            <p className="text-xs sm:text-sm text-stone-300 font-sans-ui">
               Each offering is hand-selected by Soumyaa Naveen to fulfill specific energetic and spatial intentions.
             </p>
           </div>
@@ -211,26 +211,26 @@ export default function AboutPage() {
               return (
                 <div
                   key={idx}
-                  className="card-3d-animatic p-6 rounded-2xl glass-card-3d border border-white/10 hover:border-gold-500/30 transition flex flex-col justify-between space-y-4"
+                  className="p-6 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 transition flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-xl bg-gold-500/10 border border-gold-500/20 flex items-center justify-center text-gold-400 shadow-md">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-[#E5C378] shadow-md">
                       <Icon className="w-6 h-6" />
                     </div>
-                    <h3 className="font-serif text-lg font-bold text-white text-3d-subtle">
+                    <h3 className="font-editorial text-lg font-bold text-white">
                       {item.title}
                     </h3>
-                    <p className="text-[11px] font-mono uppercase tracking-wider text-gold-300/80 font-bold">
+                    <p className="text-[11px] font-mono uppercase tracking-wider text-[#E5C378]/90 font-bold">
                       {item.subtitle}
                     </p>
-                    <p className="text-xs text-luxe-300 leading-relaxed">
+                    <p className="text-xs text-stone-300 leading-relaxed font-sans-ui">
                       {item.desc}
                     </p>
                   </div>
                   <div className="pt-2">
                     <Link
                       href="/shop"
-                      className="text-xs font-mono uppercase tracking-wider text-gold-400 hover:text-gold-300 inline-flex items-center gap-1 font-semibold"
+                      className="text-xs font-mono uppercase tracking-wider text-[#E5C378] hover:text-white inline-flex items-center gap-1 font-semibold transition-colors"
                     >
                       <span>Explore Collection</span>
                       <ArrowRight className="w-3 h-3" />
@@ -243,19 +243,19 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 6. THE ETHICAL PROMISE & HAND-SELECTED COMMITMENT */}
+      {/* 6. THE ETHICAL PROMISE & HAND-SELECTED COMMITMENT (Image 5) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-3d text-emerald-400 text-[11px] font-mono uppercase tracking-widest font-semibold">
-              <ShieldCheck className="w-4 h-4" />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 text-[11px] font-mono uppercase tracking-widest font-semibold shadow-xs">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <span>The Sumuk Crystalz 5 Standard</span>
             </div>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white leading-tight text-3d-title">
+            <h2 className="font-editorial text-3xl sm:text-4xl font-extrabold text-[#1F1A15] leading-tight tracking-tight">
               Ethically Sourced. <br />
-              <span className="gold-gradient-text">Genuinely Consecrated.</span>
+              <span className="text-[#B45309]">Genuinely Consecrated.</span>
             </h2>
-            <p className="text-xs sm:text-sm text-luxe-300 leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#5C5245] leading-relaxed font-sans-ui">
               We believe the energy of a crystal is deeply tied to how it was unearthed and handled. Soumyaa personally vets our mineral suppliers to ensure humane working conditions, fair wages, and natural integrity without synthetic treatments.
             </p>
 
@@ -266,8 +266,8 @@ export default function AboutPage() {
                 'Sound-cleansed with sacred Solfeggio singing bowls before dispatch',
                 'Individual Certificate of Provenance included with every collector order',
               ].map((point, i) => (
-                <div key={i} className="flex items-center gap-3 text-xs text-luxe-200">
-                  <CheckCircle2 className="w-4 h-4 text-gold-400 flex-shrink-0" />
+                <div key={i} className="flex items-center gap-3 text-xs sm:text-sm text-[#2C241B]">
+                  <CheckCircle2 className="w-4 h-4 text-[#B45309] flex-shrink-0 stroke-[2.2]" />
                   <span>{point}</span>
                 </div>
               ))}
@@ -275,17 +275,17 @@ export default function AboutPage() {
           </div>
 
           {/* Right community callout card */}
-          <div className="card-3d-animatic p-8 sm:p-10 rounded-3xl glass-panel-3d border border-gold-500/30 text-center space-y-5 shadow-2xl">
-            <div className="w-16 h-16 mx-auto rounded-full bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400 shadow-lg">
+          <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-[#1A1124] to-[#120B1A] border border-[#D4AF37]/30 text-center space-y-5 shadow-xl text-white">
+            <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-[#D4AF37]/30 flex items-center justify-center text-[#E5C378] shadow-lg">
               <Instagram className="w-8 h-8" />
             </div>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-gold-400 block font-bold">
+            <span className="text-[11px] font-mono uppercase tracking-widest text-[#E5C378] block font-bold">
               Follow Our Daily Journey
             </span>
-            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white text-3d-title">
+            <h3 className="font-editorial text-2xl sm:text-3xl font-bold text-white tracking-tight">
               Connect on @sumukcrystalz5
             </h3>
-            <p className="text-xs text-luxe-300 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto leading-relaxed font-sans-ui">
               Join Soumyaa Naveen on Instagram for unboxing live streams, crystal healing guidance, sanctuary styling tips, and new batch alerts.
             </p>
             <div className="pt-2">
@@ -293,10 +293,10 @@ export default function AboutPage() {
                 href="https://www.instagram.com/sumukcrystalz5?stkn=d3NqcW1pbnV3ZDRn"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="gold-3d-btn inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-xs font-mono font-bold uppercase tracking-[0.16em] shadow-xl"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-stone-950 text-xs font-mono font-bold uppercase tracking-[0.16em] shadow-md transition-all active:scale-95"
               >
                 <span>FOLLOW @SUMUKCRYSTALZ5</span>
-                <ArrowUpRight className="w-4 h-4" />
+                <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
               </a>
             </div>
           </div>
@@ -305,16 +305,16 @@ export default function AboutPage() {
 
       {/* 7. PHYSICAL SANCTUARY & OFFICE LOCATION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="glass-panel-3d p-8 sm:p-12 border border-gold-500/30 rounded-3xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+        <div className="rounded-3xl bg-gradient-to-br from-[#1A1124] to-[#120B1A] border border-[#D4AF37]/30 p-8 sm:p-12 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
           <div className="space-y-3 max-w-2xl text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full badge-3d text-gold-400 text-[11px] font-mono uppercase tracking-widest font-semibold">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.06] border border-[#D4AF37]/30 text-[#E5C378] text-[11px] font-mono uppercase tracking-widest font-semibold">
               <MapPin className="w-3.5 h-3.5" />
               <span>Physical Sanctuary &amp; Office</span>
             </div>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white text-3d-title">
+            <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-white tracking-tight">
               Visit Our Sacred Space in Sus Gaon, Pune
             </h2>
-            <p className="text-xs sm:text-sm text-luxe-300 leading-relaxed font-light">
+            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed font-sans-ui font-light">
               Experience the physical vault of museum-grade crystals, attend private in-person Reiki and sound attunement sessions, or consult directly with Soumyaa Naveen in Sus Gaon, Pune, Maharashtra.
             </p>
           </div>
@@ -323,11 +323,11 @@ export default function AboutPage() {
               href="https://share.google/ZlRBaN7xnl5EdHmIX"
               target="_blank"
               rel="noopener noreferrer"
-              className="gold-3d-btn w-full sm:w-auto px-8 py-3.5 rounded-full text-xs font-mono font-bold uppercase tracking-[0.16em] shadow-xl flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-stone-950 text-xs font-mono font-bold uppercase tracking-[0.16em] shadow-md flex items-center justify-center gap-2 transition-all active:scale-95"
             >
-              <Navigation className="w-4 h-4" />
+              <Navigation className="w-4 h-4 stroke-[2.5]" />
               <span>OPEN GOOGLE MAPS</span>
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
             </a>
           </div>
         </div>

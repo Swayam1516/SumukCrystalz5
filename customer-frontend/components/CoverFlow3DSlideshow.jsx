@@ -8,8 +8,6 @@ import { getSupabaseProducts } from '../lib/supabase';
 import { ENERGY_STONES_CATALOG } from '../data/energyStones';
 import { crystalAudio } from '../utils/harmonicResonance';
 import {
-  ChevronLeft,
-  ChevronRight,
   Sparkles,
   ShoppingBag,
   Star,
@@ -17,8 +15,6 @@ import {
   Eye,
   ArrowRight,
   ShieldCheck,
-  Play,
-  Pause,
 } from 'lucide-react';
 
 // The 6 Flagship Crystal Products specified in the Master Prompt
@@ -275,69 +271,7 @@ export default function CoverFlow3DSlideshow({ className = '' }) {
       }}
       aria-label="Sumuk Crystalz 3D Cover Flow Product Slideshow"
     >
-      {/* ── Header: Light Luxury Ivory & Champagne Gold ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-4 border-b border-[#EAE3D5]">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-mono font-bold tracking-widest uppercase shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-            <span>Consecrated Crystal Showcase</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-          </div>
 
-          <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1F1A15] tracking-tight">
-            Curated Energy Specimen Slideshow
-          </h2>
-
-          <p className="text-xs sm:text-sm text-[#5C5245] max-w-xl font-sans-ui leading-relaxed">
-            Handcrafted natural gemstones, Vedic energy bands, and rare collector geodes sliding live from our consecrated sanctuary vault.
-          </p>
-        </div>
-
-        {/* Carousel Controls */}
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
-          {/* Pause / Play Button */}
-          <button
-            type="button"
-            onClick={() => setIsAutoPlaying((prev) => !prev)}
-            className="p-2.5 rounded-xl bg-white hover:bg-amber-50 border border-amber-200/80 text-amber-800 transition shadow-sm cursor-pointer"
-            title={isAutoPlaying ? 'Pause 3-second Auto Rotation' : 'Resume Auto Rotation'}
-            aria-label={isAutoPlaying ? 'Pause Slideshow' : 'Play Slideshow'}
-          >
-            {isAutoPlaying ? <Pause className="w-4 h-4 text-amber-600" /> : <Play className="w-4 h-4 text-amber-600" />}
-          </button>
-
-          {/* Prev Arrow */}
-          <button
-            type="button"
-            onClick={handlePrev}
-            className="p-2.5 rounded-xl bg-white hover:bg-amber-100/70 border border-amber-300 text-amber-900 transition active:scale-95 shadow-sm cursor-pointer"
-            title="Previous Specimen"
-            aria-label="Previous Slide"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
-          {/* Next Arrow */}
-          <button
-            type="button"
-            onClick={handleNext}
-            className="p-2.5 rounded-xl bg-white hover:bg-amber-100/70 border border-amber-300 text-amber-900 transition active:scale-95 shadow-sm cursor-pointer"
-            title="Next Specimen"
-            aria-label="Next Slide"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-
-          {/* View All Store Link */}
-          <Link
-            href="/shop"
-            className="ml-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-stone-900 hover:text-black text-xs font-bold font-mono tracking-wider flex items-center gap-1.5 transition shadow-[0_4px_14px_rgba(212,175,55,0.3)] cursor-pointer"
-          >
-            <span>View All ({total})</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
 
       {/* ── 3D Cover Flow Stage ── */}
       <div

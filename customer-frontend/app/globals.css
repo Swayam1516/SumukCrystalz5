@@ -147,22 +147,22 @@
   letter-spacing: 0.05em;
 }
 
-/* 3D Text Depth Effects */
+/* 3D Text Depth Effects - Crisp and sharp typography with zero blur */
 .text-3d-title {
-  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.9), 0 0 30px rgba(245, 158, 11, 0.25);
+  text-shadow: none;
 }
 
 .text-3d-title-light {
-  text-shadow: 0 2px 8px rgba(62, 39, 24, 0.12), 0 1px 2px rgba(0, 0, 0, 0.05);
+  text-shadow: none;
 }
 
 .text-3d-subtle {
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  text-shadow: none;
 }
 
-/* Luxury Gradient Text */
+/* Luxury Gradient Text - High-contrast rich metallic gold */
 .gold-gradient-text {
-  background: linear-gradient(135deg, #fffdf5 0%, #fde047 35%, #eab308 70%, #ca8a04 100%);
+  background: linear-gradient(135deg, #d97706 0%, #b45309 50%, #92400e 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
