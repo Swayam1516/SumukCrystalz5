@@ -22,57 +22,27 @@ import {
 } from 'lucide-react';
 import { TOP_NAV_SHOP_MENU } from '../lib/discoveryTaxonomy';
 
-function GoldenCrystalLogo() {
+function FacetedCrystalLogo({ className = 'w-7 h-7 sm:w-8 sm:h-8' }) {
   return (
-    <div className="relative flex items-center justify-center">
-      <svg
-        viewBox="0 0 40 40"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-8 h-8 sm:w-9 sm:h-9 filter drop-shadow-[0_2px_10px_rgba(212,175,55,0.45)] select-none"
-      >
-        <defs>
-          <linearGradient id="goldGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fff3b8" />
-            <stop offset="45%" stopColor="#dfaf37" />
-            <stop offset="100%" stopColor="#875e11" />
-          </linearGradient>
-          <linearGradient id="goldGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#fde892" />
-            <stop offset="55%" stopColor="#c5992a" />
-            <stop offset="100%" stopColor="#5e410b" />
-          </linearGradient>
-          <linearGradient id="goldGrad3" x1="0%" y1="50%" x2="100%" y2="50%">
-            <stop offset="0%" stopColor="#fffdf0" />
-            <stop offset="100%" stopColor="#d4af37" />
-          </linearGradient>
-        </defs>
-
-        {/* Left crystal point */}
-        <polygon points="12,17 6,24 9,35 15,35 15,22" fill="url(#goldGrad2)" opacity="0.9" />
-        <polygon points="12,17 15,22 15,35 12,35" fill="url(#goldGrad1)" opacity="0.8" />
-
-        {/* Right crystal point */}
-        <polygon points="28,17 34,24 31,35 25,35 25,22" fill="url(#goldGrad2)" opacity="0.9" />
-        <polygon points="28,17 25,22 25,35 28,35" fill="url(#goldGrad1)" opacity="0.8" />
-
-        {/* Center main crystal tower */}
-        <polygon points="20,3 13,12 14,36 26,36 27,12" fill="url(#goldGrad1)" />
-        <polygon points="20,3 20,36 26,36 27,12" fill="url(#goldGrad3)" opacity="0.55" />
-        <polygon points="20,3 13,12 20,15" fill="#fff9e0" opacity="0.85" />
-        <polygon points="20,3 27,12 20,15" fill="url(#goldGrad2)" opacity="0.9" />
-        <polygon points="20,15 13,12 14,36 20,36" fill="url(#goldGrad2)" opacity="0.95" />
-
-        {/* Small base crystal accents */}
-        <polygon points="8,27 4,34 10,35" fill="url(#goldGrad1)" opacity="0.75" />
-        <polygon points="32,27 36,34 30,35" fill="url(#goldGrad1)" opacity="0.75" />
-
-        {/* Facet Edge Highlights */}
-        <line x1="20" y1="3" x2="20" y2="36" stroke="#fff9e0" strokeWidth="0.75" opacity="0.7" />
-        <line x1="20" y1="3" x2="13" y2="12" stroke="#fff9e0" strokeWidth="0.75" opacity="0.75" />
-        <line x1="20" y1="3" x2="27" y2="12" stroke="#fff9e0" strokeWidth="0.75" opacity="0.75" />
-      </svg>
-    </div>
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      {/* Top crystal pyramid */}
+      <polygon points="16,2 6,9 16,13 26,9" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
+      {/* Middle vertical edges */}
+      <line x1="6" y1="9" x2="6" y2="23" stroke="white" strokeWidth="1.5" />
+      <line x1="16" y1="13" x2="16" y2="29" stroke="white" strokeWidth="1.5" />
+      <line x1="26" y1="9" x2="26" y2="23" stroke="white" strokeWidth="1.5" />
+      {/* Bottom pyramid */}
+      <polyline points="6,23 16,29 26,23" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
+      {/* Internal facet diagonals */}
+      <line x1="6" y1="9" x2="16" y2="2" stroke="white" strokeWidth="1.5" />
+      <line x1="26" y1="9" x2="16" y2="2" stroke="white" strokeWidth="1.5" />
+      <polyline points="6,23 16,13 26,23" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
   );
 }
 
@@ -132,34 +102,20 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full transition-all duration-300 px-3 sm:px-6 pt-3 pb-2">
-        {/* Subtle Ambient Twinkling Stars in Background */}
-        <div className="absolute top-2 left-1/4 pointer-events-none opacity-40 animate-pulse">
-          <SparkleStar className="w-3 h-3 text-amber-300" />
-        </div>
-        <div className="absolute top-8 right-1/4 pointer-events-none opacity-40 animate-pulse delay-500">
-          <SparkleStar className="w-2.5 h-2.5 text-amber-200" />
-        </div>
-
-        {/* Translucent Floating Glass Header Bar (Light Luxury Theme Matching Image 2 & 4) */}
-        <div className="max-w-7xl mx-auto rounded-2xl bg-white/92 backdrop-blur-xl border border-amber-300/40 shadow-[0_4px_24px_rgba(180,130,40,0.08)] px-3 sm:px-7 h-16 sm:h-20 flex items-center justify-between relative">
-          {/* Subtle Golden Glow Line at top/bottom border */}
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none rounded-t-2xl" />
-          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent pointer-events-none rounded-b-2xl" />
-
-          {/* LEFT: Crystal Logo + Brand Name + Sparkle Divider */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group flex-shrink-0 whitespace-nowrap">
-              <GoldenCrystalLogo />
-              <span className="font-serif text-xs sm:text-sm md:text-base font-bold tracking-[0.16em] sm:tracking-[0.2em] text-[#8C6208] group-hover:text-amber-900 transition-colors uppercase whitespace-nowrap">
+      <header className="sticky top-0 z-50 w-full bg-[#0A070D] border-b border-white/[0.08] transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-18 sm:h-20 flex items-center justify-between relative">
+          {/* LEFT: Faceted Wireframe Crystal Logo + Brand Name */}
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group flex-shrink-0 whitespace-nowrap">
+              <FacetedCrystalLogo className="w-7 h-7 sm:w-8 sm:h-8" />
+              <span className="font-sans text-xs sm:text-sm md:text-base font-bold tracking-[0.18em] text-white group-hover:text-stone-200 transition-colors uppercase whitespace-nowrap">
                 SUMUK CRYSTALZ 5
               </span>
             </Link>
-            <SparkleStar className="w-3.5 h-3.5 text-amber-500/80 hidden sm:block ml-0.5 flex-shrink-0" />
           </div>
 
           {/* CENTER / NAVIGATION LINKS */}
-          <nav className="hidden md:flex items-center gap-3.5 lg:gap-5 xl:gap-6 text-[11px] lg:text-xs font-mono uppercase tracking-[0.14em]">
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 xl:gap-10 text-[11px] lg:text-xs font-mono uppercase tracking-[0.16em]">
             {/* SHOP / STORE MEGAMENU DROPDOWN */}
             <div
               className="relative flex items-center"
@@ -170,14 +126,14 @@ export default function Header() {
               <Link
                 href="/shop"
                 onClick={() => setShopDropdownOpen(false)}
-                className="text-[#8C6208] font-bold hover:text-amber-900 transition-all duration-200 py-2.5 px-2 flex items-center gap-1.5 cursor-pointer rounded-lg hover:bg-amber-50/60"
+                className="text-stone-300 font-bold hover:text-white transition-all duration-200 py-2.5 px-2 flex items-center gap-1.5 cursor-pointer"
               >
                 <span>SHOP</span>
               </Link>
               <button
                 type="button"
                 onClick={() => setShopDropdownOpen(!shopDropdownOpen)}
-                className="p-1.5 text-amber-600 hover:text-amber-800 cursor-pointer outline-none rounded-md hover:bg-amber-50/60"
+                className="p-1 text-stone-400 hover:text-white cursor-pointer outline-none"
                 aria-label="Toggle Shop Category Menu"
               >
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180' : ''}`} />
@@ -185,19 +141,19 @@ export default function Header() {
 
               {shopDropdownOpen && (
                 <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 w-[520px] max-w-[92vw] z-50 animate-fade-in text-left pointer-events-auto">
-                  <div className="p-4 bg-white/98 border border-amber-300/50 rounded-2xl shadow-[0_20px_50px_rgba(180,130,40,0.15)] backdrop-blur-2xl">
+                  <div className="p-4 bg-[#140E1B] border border-stone-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl text-white">
                     {/* Top Bar with All Store Link */}
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-stone-200">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-stone-800">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-amber-600" />
-                        <span className="font-serif text-xs font-bold text-amber-900 tracking-wider uppercase">
+                        <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                        <span className="font-sans text-xs font-bold text-white tracking-wider uppercase">
                           6-Pillar Discovery Vault
                         </span>
                       </div>
                       <Link
                         href="/shop"
                         onClick={() => setShopDropdownOpen(false)}
-                        className="text-[11px] text-amber-700 hover:text-amber-900 font-mono font-bold flex items-center gap-1 transition"
+                        className="text-[11px] text-[#E5C378] hover:text-white font-mono font-bold flex items-center gap-1 transition"
                       >
                         <span>Explore All Products</span>
                         <ArrowRight className="w-3 h-3" />
@@ -211,15 +167,15 @@ export default function Header() {
                           key={item.label}
                           href={item.href}
                           onClick={() => setShopDropdownOpen(false)}
-                          className="p-2.5 rounded-xl hover:bg-amber-50/80 border border-transparent hover:border-amber-300/40 transition group block"
+                          className="p-2.5 rounded-xl hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition group block"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-stone-800 group-hover:text-amber-800 transition">
+                            <span className="text-xs font-bold text-white group-hover:text-[#E5C378] transition">
                               {item.label}
                             </span>
-                            <span className="text-[10px] text-amber-600 group-hover:text-amber-800">&rarr;</span>
+                            <span className="text-[10px] text-stone-400 group-hover:text-white">&rarr;</span>
                           </div>
-                          <p className="text-[10px] text-stone-500 group-hover:text-stone-700 truncate mt-0.5 font-sans">
+                          <p className="text-[10px] text-stone-400 group-hover:text-stone-300 truncate mt-0.5 font-sans">
                             {item.description}
                           </p>
                         </Link>
@@ -232,14 +188,14 @@ export default function Header() {
 
             <Link
               href="/services"
-              className="text-stone-700 hover:text-[#8C6208] font-bold transition-all duration-200"
+              className="text-stone-300 hover:text-white font-medium transition-all duration-200"
             >
               SERVICES
             </Link>
 
             <Link
               href="/about"
-              className="text-stone-700 hover:text-[#8C6208] font-bold transition-all duration-200"
+              className="text-stone-300 hover:text-white font-medium transition-all duration-200"
             >
               FOUNDER STORY
             </Link>
@@ -247,178 +203,120 @@ export default function Header() {
             {/* Auth / Account Profile or Sign In */}
             {currentUser ? (
               <div className="relative flex items-center" ref={dropdownRef}>
-                {/* User Profile Dropdown Button */}
                 <button
                   type="button"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-amber-500/35 text-white hover:text-[#e8c97c] transition-all flex items-center gap-2 font-bold shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-stone-700 text-white transition-all flex items-center gap-2 font-bold shadow-sm cursor-pointer"
                   aria-expanded={userDropdownOpen}
                   title="Patron Profile & Orders"
                 >
                   {isCurrentAdmin ? (
                     <Crown className="w-3.5 h-3.5 text-amber-400" />
                   ) : (
-                    <User className="w-3.5 h-3.5 text-[#e8c97c]" />
+                    <User className="w-3.5 h-3.5 text-stone-300" />
                   )}
                   <span className="max-w-[110px] truncate">{currentUser.name?.split(' ')[0] || 'Patron'}</span>
-                  <ChevronDown className={`w-3 h-3 text-amber-400 transition-transform duration-200 ${userDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3 h-3 text-stone-400 transition-transform duration-200 ${userDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {userDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-3 w-64 py-2 bg-white border border-amber-300/50 rounded-2xl shadow-2xl z-50 text-xs font-mono space-y-1 backdrop-blur-2xl animate-fade-in text-stone-800">
-                    <div className="px-4 py-2.5 border-b border-stone-100 font-sans">
-                      <p className="font-bold text-stone-900 truncate">{currentUser.name || 'Sacred Patron'}</p>
-                      <p className="text-[10px] text-stone-500 truncate font-mono">{currentUser.email}</p>
-                      <span className={`inline-block mt-1 text-[9px] px-2 py-0.5 rounded font-bold ${
-                        isCurrentAdmin
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                          : 'bg-purple-100 text-purple-900 border border-purple-300'
-                      }`}>
-                        {isCurrentAdmin ? '👑 Founder Admin' : '✨ Crystal Patron'}
-                      </span>
+                  <div className="absolute right-0 top-full mt-3 w-64 py-2 bg-[#140E1B] border border-stone-800 rounded-2xl shadow-2xl z-50 text-xs font-mono space-y-1 backdrop-blur-2xl animate-fade-in text-white">
+                    <div className="px-4 py-2.5 border-b border-stone-800 font-sans">
+                      <p className="font-bold text-white truncate">{currentUser.name || 'Sacred Patron'}</p>
+                      <p className="text-[10px] text-stone-400 truncate font-mono">{currentUser.email}</p>
                     </div>
 
                     <Link
                       href="/account"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 flex items-center gap-2.5 text-stone-800 transition"
+                      className="w-full text-left px-4 py-2.5 hover:bg-white/[0.06] flex items-center gap-2.5 text-stone-200 transition"
                     >
-                      <User className="w-3.5 h-3.5 text-amber-600" />
+                      <User className="w-3.5 h-3.5 text-stone-400" />
                       <span>My Account &amp; Orders</span>
                     </Link>
 
-                    <Link
-                      href="/admin"
-                      onClick={() => setUserDropdownOpen(false)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 flex items-center gap-2.5 text-amber-800 font-bold transition"
-                    >
-                      <Crown className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Admin Control Center</span>
-                    </Link>
+                    {isCurrentAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="w-full text-left px-4 py-2.5 hover:bg-white/[0.06] flex items-center gap-2.5 text-[#E5C378] font-bold transition"
+                      >
+                        <Crown className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Admin Control Center</span>
+                      </Link>
+                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserDropdownOpen(false);
-                        openAuthModal('register');
-                      }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 flex items-center gap-2.5 text-amber-700 transition"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Create New Account</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserDropdownOpen(false);
-                        openAuthModal('login');
-                      }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 flex items-center gap-2.5 text-stone-600 transition"
-                    >
-                      <User className="w-3.5 h-3.5 text-stone-500" />
-                      <span>Switch Account</span>
-                    </button>
-
-                    <div className="border-t border-stone-100 my-1.5" />
-
-                    {/* Prominent Sign Out Button */}
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2.5 bg-red-50 hover:bg-red-100 flex items-center gap-2.5 text-red-700 font-bold transition rounded-lg mx-auto"
+                      className="w-full text-left px-4 py-2.5 bg-red-950/40 hover:bg-red-900/40 flex items-center gap-2.5 text-red-300 font-bold transition"
                     >
-                      <LogOut className="w-4 h-4 text-red-500" />
+                      <LogOut className="w-4 h-4 text-red-400" />
                       <span>Sign Out</span>
                     </button>
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="flex items-center gap-3">
+            ) : null}
+          </nav>
+
+          {/* RIGHT: Sign In + Sign Up + Cart + Mobile Menu Toggle */}
+          <div className="flex items-center gap-2.5 sm:gap-4">
+            {!currentUser && (
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                {/* Sign In Outline Pill */}
                 <button
                   type="button"
                   onClick={() => openAuthModal('login')}
-                  className="px-3.5 py-1.5 rounded-full border border-stone-300 bg-white hover:bg-stone-50 text-stone-800 transition-all duration-200 text-xs font-semibold tracking-wider shadow-xs"
+                  className="px-3.5 sm:px-4 py-1.5 rounded-full border border-stone-600/80 bg-transparent hover:bg-white/[0.08] text-white text-xs font-mono font-medium flex items-center gap-1.5 transition cursor-pointer"
                 >
-                  Sign In
+                  <User className="w-3.5 h-3.5 text-stone-300" />
+                  <span>Sign In</span>
                 </button>
 
+                {/* Sign Up Solid White Pill */}
                 <button
                   type="button"
                   onClick={() => openAuthModal('register')}
-                  className="px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs tracking-wider shadow-sm transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5"
+                  className="px-3.5 sm:px-4 py-1.5 rounded-full bg-white hover:bg-stone-100 text-stone-900 text-xs font-mono font-bold flex items-center gap-1.5 shadow-md transition cursor-pointer"
                 >
-                  <Sparkles className="w-3 h-3 text-white" />
+                  <Sparkles className="w-3.5 h-3.5 text-stone-900" />
                   <span>Sign Up</span>
                 </button>
               </div>
             )}
 
-            {isCurrentAdmin && (
-              <Link
-                href="/admin"
-                className="px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 hover:bg-amber-200 font-bold transition-all text-[10px] flex items-center gap-1 shadow-xs"
-              >
-                <Crown className="w-3 h-3 text-amber-700" />
-                <span>ADMIN</span>
-              </Link>
-            )}
-          </nav>
-
-          {/* RIGHT: Golden Shopping Cart + Twinkles + Mobile Menu Toggle */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Mobile Auth Buttons matching Image 4 */}
-            {!currentUser && (
-              <div className="flex md:hidden items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => openAuthModal('login')}
-                  className="px-2.5 py-1 rounded-full border border-stone-300 bg-white text-stone-800 text-[11px] font-semibold"
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openAuthModal('register')}
-                  className="px-3 py-1 rounded-full bg-amber-600 text-white text-[11px] font-bold shadow-xs"
-                >
-                  Sign Up
-                </button>
-              </div>
-            )}
-
+            {/* Cart Button with Counter */}
             <button
               type="button"
               onClick={openDrawer}
-              className="relative p-2 text-stone-800 hover:text-amber-800 transition-all group flex items-center justify-center"
+              className="relative p-2 text-white hover:text-stone-300 transition cursor-pointer"
               aria-label="View Shopping Cart"
             >
-              <ShoppingCart className="w-6 h-6 stroke-[1.9] group-hover:scale-105 transition-transform text-stone-800" />
-              <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-[#D4AF37] text-stone-950 font-extrabold text-[10px] flex items-center justify-center shadow-md border-2 border-white">
+              <ShoppingCart className="w-5 h-5 text-white stroke-[1.8]" />
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-stone-800 border border-stone-600 text-[10px] font-mono font-bold text-white flex items-center justify-center shadow-sm">
                 {cartCount}
               </span>
             </button>
 
-            {/* Subtle Right Sparkle */}
-            <div className="hidden sm:block pointer-events-none opacity-60">
-              <SparkleStar className="w-3 h-3 text-amber-500" />
-            </div>
+            {/* Vertical Divider & Menu Icon matching screenshot */}
+            <div className="h-6 w-px bg-white/20 mx-1 hidden sm:block" />
 
-            {/* Mobile menu toggle */}
+            {/* Menu toggle */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 transition-colors"
+              className="p-1.5 sm:p-2 text-white hover:text-stone-300 transition-colors cursor-pointer flex items-center justify-center"
+              aria-label="Toggle Menu"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white stroke-[1.8]" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Nav Drawer */}
+        {/* Navigation Slide Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-2 max-w-7xl mx-auto rounded-2xl px-6 pt-4 pb-6 bg-white/98 backdrop-blur-2xl border border-amber-300/40 space-y-3 animate-fade-in shadow-2xl text-stone-900">
+          <div className="mt-2 max-w-7xl mx-auto rounded-2xl px-6 pt-5 pb-6 bg-[#0E0A14]/95 backdrop-blur-2xl border border-white/10 space-y-3 animate-fade-in shadow-2xl text-white">
             {isCurrentAdmin && (
               <Link
                 href="/admin"

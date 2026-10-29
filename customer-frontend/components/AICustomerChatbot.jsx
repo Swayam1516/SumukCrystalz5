@@ -159,7 +159,7 @@ export default function AICustomerChatbot() {
     },
   ]);
 
-  // Load custom FAQs from localStorage
+  // Load custom FAQs from localStorage and listen to global chat open events
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -171,6 +171,22 @@ export default function AICustomerChatbot() {
           }
         }
       } catch (_) {}
+
+      const handleToggle = () => {
+        setIsOpen((prev) => !prev);
+        setIsMinimized(false);
+      };
+      const handleOpen = () => {
+        setIsOpen(true);
+        setIsMinimized(false);
+      };
+
+      window.addEventListener('toggle-ai-chat', handleToggle);
+      window.addEventListener('open-ai-chat', handleOpen);
+      return () => {
+        window.removeEventListener('toggle-ai-chat', handleToggle);
+        window.removeEventListener('open-ai-chat', handleOpen);
+      };
     }
   }, []);
 
