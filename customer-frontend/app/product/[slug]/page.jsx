@@ -33,15 +33,6 @@ import {
   Info,
 } from 'lucide-react';
 
-const CrystalShowcase = dynamic(() => import('../../../components/CrystalShowcase'), {
-  ssr: false,
-  loading: () => (
-    <div className="aspect-square w-full rounded-3xl bg-[#F5EFE6] border border-[#EDE6DA] flex items-center justify-center text-xs text-[#8C8377]">
-      <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  ),
-});
-
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const router = useRouter();
@@ -51,7 +42,6 @@ export default function ProductDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState('8mm Regular');
   const [quantity, setQuantity] = useState(1);
-  const [activeMediaTab, setActiveMediaTab] = useState('gallery'); // 'gallery' | '3d'
   const [addedNotice, setAddedNotice] = useState(false);
 
   // Express delivery checker states
@@ -275,61 +265,28 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           {/* LEFT COLUMN: PRODUCT MEDIA GALLERY */}
           <div className="lg:col-span-7 space-y-4 lg:sticky lg:top-28">
-            {/* Media Mode Tabs */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveMediaTab('gallery')}
-                className={`px-4 py-2 rounded-full text-xs font-option transition-all flex items-center gap-1.5 ${
-                  activeMediaTab === 'gallery'
-                    ? 'option-3d-light-active-gold text-black'
-                    : 'option-3d-light'
-                }`}
-              >
-                <span>Gallery Views</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveMediaTab('3d')}
-                className={`px-4 py-2 rounded-full text-xs font-option transition-all flex items-center gap-1.5 ${
-                  activeMediaTab === '3d'
-                    ? 'option-3d-light-active-gold text-black'
-                    : 'option-3d-light'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] animate-pulse" />
-                <span>3D Refraction Matrix</span>
-              </button>
-            </div>
-
-            {/* Main Image / 3D Canvas */}
+            {/* Main Image */}
             <div className="relative aspect-square w-full rounded-3xl overflow-hidden bg-[#FFFFFF] border border-[#EDE6DA] shadow-xl group">
-              {activeMediaTab === '3d' ? (
-                <CrystalShowcase activeCrystalId={slug} />
-              ) : (
-                <>
-                  <Image
-                    src={product.images[selectedImageIndex] || product.images[0]}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                    priority
-                  />
+              <Image
+                src={product.images[selectedImageIndex] || product.images[0]}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-700"
+                priority
+              />
 
-                  {/* Floating Bead / Dimension Badge */}
-                  <div className="absolute top-4 left-4 z-10">
-                    <span className="px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[#8C6208] text-xs font-mono font-bold tracking-wider border border-[#D4AF37]/50 shadow-md">
-                      {selectedSize} &bull; Natural Stones
-                    </span>
-                  </div>
+              {/* Floating Bead / Dimension Badge */}
+              <div className="absolute top-4 left-4 z-10">
+                <span className="px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[#8C6208] text-xs font-mono font-bold tracking-wider border border-[#D4AF37]/50 shadow-md">
+                  {selectedSize} &bull; Natural Stones
+                </span>
+              </div>
 
-                  {/* Discount Tag Top-Right */}
-                  <div className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-[#BA3C2A] text-white text-xs font-mono font-bold shadow-lg">
-                    {product.discountPercent}% OFF
-                  </div>
-                </>
-              )}
+              {/* Discount Tag Top-Right */}
+              <div className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-[#BA3C2A] text-white text-xs font-mono font-bold shadow-lg">
+                {product.discountPercent}% OFF
+              </div>
             </div>
 
             {/* Thumbnails */}
@@ -339,12 +296,9 @@ export default function ProductDetailPage() {
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => {
-                      setSelectedImageIndex(idx);
-                      setActiveMediaTab('gallery');
-                    }}
+                    onClick={() => setSelectedImageIndex(idx)}
                     className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${
-                      selectedImageIndex === idx && activeMediaTab === 'gallery'
+                      selectedImageIndex === idx
                         ? 'border-[#D4AF37] scale-105 shadow-md ring-2 ring-[#D4AF37]/30'
                         : 'border-[#EDE6DA] opacity-70 hover:opacity-100'
                     }`}

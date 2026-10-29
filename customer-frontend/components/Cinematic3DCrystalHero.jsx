@@ -1,11 +1,8 @@
 'use client';
 
-import React, { useState, Suspense, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Center } from '@react-three/drei';
-import { ProceduralCrystal } from './ProceduralCrystal';
 import {
   ArrowRight,
   Sparkles,
@@ -14,60 +11,9 @@ import {
   Heart,
   MapPin,
   Bell,
-  Compass,
-  RotateCw,
 } from 'lucide-react';
 
-const HERO_CRYSTALS = [
-  { id: 'Amethyst', label: 'Amethyst', type: 'Peace & Intuition', color: '#8B5CF6' },
-  { id: 'Pyrite', label: 'Pyrite', type: 'Abundance & Manifestation', color: '#D97706' },
-  { id: "Tiger's Eye", label: "Tiger's Eye", type: 'Courage & Focus', color: '#B45309' },
-  { id: 'Rose Quartz', label: 'Rose Quartz', type: 'Heart Harmony', color: '#EC4899' },
-  { id: 'Clear Quartz', label: 'Clear Quartz', type: 'Master Amplifier', color: '#E2E8F0' },
-  { id: 'Black Obsidian', label: 'Black Obsidian', type: 'Shielding & Grounding', color: '#475569' },
-];
-
-function CrystalScene({ activeCrystal }) {
-  return (
-    <>
-      <ambientLight intensity={0.9} />
-      <directionalLight position={[5, 8, 5]} intensity={1.8} color="#FFF8E7" castShadow />
-      <directionalLight position={[-5, -4, -4]} intensity={0.8} color="#C4B5FD" />
-      <pointLight position={[0, 4, 3]} intensity={1.4} color="#FDE68A" />
-
-      <Center>
-        <ProceduralCrystal crystalType={activeCrystal} scale={1.5} />
-      </Center>
-
-      <OrbitControls
-        enableZoom={false}
-        enablePan={false}
-        autoRotate
-        autoRotateSpeed={0.9}
-        minPolarAngle={Math.PI / 3}
-        maxPolarAngle={(2 * Math.PI) / 3}
-        dampingFactor={0.05}
-      />
-    </>
-  );
-}
-
 export default function Cinematic3DCrystalHero() {
-  const [activeCrystalIndex, setActiveCrystalIndex] = useState(0);
-  const [show3DInteractive, setShow3DInteractive] = useState(false);
-  const [hasWebGL, setHasWebGL] = useState(true);
-  const activeCrystal = HERO_CRYSTALS[activeCrystalIndex];
-
-  useEffect(() => {
-    try {
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      setHasWebGL(Boolean(gl));
-    } catch {
-      setHasWebGL(false);
-    }
-  }, []);
-
   const handleOpenAssistant = () => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('toggle-ai-chat'));
@@ -131,66 +77,17 @@ export default function Cinematic3DCrystalHero() {
 
         {/* RIGHT COLUMN: The 4K Glowing Amethyst Crystal Specimen on Dark Rock */}
         <div className="lg:col-span-5 relative w-full h-[380px] sm:h-[460px] lg:h-[520px] flex items-center justify-center">
-          {show3DInteractive && hasWebGL ? (
-            /* Interactive Three.js 3D Mode */
-            <div className="w-full h-full relative cursor-grab active:cursor-grabbing rounded-3xl overflow-hidden bg-black/40 border border-white/10">
-              <Canvas
-                camera={{ position: [0, 0, 4.2], fov: 45 }}
-                dpr={[1, 2]}
-                gl={{ antialias: true, alpha: true }}
-                className="w-full h-full"
-              >
-                <Suspense fallback={null}>
-                  <CrystalScene activeCrystal={activeCrystal.id} />
-                </Suspense>
-              </Canvas>
-
-              <div className="absolute top-3 right-3 z-20">
-                <button
-                  type="button"
-                  onClick={() => setShow3DInteractive(false)}
-                  className="px-3 py-1 rounded-full bg-black/60 border border-white/20 text-[10px] font-mono uppercase tracking-wider text-stone-300 hover:text-white transition"
-                >
-                  View 4K Photo
-                </button>
-              </div>
-
-              <div className="absolute bottom-3 inset-x-0 text-center pointer-events-none">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 border border-white/10 text-[10px] font-mono tracking-widest uppercase text-stone-400 backdrop-blur-md">
-                  <Compass className="w-3 h-3 text-[#D4AF37]" />
-                  <span>Interactive 3D &bull; Drag to rotate</span>
-                </span>
-              </div>
-            </div>
-          ) : (
-            /* Pristine Ultra 4K Specimen Visual (Matching Image 1) */
-            <div className="relative w-full h-full flex items-center justify-center group">
-              <div className="relative w-full h-full max-w-[620px] max-h-[520px] flex items-center justify-center">
-                <Image
-                  src="/images/hero-amethyst-4k.jpg"
-                  alt="Authentic 4K Glowing Amethyst Natural Specimen - Sumuk Crystalz 5"
-                  fill
-                  priority
-                  quality={98}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 620px"
-                  className="object-contain filter drop-shadow-[0_20px_50px_rgba(147,51,234,0.45)] transition-transform duration-700 group-hover:scale-102"
-                />
-
-                {/* 3D Spin Toggle Button */}
-                {hasWebGL && (
-                  <button
-                    type="button"
-                    onClick={() => setShow3DInteractive(true)}
-                    className="absolute bottom-3 right-3 z-20 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black border border-white/20 text-stone-300 hover:text-white text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md shadow-lg transition-all cursor-pointer opacity-85 hover:opacity-100"
-                    title="Rotate 3D Crystal Model"
-                  >
-                    <RotateCw className="w-3 h-3 text-[#E5C378]" />
-                    <span>3D Spin</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+          <div className="relative w-full h-full max-w-[620px] max-h-[520px] flex items-center justify-center group">
+            <Image
+              src="/images/hero-amethyst-4k.jpg"
+              alt="Authentic 4K Glowing Amethyst Natural Specimen - Sumuk Crystalz 5"
+              fill
+              priority
+              quality={98}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 620px"
+              className="object-contain filter drop-shadow-[0_20px_50px_rgba(147,51,234,0.45)] transition-transform duration-700 group-hover:scale-102"
+            />
+          </div>
         </div>
       </div>
 
