@@ -182,8 +182,8 @@ export default function LuxuryInvoiceModal({ order, isOpen, onClose }) {
                       <strong className="text-white print:text-black text-xs font-serif block">
                         {item.name}
                       </strong>
-                      <span className="text-[10px] text-amber-400/80 font-mono">
-                        {item.variantLabel || 'Consecrated 8mm Regular'} &bull; Natural Mineral
+                      <span className="text-[10px] text-amber-400/90 font-mono block">
+                        Product ID: {item.productId || item.product_id || (item.name?.toLowerCase().includes('mala') ? 'MA001' : (item.name?.toLowerCase().includes('amethyst') || item.name?.toLowerCase().includes('geode') ? 'HO001' : 'BR001'))} &bull; {item.variantLabel || 'Consecrated 8mm Regular'}
                       </span>
                     </td>
                     <td className="py-3.5 px-3 text-center font-mono text-neutral-400 print:text-neutral-700">

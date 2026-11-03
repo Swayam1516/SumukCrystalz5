@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { CRYSTAL_CATALOG } from '../data/crystals';
+import { CRYSTAL_CATALOG } from '../data/crystals.js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cmsiounkoqpwjccczebk.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ylcqcDVWnCBJ9EhGPeEMKQ_P7-nnoVP';
@@ -23,6 +23,255 @@ export function isSupabaseOfflineState() {
 export function markSupabaseOffline() {
   isSupabaseOffline = true;
   lastOfflineCheck = Date.now();
+}
+
+/**
+ * =========================================================================
+ * PRODUCT ID GENERATION & SEQUENCE SYSTEM (SUMUK CRYSTALZ 5)
+ * =========================================================================
+ */
+export const CANONICAL_PRODUCT_CATEGORIES = [
+  { category: 'Bracelet', prefix: 'BR', description: 'Sacred wrist adornments & energy bands' },
+  { category: 'Mala', prefix: 'MA', description: '108 bead prayer & meditation malas' },
+  { category: 'Home Decor', prefix: 'HO', description: 'Geodes, clusters, spheres & altar decor' },
+  { category: 'Other', prefix: 'OT', description: 'Curated specimens, wands & miscellaneous masterworks' },
+];
+
+/**
+ * Derives a clean two-character uppercase prefix for any category name
+ */
+export function deriveCategoryPrefix(categoryName) {
+  if (!categoryName || typeof categoryName !== 'string') return 'OT';
+  const clean = categoryName.trim().toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+  
+  if (clean === 'BRACELET' || clean.startsWith('BRACELET') || clean === 'ENERGY BANDS') return 'BR';
+  if (clean === 'MALA' || clean.startsWith('MALA') || clean === 'SACRED MALAS') return 'MA';
+  if (clean === 'HOME DECOR' || clean.startsWith('HOME DECOR') || clean === 'RAW GEODES' || clean === 'TUMBLE STONES') return 'HO';
+  if (clean === 'OTHER') return 'OT';
+  if (clean === 'CRYSTAL TREES') return 'CT';
+  if (clean === 'RAW CRYSTALS') return 'RA';
+  if (clean === 'GIFT SETS') return 'GI';
+
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase().slice(0, 2);
+  }
+  return (words[0] || 'OT').toUpperCase().slice(0, 2).padEnd(2, 'X');
+}
+
+/**
+ * Get all registered category sequences (Supabase + local cache)
+ */
+export async function getRegisteredCategories() {
+  let categories = [...CANONICAL_PRODUCT_CATEGORIES];
+
+  if (!isSupabaseOfflineState()) {
+    try {
+      const { data, error } = await supabase
+        .from('product_id_sequences')
+        .select('*')
+        .order('category', { ascending: true });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const remoteMap = new Map();
+        data.forEach(item => {
+          remoteMap.set(item.category.toLowerCase(), {
+            category: item.category,
+            prefix: item.prefix,
+            next_number: item.next_number,
+            description: item.category
+          });
+        });
+
+        // Ensure canonicals exist in map
+        CANONICAL_PRODUCT_CATEGORIES.forEach(c => {
+          if (!remoteMap.has(c.category.toLowerCase())) {
+            remoteMap.set(c.category.toLowerCase(), c);
+          }
+        });
+
+        return Array.from(remoteMap.values());
+      }
+    } catch (e) {
+      console.warn('Supabase fetch category sequences error:', e.message);
+    }
+  }
+
+  // Local storage fallback
+  if (typeof window !== 'undefined') {
+    try {
+      const customCats = JSON.parse(localStorage.getItem('sumuk_custom_categories') || '[]');
+      if (Array.isArray(customCats) && customCats.length > 0) {
+        const merged = [...categories];
+        customCats.forEach(cc => {
+          if (!merged.some(m => m.category.toLowerCase() === cc.category.toLowerCase())) {
+            merged.push(cc);
+          }
+        });
+        return merged;
+      }
+    } catch (_) {}
+  }
+
+  return categories;
+}
+
+/**
+ * Register a new category with collision detection
+ */
+export async function registerNewProductCategory(categoryName, customPrefix = null) {
+  const cat = (categoryName || '').trim();
+  if (!cat) throw new Error('Category name is required.');
+
+  const prefix = (customPrefix ? customPrefix.trim().toUpperCase() : deriveCategoryPrefix(cat)).replace(/[^A-Z0-9]/g, '').slice(0, 2);
+  if (prefix.length < 2) {
+    throw new Error('Category prefix must be exactly 2 alphanumeric characters.');
+  }
+
+  // Check collision against registered categories
+  const currentCategories = await getRegisteredCategories();
+  const collision = currentCategories.find(c => 
+    c.prefix.toUpperCase() === prefix && c.category.toLowerCase() !== cat.toLowerCase()
+  );
+
+  if (collision) {
+    return {
+      success: false,
+      error: 'PREFIX_COLLISION',
+      message: `Prefix "${prefix}" is already assigned to category "${collision.category}". Please select a distinct prefix.`,
+      collidingCategory: collision.category,
+      prefix,
+    };
+  }
+
+  // 1. Try Supabase insert
+  if (!isSupabaseOfflineState()) {
+    try {
+      const { data, error } = await supabase
+        .from('product_id_sequences')
+        .insert([{ category: cat, prefix, next_number: 1 }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        return { success: true, category: data.category, prefix: data.prefix, next_number: 1 };
+      }
+    } catch (err) {
+      console.warn('Supabase register category error, saving locally:', err.message);
+    }
+  }
+
+  // 2. Save locally
+  if (typeof window !== 'undefined') {
+    try {
+      const customCats = JSON.parse(localStorage.getItem('sumuk_custom_categories') || '[]');
+      const newEntry = { category: cat, prefix, next_number: 1, description: cat };
+      const updated = [...customCats.filter(c => c.category.toLowerCase() !== cat.toLowerCase()), newEntry];
+      localStorage.setItem('sumuk_custom_categories', JSON.stringify(updated));
+    } catch (_) {}
+  }
+
+  return { success: true, category: cat, prefix, next_number: 1 };
+}
+
+/**
+ * Preview next Product ID (read-only, does not increment sequence)
+ */
+export async function previewNextProductId(categoryName) {
+  const cat = (categoryName || 'Other').trim();
+  const prefix = deriveCategoryPrefix(cat);
+
+  // 1. Try Supabase RPC
+  if (!isSupabaseOfflineState()) {
+    try {
+      const { data, error } = await supabase.rpc('preview_next_product_id', {
+        p_category: cat,
+      });
+
+      if (!error && data?.preview_product_id) {
+        return data.preview_product_id;
+      }
+    } catch (err) {
+      console.warn('Supabase preview_next_product_id note:', err.message);
+    }
+  }
+
+  // 2. Local Fallback calculation
+  let highestNum = 0;
+  if (typeof window !== 'undefined') {
+    try {
+      // Check existing custom products
+      const stored = JSON.parse(localStorage.getItem('sumuk_custom_products') || '[]');
+      stored.forEach(p => {
+        const pid = p.product_id || p.productId || '';
+        if (pid.startsWith(prefix)) {
+          const num = parseInt(pid.slice(prefix.length), 10);
+          if (!isNaN(num) && num > highestNum) highestNum = num;
+        }
+      });
+
+      // Check local sequences store
+      const seqStore = JSON.parse(localStorage.getItem('sumuk_category_sequences') || '{}');
+      if (seqStore[cat] && seqStore[cat] > highestNum) {
+        highestNum = seqStore[cat] - 1;
+      }
+    } catch (_) {}
+  }
+
+  const nextSeq = highestNum + 1;
+  return `${prefix}${String(nextSeq).padStart(3, '0')}`;
+}
+
+/**
+ * Concurrency-safe atomic allocation of next Product ID
+ */
+export async function allocateNextProductId(categoryName, customPrefix = null) {
+  const cat = (categoryName || 'Other').trim();
+
+  // 1. Try Supabase RPC with row lock
+  if (!isSupabaseOfflineState()) {
+    try {
+      const { data, error } = await supabase.rpc('generate_next_product_id', {
+        p_category: cat,
+        p_custom_prefix: customPrefix || null,
+      });
+
+      if (!error && data?.assigned_product_id) {
+        return data.assigned_product_id;
+      } else if (error) {
+        console.warn('Supabase generate_next_product_id warning:', error.message);
+      }
+    } catch (err) {
+      console.warn('Supabase allocate next product id error, using local fallback:', err.message);
+    }
+  }
+
+  // 2. Concurrency-safe Local Allocation Fallback
+  const prefix = (customPrefix ? customPrefix.trim().toUpperCase() : deriveCategoryPrefix(cat)).slice(0, 2);
+  let nextNum = 1;
+
+  if (typeof window !== 'undefined') {
+    try {
+      const seqStore = JSON.parse(localStorage.getItem('sumuk_category_sequences') || '{}');
+      let currentVal = seqStore[cat] || 1;
+
+      // Ensure no collision with existing products in localStorage
+      const stored = JSON.parse(localStorage.getItem('sumuk_custom_products') || '[]');
+      const existingIds = new Set(stored.map(p => p.product_id || p.productId).filter(Boolean));
+
+      let testId = `${prefix}${String(currentVal).padStart(3, '0')}`;
+      while (existingIds.has(testId)) {
+        currentVal++;
+        testId = `${prefix}${String(currentVal).padStart(3, '0')}`;
+      }
+
+      nextNum = currentVal;
+      seqStore[cat] = currentVal + 1;
+      localStorage.setItem('sumuk_category_sequences', JSON.stringify(seqStore));
+    } catch (_) {}
+  }
+
+  return `${prefix}${String(nextNum).padStart(3, '0')}`;
 }
 
 /**
@@ -65,9 +314,15 @@ export function normalizeProduct(raw) {
     ? Math.round(((originalPrice - sellingPrice) / originalPrice) * 100)
     : Number(raw.discount_percentage || 0);
 
+  const rawCat = raw.category || 'Bracelet';
+  const explicitProductId = (raw.product_id || raw.productId || '').trim();
+  const resolvedProductId = explicitProductId || `${deriveCategoryPrefix(rawCat)}001`;
+
   return {
     ...raw,
     id: raw.id,
+    product_id: resolvedProductId,
+    productId: resolvedProductId,
     slug: raw.slug || (raw.name ? raw.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : `specimen-${raw.id}`),
     name: raw.name || raw.title || 'Sacred Crystal Specimen',
     title: raw.name || raw.title || 'Sacred Crystal Specimen',
@@ -141,10 +396,19 @@ export async function saveProductToSupabase(productPayload) {
 
     const heroImage = images[0] || productPayload.hero_image || productPayload.heroImage || productPayload.image || '';
 
+    // Product ID Assignment & Preservation
+    // If existing product already has product_id, strictly retain it (immutable permanent identifier)
+    // If new product, use previewed/supplied product_id or allocate atomically
+    let assignedProductId = (productPayload.product_id || productPayload.productId || '').trim();
+    if (!assignedProductId) {
+      assignedProductId = await allocateNextProductId(productPayload.category || 'Bracelet');
+    }
+
     const productRecord = {
+      product_id: assignedProductId,
       name,
       slug,
-      category: productPayload.category || 'Energy Bands',
+      category: productPayload.category || 'Bracelet',
       collection: productPayload.collection || 'Masterworks Collection',
       crystal_type: productPayload.crystalType || productPayload.crystal_type || 'Pyrite',
       zodiac: productPayload.zodiac || '',
@@ -203,7 +467,7 @@ export async function saveProductToSupabase(productPayload) {
               selling_price: Number(v.price || v.selling_price || sellingPrice),
               original_price: Number(v.originalPrice || v.original_price || originalPrice),
               stock: Number(v.stock || v.stockCount || 20),
-              sku: v.sku || `${slug.toUpperCase()}-${i + 1}`,
+              sku: v.sku || `${assignedProductId}-${(v.beadSize || v.bead_size || v.name || `${i + 1}`).toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || (i + 1)}`,
               available: v.available !== false,
             }));
 
@@ -248,7 +512,7 @@ export async function saveProductToSupabase(productPayload) {
         selling_price: Number(v.price || v.selling_price || sellingPrice),
         original_price: Number(v.originalPrice || v.original_price || originalPrice),
         stock: Number(v.stock || v.stockCount || 20),
-        sku: v.sku || `${slug.toUpperCase()}-${idx + 1}`,
+        sku: v.sku || `${assignedProductId}-${(v.beadSize || v.bead_size || v.name || `${idx + 1}`).toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || (idx + 1)}`,
       })),
     });
 
@@ -597,7 +861,7 @@ export async function updateSupabaseOccasionBanner(bannerPayload) {
  * ==========================================
  */
 
-import { CANONICAL_SERVICES_DEFAULT, normalizeService, SERVICE_CATEGORIES } from '../data/servicesData';
+import { CANONICAL_SERVICES_DEFAULT, normalizeService, SERVICE_CATEGORIES } from '../data/servicesData.js';
 export { CANONICAL_SERVICES_DEFAULT, normalizeService, SERVICE_CATEGORIES };
 
 /**

@@ -15,12 +15,12 @@ import {
   LogOut,
   Sparkles,
   ChevronDown,
-  Layers,
-  Zap,
-  Tag,
-  ArrowRight,
+  Package,
+  Truck,
+  Heart,
 } from 'lucide-react';
 import { TOP_NAV_SHOP_MENU } from '../lib/discoveryTaxonomy';
+import ShopMegaMenu from './ShopMegaMenu';
 
 function FacetedCrystalLogo({ className = 'w-7 h-7 sm:w-8 sm:h-8' }) {
   return (
@@ -30,26 +30,25 @@ function FacetedCrystalLogo({ className = 'w-7 h-7 sm:w-8 sm:h-8' }) {
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
+      <defs>
+        <linearGradient id="headerGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#DEC69B" />
+          <stop offset="50%" stopColor="#C8A65E" />
+          <stop offset="100%" stopColor="#947434" />
+        </linearGradient>
+      </defs>
       {/* Top crystal pyramid */}
-      <polygon points="16,2 6,9 16,13 26,9" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
+      <polygon points="16,2 6,9 16,13 26,9" stroke="url(#headerGoldGrad)" strokeWidth="1.5" strokeLinejoin="round" />
       {/* Middle vertical edges */}
-      <line x1="6" y1="9" x2="6" y2="23" stroke="white" strokeWidth="1.5" />
-      <line x1="16" y1="13" x2="16" y2="29" stroke="white" strokeWidth="1.5" />
-      <line x1="26" y1="9" x2="26" y2="23" stroke="white" strokeWidth="1.5" />
+      <line x1="6" y1="9" x2="6" y2="23" stroke="url(#headerGoldGrad)" strokeWidth="1.5" />
+      <line x1="16" y1="13" x2="16" y2="29" stroke="url(#headerGoldGrad)" strokeWidth="1.5" />
+      <line x1="26" y1="9" x2="26" y2="23" stroke="url(#headerGoldGrad)" strokeWidth="1.5" />
       {/* Bottom pyramid */}
-      <polyline points="6,23 16,29 26,23" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
+      <polyline points="6,23 16,29 26,23" stroke="url(#headerGoldGrad)" strokeWidth="1.5" strokeLinejoin="round" />
       {/* Internal facet diagonals */}
-      <line x1="6" y1="9" x2="16" y2="2" stroke="white" strokeWidth="1.5" />
-      <line x1="26" y1="9" x2="16" y2="2" stroke="white" strokeWidth="1.5" />
-      <polyline points="6,23 16,13 26,23" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function SparkleStar({ className = 'w-4 h-4 text-amber-300' }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" />
+      <line x1="6" y1="9" x2="16" y2="2" stroke="url(#headerGoldGrad)" strokeWidth="1.5" />
+      <line x1="26" y1="9" x2="16" y2="2" stroke="url(#headerGoldGrad)" strokeWidth="1.5" />
+      <polyline points="6,23 16,13 26,23" stroke="url(#headerGoldGrad)" strokeWidth="1.5" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -102,102 +101,58 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-[#0A070D] border-b border-white/[0.08] transition-all">
+      <header className="sticky top-0 z-50 w-full bg-[#F8F6F2]/90 backdrop-blur-md border-b border-[#EAE2F2] shadow-[0_2px_12px_rgba(41,36,45,0.03)] transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 h-18 sm:h-20 flex items-center justify-between relative">
-          {/* LEFT: Faceted Wireframe Crystal Logo + Brand Name */}
+          {/* LEFT: Faceted Gold Wireframe Crystal Logo + Brand Name */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group flex-shrink-0 whitespace-nowrap">
               <FacetedCrystalLogo className="w-7 h-7 sm:w-8 sm:h-8" />
-              <span className="font-sans text-xs sm:text-sm md:text-base font-bold tracking-[0.18em] text-white group-hover:text-stone-200 transition-colors uppercase whitespace-nowrap">
+              <span className="font-serif text-sm sm:text-base md:text-lg font-bold tracking-[0.16em] text-[#29242D] group-hover:text-[#79539B] transition-colors uppercase whitespace-nowrap">
                 SUMUK CRYSTALZ 5
               </span>
             </Link>
           </div>
 
           {/* CENTER / NAVIGATION LINKS */}
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8 xl:gap-10 text-[11px] lg:text-xs font-mono uppercase tracking-[0.16em]">
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 xl:gap-10 text-xs lg:text-[13px] font-sans font-medium uppercase tracking-[0.14em]">
             {/* SHOP / STORE MEGAMENU DROPDOWN */}
             <div
               className="relative flex items-center"
               ref={shopDropdownRef}
-              onMouseEnter={() => setShopDropdownOpen(true)}
-              onMouseLeave={() => setShopDropdownOpen(false)}
             >
-              <Link
-                href="/shop"
-                onClick={() => setShopDropdownOpen(false)}
-                className="text-stone-300 font-bold hover:text-white transition-all duration-200 py-2.5 px-2 flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>SHOP</span>
-              </Link>
               <button
                 type="button"
                 onClick={() => setShopDropdownOpen(!shopDropdownOpen)}
-                className="p-1 text-stone-400 hover:text-white cursor-pointer outline-none"
-                aria-label="Toggle Shop Category Menu"
+                className={`text-xs lg:text-[13px] font-sans font-semibold uppercase tracking-[0.14em] py-2.5 px-2 flex items-center gap-1.5 transition-all duration-200 cursor-pointer ${
+                  shopDropdownOpen ? 'text-[#79539B]' : 'text-[#29242D]/80 hover:text-[#79539B]'
+                }`}
+                aria-expanded={shopDropdownOpen}
+                aria-label="Toggle Shop Category Mega Menu"
               >
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180' : ''}`} />
+                <span>SHOP</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180 text-[#79539B]' : ''}`} />
               </button>
-
-              {shopDropdownOpen && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 w-[520px] max-w-[92vw] z-50 animate-fade-in text-left pointer-events-auto">
-                  <div className="p-4 bg-[#140E1B] border border-stone-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl text-white">
-                    {/* Top Bar with All Store Link */}
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-stone-800">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                        <span className="font-sans text-xs font-bold text-white tracking-wider uppercase">
-                          6-Pillar Discovery Vault
-                        </span>
-                      </div>
-                      <Link
-                        href="/shop"
-                        onClick={() => setShopDropdownOpen(false)}
-                        className="text-[11px] text-[#E5C378] hover:text-white font-mono font-bold flex items-center gap-1 transition"
-                      >
-                        <span>Explore All Products</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
-                    </div>
-
-                    {/* 2-Column Discovery Taxonomy Grid */}
-                    <div className="grid grid-cols-2 gap-2">
-                      {TOP_NAV_SHOP_MENU.map((item) => (
-                        <Link
-                          key={item.label}
-                          href={item.href}
-                          onClick={() => setShopDropdownOpen(false)}
-                          className="p-2.5 rounded-xl hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition group block"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-white group-hover:text-[#E5C378] transition">
-                              {item.label}
-                            </span>
-                            <span className="text-[10px] text-stone-400 group-hover:text-white">&rarr;</span>
-                          </div>
-                          <p className="text-[10px] text-stone-400 group-hover:text-stone-300 truncate mt-0.5 font-sans">
-                            {item.description}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             <Link
               href="/services"
-              className="text-stone-300 hover:text-white font-medium transition-all duration-200"
+              className="text-[#29242D]/80 hover:text-[#79539B] font-medium transition-all duration-200"
             >
               SERVICES
             </Link>
 
             <Link
               href="/about"
-              className="text-stone-300 hover:text-white font-medium transition-all duration-200"
+              className="text-[#29242D]/80 hover:text-[#79539B] font-medium transition-all duration-200"
             >
               FOUNDER STORY
+            </Link>
+
+            <Link
+              href="/account"
+              className="text-[#29242D]/80 hover:text-[#79539B] font-medium transition-all duration-200"
+            >
+              MY ACCOUNT &amp; ORDERS
             </Link>
 
             {/* Auth / Account Profile or Sign In */}
@@ -206,52 +161,80 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="px-4 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-stone-700 text-white transition-all flex items-center gap-2 font-bold shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 rounded-full bg-white border border-[#EAE2F2] hover:border-[#D8CBE4] text-[#29242D] transition-all flex items-center gap-2 font-semibold shadow-xs cursor-pointer"
                   aria-expanded={userDropdownOpen}
                   title="Patron Profile & Orders"
                 >
                   {isCurrentAdmin ? (
-                    <Crown className="w-3.5 h-3.5 text-amber-400" />
+                    <Crown className="w-3.5 h-3.5 text-[#C8A65E]" />
                   ) : (
-                    <User className="w-3.5 h-3.5 text-stone-300" />
+                    <User className="w-3.5 h-3.5 text-[#79539B]" />
                   )}
                   <span className="max-w-[110px] truncate">{currentUser.name?.split(' ')[0] || 'Patron'}</span>
                   <ChevronDown className={`w-3 h-3 text-stone-400 transition-transform duration-200 ${userDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {userDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-3 w-64 py-2 bg-[#140E1B] border border-stone-800 rounded-2xl shadow-2xl z-50 text-xs font-mono space-y-1 backdrop-blur-2xl animate-fade-in text-white">
-                    <div className="px-4 py-2.5 border-b border-stone-800 font-sans">
-                      <p className="font-bold text-white truncate">{currentUser.name || 'Sacred Patron'}</p>
-                      <p className="text-[10px] text-stone-400 truncate font-mono">{currentUser.email}</p>
+                  <div className="absolute right-0 top-full mt-3 w-64 py-2 bg-white/95 border border-[#EAE2F2] rounded-2xl shadow-xl z-50 text-xs font-sans space-y-1 backdrop-blur-xl animate-fade-in text-[#29242D]">
+                    <div className="px-4 py-2.5 border-b border-[#EAE2F2]">
+                      <p className="font-bold text-[#29242D] truncate">{currentUser.name || 'Sacred Patron'}</p>
+                      <p className="text-[10px] text-stone-500 truncate">{currentUser.email}</p>
                     </div>
 
                     <Link
                       href="/account"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-white/[0.06] flex items-center gap-2.5 text-stone-200 transition"
+                      className="w-full text-left px-4 py-2 hover:bg-[#F8F6F2] flex items-center gap-2.5 text-[#29242D] transition font-medium"
                     >
-                      <User className="w-3.5 h-3.5 text-stone-400" />
-                      <span>My Account &amp; Orders</span>
+                      <User className="w-3.5 h-3.5 text-[#79539B]" />
+                      <span>Customer Dashboard</span>
+                    </Link>
+
+                    <Link
+                      href="/account?tab=orders"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="w-full text-left px-4 py-2 hover:bg-[#F8F6F2] flex items-center gap-2.5 text-[#29242D] transition font-medium"
+                    >
+                      <Package className="w-3.5 h-3.5 text-[#79539B]" />
+                      <span>My Orders</span>
+                    </Link>
+
+                    <Link
+                      href="/account?tab=tracking"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="w-full text-left px-4 py-2 hover:bg-[#F8F6F2] flex items-center gap-2.5 text-[#29242D] transition font-medium"
+                    >
+                      <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Order Tracking</span>
+                    </Link>
+
+                    <Link
+                      href="/account?tab=wishlist"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="w-full text-left px-4 py-2 hover:bg-[#F8F6F2] flex items-center gap-2.5 text-[#29242D] transition font-medium"
+                    >
+                      <Heart className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Saved Wishlist</span>
                     </Link>
 
                     {isCurrentAdmin && (
                       <Link
-                        href="/admin"
+                        href="http://localhost:3001"
+                        target="_blank"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="w-full text-left px-4 py-2.5 hover:bg-white/[0.06] flex items-center gap-2.5 text-[#E5C378] font-bold transition"
+                        className="w-full text-left px-4 py-2.5 hover:bg-[#F8F6F2] flex items-center gap-2.5 text-[#79539B] font-semibold transition"
                       >
-                        <Crown className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Admin Control Center</span>
+                        <Crown className="w-3.5 h-3.5 text-[#C8A65E]" />
+                        <span>Founder Admin Sanctum</span>
                       </Link>
                     )}
 
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2.5 bg-red-950/40 hover:bg-red-900/40 flex items-center gap-2.5 text-red-300 font-bold transition"
+                      className="w-full text-left px-4 py-2.5 hover:bg-rose-50 flex items-center gap-2.5 text-rose-700 font-semibold transition"
                     >
-                      <LogOut className="w-4 h-4 text-red-400" />
+                      <LogOut className="w-3.5 h-3.5 text-rose-600" />
                       <span>Sign Out</span>
                     </button>
                   </div>
@@ -268,81 +251,98 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => openAuthModal('login')}
-                  className="px-3.5 sm:px-4 py-1.5 rounded-full border border-stone-600/80 bg-transparent hover:bg-white/[0.08] text-white text-xs font-mono font-medium flex items-center gap-1.5 transition cursor-pointer"
+                  className="px-3.5 sm:px-4 py-1.5 rounded-full border border-[#EAE2F2] bg-white hover:bg-[#F8F6F2] text-[#29242D] text-xs font-sans font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                 >
-                  <User className="w-3.5 h-3.5 text-stone-300" />
+                  <User className="w-3.5 h-3.5 text-[#79539B]" />
                   <span>Sign In</span>
                 </button>
 
-                {/* Sign Up Solid White Pill */}
+                {/* Sign Up Solid Purple Pill */}
                 <button
                   type="button"
                   onClick={() => openAuthModal('register')}
-                  className="px-3.5 sm:px-4 py-1.5 rounded-full bg-white hover:bg-stone-100 text-stone-900 text-xs font-mono font-bold flex items-center gap-1.5 shadow-md transition cursor-pointer"
+                  className="px-3.5 sm:px-4 py-1.5 rounded-full bg-[#79539B] hover:bg-[#684587] text-white text-xs font-sans font-semibold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-stone-900" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#C8A65E]" />
                   <span>Sign Up</span>
                 </button>
               </div>
             )}
 
-            {/* Cart Button with Counter */}
+            {/* Cart Button with Lavender Counter */}
             <button
               type="button"
               onClick={openDrawer}
-              className="relative p-2 text-white hover:text-stone-300 transition cursor-pointer"
+              className="relative p-2 text-[#29242D] hover:text-[#79539B] transition cursor-pointer"
               aria-label="View Shopping Cart"
             >
-              <ShoppingCart className="w-5 h-5 text-white stroke-[1.8]" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-stone-800 border border-stone-600 text-[10px] font-mono font-bold text-white flex items-center justify-center shadow-sm">
+              <ShoppingCart className="w-5 h-5 stroke-[1.8]" />
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#EAE2F2] border border-[#D8CBE4] text-[10px] font-sans font-bold text-[#79539B] flex items-center justify-center shadow-xs">
                 {cartCount}
               </span>
             </button>
 
-            {/* Vertical Divider & Menu Icon matching screenshot */}
-            <div className="h-6 w-px bg-white/20 mx-1 hidden sm:block" />
+            {/* Vertical Divider */}
+            <div className="h-6 w-px bg-[#EAE2F2] mx-1 hidden sm:block" />
 
             {/* Menu toggle */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 sm:p-2 text-white hover:text-stone-300 transition-colors cursor-pointer flex items-center justify-center"
+              className="p-1.5 sm:p-2 text-[#29242D] hover:text-[#79539B] transition-colors cursor-pointer flex items-center justify-center"
               aria-label="Toggle Menu"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white stroke-[1.8]" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 stroke-[1.8]" />}
             </button>
           </div>
         </div>
 
+        {/* SHOP MEGA MENU MODAL / FLYOUT */}
+        {shopDropdownOpen && (
+          <>
+            {/* Backdrop Scrim */}
+            <div
+              className="fixed inset-0 top-18 sm:top-20 bg-[#29242D]/30 backdrop-blur-xs z-40 transition-opacity cursor-pointer"
+              onClick={() => setShopDropdownOpen(false)}
+            />
+
+            {/* Mega Menu Floating Container */}
+            <div className="absolute top-full left-0 right-0 pt-3 px-3 sm:px-6 lg:px-8 z-50 pointer-events-auto max-h-[85vh] overflow-y-auto no-scrollbar">
+              <ShopMegaMenu onClose={() => setShopDropdownOpen(false)} />
+            </div>
+          </>
+        )}
+
         {/* Navigation Slide Drawer */}
         {mobileMenuOpen && (
-          <div className="mt-2 max-w-7xl mx-auto rounded-2xl px-6 pt-5 pb-6 bg-[#0E0A14]/95 backdrop-blur-2xl border border-white/10 space-y-3 animate-fade-in shadow-2xl text-white">
+          <div className="mt-2 max-w-7xl mx-auto rounded-2xl px-6 pt-5 pb-6 bg-white/95 backdrop-blur-2xl border border-[#EAE2F2] space-y-3 animate-fade-in shadow-xl text-[#29242D]">
             {isCurrentAdmin && (
               <Link
-                href="/admin"
+                href="http://localhost:3001"
+                target="_blank"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-xs font-mono uppercase tracking-wider text-amber-300 font-bold flex items-center gap-2 bg-amber-500/20 px-3 rounded-lg border border-amber-500/30"
+                className="py-2 text-xs font-sans uppercase tracking-wider text-[#79539B] font-bold flex items-center gap-2 bg-[#EAE2F2]/60 px-3 rounded-xl border border-[#D8CBE4]"
               >
-                <Crown className="w-4 h-4 text-amber-400" />
+                <Crown className="w-4 h-4 text-[#C8A65E]" />
                 <span>Founder Admin Dashboard</span>
               </Link>
             )}
 
             {/* Mobile SHOP Discovery Section */}
-            <div className="rounded-xl bg-white/[0.04] border border-amber-500/25 overflow-hidden">
+            <div className="rounded-xl bg-[#F8F6F2] border border-[#EAE2F2] overflow-hidden">
               <div className="flex items-center justify-between py-1 px-3">
                 <Link
                   href="/shop"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 py-2 text-xs font-mono uppercase tracking-wider text-[#e8c97c] font-bold flex-1"
+                  className="flex items-center gap-2 py-2 text-xs font-sans uppercase tracking-wider text-[#79539B] font-bold flex-1"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#C8A65E]" />
                   <span>SHOP ALL CRYSTALS</span>
                 </Link>
                 <button
                   type="button"
                   onClick={() => setMobileShopOpen(!mobileShopOpen)}
-                  className="p-2 text-amber-400"
+                  className="p-2 text-[#79539B]"
                   aria-label="Toggle Category Submenu"
                 >
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mobileShopOpen ? 'rotate-180' : ''}`} />
@@ -350,11 +350,11 @@ export default function Header() {
               </div>
 
               {mobileShopOpen && (
-                <div className="p-2 pt-0 grid grid-cols-2 gap-1.5 border-t border-white/5">
+                <div className="p-2 pt-0 grid grid-cols-2 gap-1.5 border-t border-[#EAE2F2]">
                   <Link
                     href="/shop"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="col-span-2 p-2 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs font-bold font-mono text-center block"
+                    className="col-span-2 p-2 rounded-lg bg-[#EAE2F2] text-[#79539B] text-xs font-bold font-sans text-center block"
                   >
                     View All Consecrated Crystals
                   </Link>
@@ -363,7 +363,7 @@ export default function Header() {
                       key={item.label}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="p-2 rounded-lg hover:bg-white/10 text-[11px] font-mono text-neutral-300 hover:text-[#e8c97c] block truncate"
+                      className="p-2 rounded-lg hover:bg-white text-[11px] font-sans text-[#5C5562] hover:text-[#79539B] block truncate"
                     >
                       &bull; {item.label}
                     </Link>
@@ -375,7 +375,7 @@ export default function Header() {
             <Link
               href="/services"
               onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-mono uppercase tracking-wider text-white/90 hover:text-[#e8c97c]"
+              className="block py-2 text-xs font-sans uppercase tracking-wider text-[#29242D] hover:text-[#79539B]"
             >
               SERVICES BY SUMUK CRYSTALZ 5
             </Link>
@@ -383,7 +383,7 @@ export default function Header() {
             <Link
               href="/about"
               onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-mono uppercase tracking-wider text-white/90 hover:text-[#e8c97c]"
+              className="block py-2 text-xs font-sans uppercase tracking-wider text-[#29242D] hover:text-[#79539B]"
             >
               FOUNDER STORY
             </Link>
@@ -391,62 +391,36 @@ export default function Header() {
             <Link
               href="/account"
               onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-mono uppercase tracking-wider text-amber-300 font-bold flex items-center gap-2"
+              className="block py-2 text-xs font-sans uppercase tracking-wider text-[#79539B] font-bold flex items-center gap-2"
             >
-              <User className="w-3.5 h-3.5 text-amber-400" />
+              <User className="w-3.5 h-3.5 text-[#79539B]" />
               <span>MY ACCOUNT &amp; ORDERS</span>
             </Link>
 
-            <div className="pt-3 border-t border-white/10 space-y-3">
+            <div className="pt-3 border-t border-[#EAE2F2] space-y-3">
               {currentUser ? (
                 <div className="space-y-3">
-                  <div className="p-3 rounded-xl bg-white/[0.04] border border-amber-500/20 flex items-center justify-between">
+                  <div className="p-3 rounded-xl bg-[#F8F6F2] border border-[#EAE2F2] flex items-center justify-between">
                     <div>
-                      <span className="text-xs font-mono text-amber-300 font-bold flex items-center gap-1.5">
-                        {isCurrentAdmin ? <Crown className="w-3.5 h-3.5 text-amber-400" /> : <User className="w-3.5 h-3.5 text-[#e8c97c]" />}
+                      <span className="text-xs font-sans text-[#29242D] font-bold flex items-center gap-1.5">
+                        {isCurrentAdmin ? <Crown className="w-3.5 h-3.5 text-[#C8A65E]" /> : <User className="w-3.5 h-3.5 text-[#79539B]" />}
                         {currentUser.name || 'Patron'}
                       </span>
-                      <p className="text-[10px] text-neutral-400 font-mono">{currentUser.email}</p>
+                      <p className="text-[10px] text-[#5C5562] font-sans">{currentUser.email}</p>
                     </div>
-                    <span className="text-[9px] px-2 py-0.5 rounded font-bold font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    <span className="text-[9px] px-2 py-0.5 rounded font-bold font-sans bg-[#EAE2F2] text-[#79539B]">
                       {isCurrentAdmin ? 'Admin' : 'Patron'}
                     </span>
                   </div>
 
-                  {/* Prominent Full-Width Mobile Sign Out Button */}
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="w-full py-2.5 px-4 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-300 font-bold text-xs tracking-wider uppercase font-mono flex items-center justify-center gap-2 transition shadow-sm"
+                    className="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs tracking-wider uppercase font-sans flex items-center justify-center gap-2 transition shadow-xs"
                   >
-                    <LogOut className="w-4 h-4 text-red-400" />
+                    <LogOut className="w-4 h-4 text-rose-600" />
                     <span>Sign Out of Sanctuary</span>
                   </button>
-
-                  <div className="grid grid-cols-2 gap-2 pt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        openAuthModal('register');
-                      }}
-                      className="w-full py-2 px-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-[11px] tracking-wider uppercase font-mono text-center flex items-center justify-center gap-1"
-                    >
-                      <Sparkles className="w-3 h-3 text-amber-400" />
-                      <span>+ Sign Up</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        openAuthModal('login');
-                      }}
-                      className="w-full py-2 px-2 rounded-xl bg-white/10 border border-white/20 text-white font-medium text-[11px] tracking-wider uppercase font-mono text-center"
-                    >
-                      Switch User
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
@@ -456,7 +430,7 @@ export default function Header() {
                       setMobileMenuOpen(false);
                       openAuthModal('login');
                     }}
-                    className="w-1/2 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-xs tracking-wider uppercase font-mono"
+                    className="w-1/2 py-2.5 rounded-xl bg-white border border-[#EAE2F2] text-[#29242D] font-bold text-xs tracking-wider uppercase font-sans shadow-xs"
                   >
                     SIGN IN
                   </button>
@@ -466,9 +440,9 @@ export default function Header() {
                       setMobileMenuOpen(false);
                       openAuthModal('register');
                     }}
-                    className="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold text-xs tracking-wider uppercase font-mono shadow-lg flex items-center justify-center gap-1"
+                    className="w-1/2 py-2.5 rounded-xl bg-[#79539B] hover:bg-[#684587] text-white font-bold text-xs tracking-wider uppercase font-sans shadow-xs flex items-center justify-center gap-1"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-black" />
+                    <Sparkles className="w-3.5 h-3.5 text-[#C8A65E]" />
                     <span>SIGN UP</span>
                   </button>
                 </div>

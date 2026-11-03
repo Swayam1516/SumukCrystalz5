@@ -50,10 +50,7 @@ export default function IntroductorySacredBanner() {
     const searchParams = new URLSearchParams(window.location.search);
     const forceShow = searchParams.get('welcome') === '1' || searchParams.get('intro') === '1';
 
-    // Only auto-trigger on the root homepage '/' if not seen yet, or if forced
-    const isHomepage = pathname === '/' || pathname === '';
-
-    if ((isHomepage && !alreadySeen) || forceShow) {
+    if (forceShow) {
       setIsOpen(true);
     }
 

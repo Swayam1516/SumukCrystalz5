@@ -14,6 +14,7 @@ import {
 } from '@/lib/supabase';
 import AdminFilterManager from '@/components/AdminFilterManager';
 import AdminOccasionBannerManager from '@/components/AdminOccasionBannerManager';
+import AdminServicesSlideshowManager from '@/components/AdminServicesSlideshowManager';
 import {
   ShieldCheck,
   Lock,
@@ -1057,6 +1058,18 @@ export default function AdminPage() {
             <Flame className="w-4 h-4 text-orange-400" />
             <span>Occasion / Festival Sales</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('services-slideshow')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all ${
+              activeTab === 'services-slideshow'
+                ? 'bg-amber-400 text-black shadow-lg shadow-amber-500/20'
+                : 'bg-zinc-900/70 text-zinc-400 hover:text-white hover:bg-zinc-800'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Services 3D Slideshow</span>
+          </button>
         </nav>
 
         {/* ========================================================================= */}
@@ -1690,6 +1703,15 @@ export default function AdminPage() {
         {activeTab === 'occasion-banners' && (
           <section className="space-y-6">
             <AdminOccasionBannerManager onToast={addToast} />
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 8: SERVICES 3D COVER FLOW SLIDESHOW MANAGER                           */}
+        {/* ========================================================================= */}
+        {activeTab === 'services-slideshow' && (
+          <section className="space-y-6">
+            <AdminServicesSlideshowManager onToast={addToast} />
           </section>
         )}
 

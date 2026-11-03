@@ -5,17 +5,10 @@ import {
   TrendingUp,
   ShoppingBag,
   Package,
-  Layers,
   PieChart,
   BarChart3,
-  Calendar,
-  Sparkles,
-  Info,
   DollarSign,
-  Users,
-  CheckCircle2,
-  Clock,
-  ArrowUpRight,
+  Sparkles,
 } from 'lucide-react';
 import {
   computeRevenueTrend,
@@ -61,17 +54,19 @@ function RevenueLineChart({ data = [], range, setRange }) {
       {/* Chart Top Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="text-xs font-serif font-bold text-[#F3E5AB] flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-[#D4AF37]" />
+          <div className="text-xs font-serif font-bold text-stone-900 flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-amber-50 text-amber-700">
+              <DollarSign className="w-4 h-4" />
+            </div>
             Revenue &amp; Sales Velocity Trend
           </div>
-          <p className="text-[11px] text-stone-400">
+          <p className="text-[11px] text-stone-500">
             Real-time aggregate revenue computed across all valid patron transactions.
           </p>
         </div>
 
         {/* Range Selector */}
-        <div className="flex items-center gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800 self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 self-start sm:self-auto">
           {[
             { id: 'today', label: 'Today' },
             { id: '7d', label: '7D' },
@@ -83,10 +78,10 @@ function RevenueLineChart({ data = [], range, setRange }) {
               key={r.id}
               type="button"
               onClick={() => setRange(r.id)}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-sans font-medium transition-all ${
                 range === r.id
-                  ? 'bg-[#D4AF37] text-black shadow-md shadow-[#D4AF37]/20 font-bold'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? 'bg-purple-600 text-white shadow-xs font-semibold'
+                  : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               {r.label}
@@ -96,108 +91,69 @@ function RevenueLineChart({ data = [], range, setRange }) {
       </div>
 
       {/* SVG Chart Frame */}
-      <div className="relative w-full h-[260px] bg-stone-950/80 rounded-2xl border border-stone-800/80 p-2 overflow-hidden shadow-inner">
+      <div className="relative w-full h-[260px] bg-stone-50/60 rounded-xl border border-stone-100 p-2 overflow-hidden shadow-inner">
         {/* Y Axis Grid Lines */}
-        <div className="absolute inset-0 px-8 py-7 flex flex-col justify-between pointer-events-none opacity-20">
-          <div className="w-full border-b border-stone-600" />
-          <div className="w-full border-b border-stone-600" />
-          <div className="w-full border-b border-stone-600" />
-          <div className="w-full border-b border-stone-600" />
+        <div className="absolute inset-0 px-8 py-6 flex flex-col justify-between pointer-events-none opacity-20">
+          <div className="border-b border-stone-400 w-full" />
+          <div className="border-b border-stone-400 w-full" />
+          <div className="border-b border-stone-400 w-full" />
+          <div className="border-b border-stone-400 w-full" />
         </div>
 
-        {data.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-xs text-stone-500">
-            No order transactions recorded for this period.
-          </div>
-        ) : (
-          <svg
-            viewBox={`0 0 ${width} ${height}`}
-            className="w-full h-full overflow-visible"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#D4AF37" stopOpacity="0.45" />
-                <stop offset="70%" stopColor="#D4AF37" stopOpacity="0.05" />
-                <stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
-              </linearGradient>
-            </defs>
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+          <defs>
+            <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#9333EA" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#9333EA" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
 
-            {/* Glowing Area Fill */}
-            {areaString && (
-              <polygon points={areaString} fill="url(#revenueGradient)" />
-            )}
+          {/* Area Fill */}
+          {areaString && <polygon points={areaString} fill="url(#revenueFill)" />}
 
-            {/* Main Smooth Line */}
-            {pointsString && (
-              <polyline
-                fill="none"
-                stroke="#D4AF37"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={pointsString}
-              />
-            )}
+          {/* Line Stroke */}
+          {pointsString && (
+            <polyline
+              points={pointsString}
+              fill="none"
+              stroke="#7C3AED"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          )}
 
-            {/* Interactive Data Points */}
-            {data.map((d, idx) => {
-              const x = paddingX + (idx / (data.length - 1)) * (width - paddingX * 2);
-              const y = height - paddingY - (d.revenue / maxRevenue) * (height - paddingY * 2);
-              const isHovered = hoveredPoint === idx;
+          {/* Data Points */}
+          {data.map((d, idx) => {
+            const x = paddingX + (idx / Math.max(data.length - 1, 1)) * (width - paddingX * 2);
+            const y = height - paddingY - (d.revenue / maxRevenue) * (height - paddingY * 2);
+            const isHovered = hoveredPoint === idx;
 
-              return (
-                <g key={idx} className="cursor-pointer">
-                  {/* Outer glow ring on hover */}
-                  {isHovered && (
-                    <circle
-                      cx={x}
-                      cy={y}
-                      r="10"
-                      fill="#D4AF37"
-                      fillOpacity="0.25"
-                      className="animate-ping"
-                    />
-                  )}
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r={isHovered ? '6' : '3.5'}
-                    fill="#F3E5AB"
-                    stroke="#D4AF37"
-                    strokeWidth="2"
-                    onMouseEnter={() => setHoveredPoint(idx)}
-                    onMouseLeave={() => setHoveredPoint(null)}
-                  />
-                </g>
-              );
-            })}
-          </svg>
-        )}
+            return (
+              <g key={idx} className="cursor-pointer" onMouseEnter={() => setHoveredPoint(idx)} onMouseLeave={() => setHoveredPoint(null)}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={isHovered ? 6 : 3.5}
+                  className="fill-white stroke-purple-600 transition-all duration-200"
+                  strokeWidth="2"
+                />
+              </g>
+            );
+          })}
+        </svg>
 
-        {/* Hover Tooltip Overlay */}
+        {/* Hover Tooltip */}
         {hoveredPoint !== null && data[hoveredPoint] && (
           <div
-            className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-xl bg-stone-900 border border-[#D4AF37]/50 shadow-2xl backdrop-blur-md text-center z-20 animate-in fade-in duration-150 pointer-events-none"
+            className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-xl bg-white border border-stone-200 shadow-md text-xs font-sans pointer-events-none"
           >
-            <div className="text-[10px] font-mono text-stone-400">
-              {data[hoveredPoint].label}
-            </div>
-            <div className="text-xs font-bold text-[#F3E5AB]">
-              ₹{data[hoveredPoint].revenue.toLocaleString('en-IN')}
-            </div>
-            <div className="text-[9px] font-mono text-emerald-400">
-              {data[hoveredPoint].orders} orders
+            <div className="text-stone-500 text-[10px]">{data[hoveredPoint].label}</div>
+            <div className="font-serif font-bold text-stone-900">
+              ₹{Number(data[hoveredPoint].revenue).toLocaleString('en-IN')}
             </div>
           </div>
         )}
-
-        {/* X Axis Date Labels */}
-        <div className="absolute bottom-1.5 inset-x-8 flex justify-between text-[10px] font-mono text-stone-500 pointer-events-none">
-          {data.length > 0 && <span>{data[0]?.label}</span>}
-          {data.length > 4 && <span>{data[Math.floor(data.length / 2)]?.label}</span>}
-          {data.length > 1 && <span>{data[data.length - 1]?.label}</span>}
-        </div>
       </div>
     </div>
   );
@@ -208,13 +164,15 @@ function OrderStatusDonut({ statusDistribution = [] }) {
   const total = statusDistribution.reduce((acc, s) => acc + s.count, 0);
 
   return (
-    <div className="p-5 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-4">
+    <div className="p-5 rounded-2xl bg-white/95 border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-serif font-bold text-[#F3E5AB] flex items-center gap-1.5">
-          <PieChart className="w-4 h-4 text-[#D4AF37]" />
+        <h4 className="text-xs font-serif font-bold text-stone-900 flex items-center gap-1.5">
+          <div className="p-1 rounded-lg bg-purple-50 text-purple-700">
+            <PieChart className="w-3.5 h-3.5" />
+          </div>
           Order Status Breakdown
         </h4>
-        <span className="text-[10px] font-mono text-stone-500">
+        <span className="text-[10px] font-sans text-stone-500">
           {total} Total Orders
         </span>
       </div>
@@ -225,18 +183,18 @@ function OrderStatusDonut({ statusDistribution = [] }) {
           return (
             <div key={item.label} className="space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-stone-300 flex items-center gap-1.5">
+                <span className="text-stone-700 flex items-center gap-1.5 font-medium">
                   <span
                     className="w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: item.color }}
                   />
                   {item.label}
                 </span>
-                <span className="font-mono text-stone-400">
-                  <strong className="text-stone-100">{item.count}</strong> ({percent}%)
+                <span className="font-sans text-stone-500 text-[11px]">
+                  <strong className="text-stone-900">{item.count}</strong> ({percent}%)
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-stone-900 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -256,40 +214,42 @@ function OrderStatusDonut({ statusDistribution = [] }) {
 // Category Performance Widget
 function CategoryPerformanceWidget({ categories = [] }) {
   return (
-    <div className="p-5 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-4">
+    <div className="p-5 rounded-2xl bg-white/95 border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-serif font-bold text-[#F3E5AB] flex items-center gap-1.5">
-          <BarChart3 className="w-4 h-4 text-[#D4AF37]" />
+        <h4 className="text-xs font-serif font-bold text-stone-900 flex items-center gap-1.5">
+          <div className="p-1 rounded-lg bg-amber-50 text-amber-700">
+            <BarChart3 className="w-3.5 h-3.5" />
+          </div>
           Category Distribution &amp; Sales
         </h4>
-        <span className="text-[10px] font-mono text-stone-500">
+        <span className="text-[10px] font-sans text-stone-500">
           {categories.length} Categories
         </span>
       </div>
 
-      <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-stone-800 pr-1">
+      <div className="space-y-2.5 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-stone-200 pr-1">
         {categories.length === 0 ? (
-          <div className="text-xs text-stone-500 text-center py-4">
+          <div className="text-xs text-stone-400 text-center py-4">
             No category distribution available.
           </div>
         ) : (
           categories.map((cat) => (
             <div
               key={cat.name}
-              className="p-3 rounded-xl bg-stone-900/60 border border-stone-800/80 flex items-center justify-between gap-3 text-xs"
+              className="p-3 rounded-xl bg-stone-50/70 border border-stone-100 flex items-center justify-between gap-3 text-xs"
             >
               <div>
-                <div className="font-semibold text-stone-200">{cat.name}</div>
-                <div className="text-[10px] font-mono text-stone-500">
+                <div className="font-semibold text-stone-900">{cat.name}</div>
+                <div className="text-[10px] font-sans text-stone-500">
                   {cat.productCount} specimens • {cat.totalStock} units in vault
                 </div>
               </div>
 
               <div className="text-right">
-                <div className="font-bold text-[#F3E5AB]">
+                <div className="font-serif font-bold text-stone-900">
                   ₹{cat.revenue.toLocaleString('en-IN')}
                 </div>
-                <div className="text-[10px] font-mono text-emerald-400">
+                <div className="text-[10px] font-sans text-emerald-700 font-medium">
                   {cat.salesCount} sold
                 </div>
               </div>
@@ -313,19 +273,21 @@ function InventoryHealthWidget({ metrics = {} }) {
   const outOfStockPct = Math.round((outOfStock / total) * 100) || 0;
 
   return (
-    <div className="p-5 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-4">
+    <div className="p-5 rounded-2xl bg-white/95 border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-serif font-bold text-[#F3E5AB] flex items-center gap-1.5">
-          <Package className="w-4 h-4 text-[#D4AF37]" />
+        <h4 className="text-xs font-serif font-bold text-stone-900 flex items-center gap-1.5">
+          <div className="p-1 rounded-lg bg-emerald-50 text-emerald-700">
+            <Package className="w-3.5 h-3.5" />
+          </div>
           Inventory Health Overview
         </h4>
-        <span className="text-[10px] font-mono text-emerald-400 font-semibold">
+        <span className="text-[10px] font-sans text-emerald-700 font-semibold">
           {inStockPct}% Optimal
         </span>
       </div>
 
       {/* Multi-segment Progress Bar */}
-      <div className="w-full h-3 bg-stone-900 rounded-full overflow-hidden flex gap-0.5 p-0.5 border border-stone-800">
+      <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden flex gap-0.5 p-0.5 border border-stone-200">
         <div
           style={{ width: `${Math.max(inStockPct, 5)}%` }}
           className="h-full bg-emerald-500 rounded-l-full"
@@ -333,7 +295,7 @@ function InventoryHealthWidget({ metrics = {} }) {
         />
         <div
           style={{ width: `${lowStockPct}%` }}
-          className="h-full bg-amber-500"
+          className="h-full bg-amber-400"
           title={`Low Stock: ${lowStock}`}
         />
         <div
@@ -344,17 +306,17 @@ function InventoryHealthWidget({ metrics = {} }) {
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
-        <div className="p-2 rounded-xl bg-emerald-950/30 border border-emerald-800/40">
-          <div className="text-[10px] font-mono text-emerald-400">In Stock</div>
-          <div className="font-bold text-stone-100">{inStock - lowStock - outOfStock}</div>
+        <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100">
+          <div className="text-[10px] font-sans text-emerald-700 font-medium">In Stock</div>
+          <div className="font-serif font-bold text-stone-900">{inStock - lowStock - outOfStock}</div>
         </div>
-        <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-800/40">
-          <div className="text-[10px] font-mono text-amber-400">Low Stock</div>
-          <div className="font-bold text-stone-100">{lowStock}</div>
+        <div className="p-2 rounded-xl bg-amber-50 border border-amber-100">
+          <div className="text-[10px] font-sans text-amber-800 font-medium">Low Stock</div>
+          <div className="font-serif font-bold text-stone-900">{lowStock}</div>
         </div>
-        <div className="p-2 rounded-xl bg-rose-950/30 border border-rose-800/40">
-          <div className="text-[10px] font-mono text-rose-400">Out of Stock</div>
-          <div className="font-bold text-stone-100">{outOfStock}</div>
+        <div className="p-2 rounded-xl bg-rose-50 border border-rose-100">
+          <div className="text-[10px] font-sans text-rose-700 font-medium">Out of Stock</div>
+          <div className="font-serif font-bold text-stone-900">{outOfStock}</div>
         </div>
       </div>
     </div>
@@ -384,7 +346,7 @@ export default function AdminAnalyticsSection({
   return (
     <section className="space-y-6">
       {/* Top Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#1A1612]/95 via-[#120F0D]/95 to-stone-950 border border-[#D4AF37]/30 backdrop-blur-2xl shadow-2xl">
+      <div className="p-6 rounded-2xl bg-white/95 border border-stone-200/80 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
         <RevenueLineChart
           data={revenueTrendData}
           range={revenueRange}

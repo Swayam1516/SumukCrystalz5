@@ -186,8 +186,10 @@ export default function ProductDetailPage() {
       : Number(product.discountPercent || product.discount_percentage || 0);
 
   const handleAddToCart = () => {
+    const assignedId = product.product_id || product.productId || product.id;
     addItem({
-      productId: product.id,
+      productId: assignedId,
+      product_id: assignedId,
       id: product.id,
       slug: product.slug,
       name: `${product.name} - ${selectedVariant?.name || selectedSize}`,
@@ -203,8 +205,10 @@ export default function ProductDetailPage() {
   };
 
   const handleInstantBuy = () => {
+    const assignedId = product.product_id || product.productId || product.id;
     addItem({
-      productId: product.id,
+      productId: assignedId,
+      product_id: assignedId,
       id: product.id,
       slug: product.slug,
       name: `${product.name} - ${selectedVariant?.name || selectedSize}`,
@@ -326,6 +330,17 @@ export default function ProductDetailPage() {
               <h1 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1F1A15] leading-tight text-3d-title-light">
                 {product.name}
               </h1>
+
+              {/* Product ID & Category Pill */}
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#EAE2F2] border border-[#79539B]/30 text-[#79539B] text-xs font-mono font-bold tracking-wider">
+                  <Sparkles className="w-3 h-3 text-[#C8A65E]" />
+                  Product ID: {product.product_id || product.productId || 'BR001'}
+                </span>
+                <span className="text-xs font-mono text-[#8C8377]">
+                  Category: <strong className="text-[#1F1A15]">{product.category || 'Bracelet'}</strong>
+                </span>
+              </div>
 
               <p className="text-xs text-[#6B6357] font-sans-ui leading-relaxed">
                 {product.subtitle}
@@ -640,6 +655,50 @@ export default function ProductDetailPage() {
             </div>
 
 
+
+            {/* PRODUCT SYSTEM IDENTIFIER & DOSSIER */}
+            <div className="p-4 rounded-2xl bg-white border border-[#EDE6DA] shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#EDE6DA]">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#8C8377] font-semibold">
+                  Official Provenance Identifier
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-[#EAE2F2] text-[#79539B] border border-[#79539B]/30 text-[10px] font-mono font-bold">
+                  Certified Consecrated
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-[10px] text-[#8C8377] block font-mono uppercase">Unique Product ID</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <strong className="font-mono text-sm text-[#79539B] tracking-wider">
+                      {product.product_id || product.productId || 'BR001'}
+                    </strong>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-[#8C8377] block font-mono uppercase">Category</span>
+                  <strong className="text-xs text-[#1F1A15] mt-0.5 block">
+                    {product.category || 'Bracelet'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-[#8C8377] block font-mono uppercase">Specimen / Family</span>
+                  <span className="text-xs text-[#4A4237] mt-0.5 block font-medium">
+                    {product.crystalType || product.crystal_type || 'Natural Crystal'}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-[#8C8377] block font-mono uppercase">Variant SKU</span>
+                  <span className="text-xs font-mono text-[#8C6208] mt-0.5 block font-semibold">
+                    {selectedVariant?.sku || `${product.product_id || product.productId || 'BR001'}-${selectedSize?.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'STD'}`}
+                  </span>
+                </div>
+              </div>
+            </div>
 
             {/* Expandable Accordions: Benefits, Care */}
             <div className="space-y-3 pt-2">

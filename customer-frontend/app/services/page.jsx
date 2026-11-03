@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import ServicesBySoumya from '../../components/ServicesBySoumya';
 import DualTierFilterTicker from '../../components/DualTierFilterTicker';
+import Services3DCoverFlow from '../../components/Services3DCoverFlow';
 
 export default function ServicesPage() {
 
@@ -97,9 +98,14 @@ export default function ServicesPage() {
       </section>
 
 
-      {/* 2. THE 9 MODALITIES SHOWCASE */}
+      {/* 2. FLAGSHIP 3D COVER FLOW SERVICES SLIDESHOW */}
+      <section className="relative z-20 my-2 sm:my-6">
+        <Services3DCoverFlow />
+      </section>
+
+      {/* 3. COMPLETE MODALITIES DIRECTORY & MATRIX */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ServicesBySoumya showHeader={false} />
+        <ServicesBySoumya showHeader={true} />
       </section>
 
       {/* 3. HOW A SESSION WORKS */}

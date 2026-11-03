@@ -244,6 +244,8 @@ export default function EnhancedProductTable({
       const q = searchQuery.toLowerCase().trim();
       list = list.filter(
         (p) =>
+          p.product_id?.toLowerCase().includes(q) ||
+          p.productId?.toLowerCase().includes(q) ||
           p.name?.toLowerCase().includes(q) ||
           p.title?.toLowerCase().includes(q) ||
           p.subtitle?.toLowerCase().includes(q) ||
@@ -660,8 +662,14 @@ export default function EnhancedProductTable({
                           <div className="text-[11px] text-stone-400 truncate max-w-xs">
                             {p.subtitle || p.shortDescription || p.short_description || 'Sacred luxury crystal'}
                           </div>
-                          <div className="text-[10px] text-stone-500 font-mono mt-0.5">
-                            SKU: {p.sku || `SKU-${p.slug?.toUpperCase().slice(0, 8)}`}
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-950/60 border border-purple-500/40 text-[10px] font-mono font-bold text-[#F3E5AB]">
+                              <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
+                              {p.product_id || p.productId || 'BR001'}
+                            </span>
+                            <span className="text-[10px] text-stone-500 font-mono">
+                              SKU: {p.sku || `SKU-${p.slug?.toUpperCase().slice(0, 8)}`}
+                            </span>
                           </div>
                         </td>
 
@@ -821,6 +829,11 @@ export default function EnhancedProductTable({
                     alt={p.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
+                  <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
+                    <span className="px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md text-[#F3E5AB] border border-purple-500/40 text-[10px] font-mono font-bold tracking-wider">
+                      {p.product_id || p.productId || 'BR001'}
+                    </span>
+                  </div>
                   <div className="absolute top-3 right-3 flex flex-col gap-1 z-10">
                     <span className="px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 text-[10px] font-mono font-semibold">
                       {variantCount} vars

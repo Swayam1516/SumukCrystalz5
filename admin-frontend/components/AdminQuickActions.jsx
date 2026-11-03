@@ -10,9 +10,6 @@ import {
   Truck,
   Megaphone,
   Sparkles,
-  TrendingUp,
-  RefreshCw,
-  ExternalLink,
 } from 'lucide-react';
 
 export default function AdminQuickActions({
@@ -27,8 +24,8 @@ export default function AdminQuickActions({
       title: 'Add Crystal Specimen',
       description: 'Create masterwork with variants & 3D photos',
       icon: Plus,
-      iconColor: 'text-black',
-      bgGradient: 'from-[#D4AF37] via-[#C59B27] to-[#B8860B]',
+      iconColor: 'text-white',
+      bgStyle: 'bg-gradient-to-r from-[#6D28D9] via-[#7C3AED] to-[#5B21B6] text-white shadow-md shadow-purple-500/25',
       isPrimary: true,
       onClick: onOpenCreateProduct,
     },
@@ -37,9 +34,8 @@ export default function AdminQuickActions({
       title: 'Fulfill Patron Orders',
       description: 'Inspect status, dispatch & invoices',
       icon: ShoppingBag,
-      iconColor: 'text-purple-400',
-      bgGradient: 'from-stone-900 via-[#141210] to-stone-950',
-      borderColor: 'border-purple-500/30 hover:border-purple-500/60',
+      iconColor: 'text-purple-600',
+      iconBg: 'bg-purple-50',
       onClick: () => onNavigate('orders'),
     },
     {
@@ -47,9 +43,8 @@ export default function AdminQuickActions({
       title: 'Restock Inventory',
       description: 'Audit quantities & SKU thresholds',
       icon: Package,
-      iconColor: 'text-[#D4AF37]',
-      bgGradient: 'from-stone-900 via-[#141210] to-stone-950',
-      borderColor: 'border-[#D4AF37]/30 hover:border-[#D4AF37]/60',
+      iconColor: 'text-amber-600',
+      iconBg: 'bg-amber-50',
       onClick: () => onNavigate('inventory'),
     },
     {
@@ -57,9 +52,8 @@ export default function AdminQuickActions({
       title: 'Broadcast Announcement',
       description: 'Publish luxury top marquee ribbon',
       icon: Megaphone,
-      iconColor: 'text-amber-400',
-      bgGradient: 'from-stone-900 via-[#141210] to-stone-950',
-      borderColor: 'border-amber-500/30 hover:border-amber-500/60',
+      iconColor: 'text-amber-600',
+      iconBg: 'bg-amber-50',
       onClick: () => onNavigate('broadcast'),
     },
     {
@@ -67,9 +61,8 @@ export default function AdminQuickActions({
       title: 'Adjust Shipping Fees',
       description: 'Pune radial distance tiers & limits',
       icon: Truck,
-      iconColor: 'text-blue-400',
-      bgGradient: 'from-stone-900 via-[#141210] to-stone-950',
-      borderColor: 'border-blue-500/30 hover:border-blue-500/60',
+      iconColor: 'text-blue-600',
+      iconBg: 'bg-blue-50',
       onClick: () => onNavigate('shipping'),
     },
     {
@@ -77,9 +70,8 @@ export default function AdminQuickActions({
       title: 'Store Filter Matrix',
       description: 'Configure bead sizes, chakras & intentions',
       icon: SlidersHorizontal,
-      iconColor: 'text-emerald-400',
-      bgGradient: 'from-stone-900 via-[#141210] to-stone-950',
-      borderColor: 'border-emerald-500/30 hover:border-emerald-500/60',
+      iconColor: 'text-emerald-600',
+      iconBg: 'bg-emerald-50',
       onClick: () => onNavigate('filters'),
     },
     {
@@ -87,9 +79,8 @@ export default function AdminQuickActions({
       title: '9 Sacred Modalities',
       description: 'Toggle Reiki, Aura & Tarot availability',
       icon: Sparkles,
-      iconColor: 'text-pink-400',
-      bgGradient: 'from-stone-900 via-[#141210] to-stone-950',
-      borderColor: 'border-pink-500/30 hover:border-pink-500/60',
+      iconColor: 'text-purple-600',
+      iconBg: 'bg-purple-50',
       onClick: () => onNavigate('services'),
     },
     {
@@ -97,9 +88,8 @@ export default function AdminQuickActions({
       title: 'Patrons & Collectors',
       description: 'View registered seeker directory',
       icon: Users,
-      iconColor: 'text-cyan-400',
-      bgGradient: 'from-stone-900 via-[#141210] to-stone-950',
-      borderColor: 'border-cyan-500/30 hover:border-cyan-500/60',
+      iconColor: 'text-indigo-600',
+      iconBg: 'bg-indigo-50',
       onClick: () => onNavigate('customers'),
     },
   ];
@@ -107,10 +97,10 @@ export default function AdminQuickActions({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-serif font-bold text-[#E5D5BA] uppercase tracking-wider flex items-center gap-2">
+        <h3 className="text-xs font-serif font-bold text-stone-900 uppercase tracking-wider flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[#D4AF37]" /> Quick Operational Shortcuts
         </h3>
-        <span className="text-[10px] font-mono text-stone-500">1-Click Launch</span>
+        <span className="text-[10px] font-sans text-stone-400 font-medium">1-Click Launch</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -123,14 +113,14 @@ export default function AdminQuickActions({
                 key={act.id}
                 type="button"
                 onClick={act.onClick}
-                className="p-4 rounded-2xl bg-gradient-to-r from-[#D4AF37] via-[#C59B27] to-[#B8860B] text-black shadow-lg shadow-[#D4AF37]/25 hover:brightness-110 hover:-translate-y-1 transition-all duration-300 text-left flex items-start gap-3 cursor-pointer group"
+                className="p-4 rounded-2xl bg-gradient-to-r from-[#6D28D9] via-[#7C3AED] to-[#5B21B6] text-white shadow-md shadow-purple-500/25 hover:brightness-105 hover:-translate-y-1 transition-all duration-300 text-left flex items-start gap-3 cursor-pointer group"
               >
-                <div className="p-2.5 rounded-xl bg-black/15 group-hover:scale-110 transition-transform">
-                  <Icon className="w-5 h-5 text-black stroke-[2.5]" />
+                <div className="p-2.5 rounded-xl bg-white/20 group-hover:scale-110 transition-transform">
+                  <Icon className="w-5 h-5 text-white stroke-[2.5]" />
                 </div>
                 <div>
                   <div className="text-xs font-bold font-serif tracking-wide">{act.title}</div>
-                  <div className="text-[10px] text-black/80 mt-0.5 font-medium">{act.description}</div>
+                  <div className="text-[10px] text-white/80 mt-0.5 font-medium">{act.description}</div>
                 </div>
               </button>
             );
@@ -141,16 +131,16 @@ export default function AdminQuickActions({
               key={act.id}
               type="button"
               onClick={act.onClick}
-              className={`p-4 rounded-2xl bg-gradient-to-br ${act.bgGradient} border ${act.borderColor} hover:-translate-y-1 transition-all duration-300 text-left flex items-start gap-3 cursor-pointer group shadow-lg`}
+              className="p-4 rounded-2xl bg-white/95 border border-stone-200/80 hover:border-purple-300 hover:shadow-md hover:-translate-y-1 transition-all duration-300 text-left flex items-start gap-3 cursor-pointer group shadow-xs"
             >
-              <div className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 group-hover:scale-110 transition-transform flex-shrink-0">
+              <div className={`p-2.5 rounded-xl ${act.iconBg} border border-stone-200/50 group-hover:scale-110 transition-transform flex-shrink-0`}>
                 <Icon className={`w-4 h-4 ${act.iconColor}`} />
               </div>
               <div className="overflow-hidden">
-                <div className="text-xs font-bold text-stone-100 group-hover:text-[#F3E5AB] transition-colors truncate">
+                <div className="text-xs font-bold text-stone-900 group-hover:text-purple-700 transition-colors truncate">
                   {act.title}
                 </div>
-                <div className="text-[10px] text-stone-400 mt-0.5 truncate">{act.description}</div>
+                <div className="text-[10px] text-stone-500 mt-0.5 truncate">{act.description}</div>
               </div>
             </button>
           );

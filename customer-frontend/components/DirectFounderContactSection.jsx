@@ -79,24 +79,24 @@ export default function DirectFounderContactSection() {
   ];
 
   return (
-    <section className="w-full relative overflow-hidden bg-[#140C1D] text-[#FAF8F5] py-16 sm:py-20 select-none border-t border-white/5">
+    <section className="w-full relative overflow-hidden bg-[#F8F6F2] text-[#29242D] py-16 sm:py-20 select-none border-t border-[#EAE2F2]">
       {/* Subtle atmospheric ambient glow */}
-      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-purple-900/15 rounded-full blur-[160px] pointer-events-none" />
-      <div className="absolute bottom-0 left-1/4 w-[450px] h-[450px] bg-amber-700/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-[#EAE2F2]/50 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-0 left-1/4 w-[450px] h-[450px] bg-[#C8A65E]/10 rounded-full blur-[130px] pointer-events-none" />
 
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           
           {/* Left Column: Founder Biography & Brand Philosophy */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#D4AF37]/30 text-[#E5C378] text-[11px] font-mono uppercase tracking-[0.2em] backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#EAE2F2] border border-[#EAE2F2] text-[#79539B] text-[11px] font-sans font-semibold uppercase tracking-[0.2em] backdrop-blur-md">
+              <Sparkles className="w-3.5 h-3.5 text-[#C8A65E]" />
               <span>DIRECT FOUNDER SANCTUARY</span>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-xl flex-shrink-0">
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-[#C8A65E]/40 shadow-md flex-shrink-0">
                   <Image
                     src="/images/soumya-profile.jpeg"
                     alt="Soumyaa Naveen - Founder of Sumuk Crystalz 5"
@@ -106,26 +106,26 @@ export default function DirectFounderContactSection() {
                   />
                 </div>
                 <div>
-                  <h3 className="font-editorial text-2xl font-bold text-white tracking-wide">
+                  <h3 className="font-serif text-2xl font-bold text-[#29242D] tracking-wide">
                     Soumyaa Naveen
                   </h3>
-                  <p className="text-xs font-mono uppercase tracking-widest text-[#E5C378] mt-0.5 font-bold">
+                  <p className="text-xs font-sans uppercase tracking-widest text-[#C8A65E] mt-0.5 font-bold">
                     Usui Reiki Master &bull; Mineral Curator
                   </p>
-                  <p className="text-[11px] text-stone-400 font-sans-ui mt-1">
+                  <p className="text-[11px] text-[#29242D]/60 font-sans mt-1">
                     Sus Gaon, Pune, Maharashtra
                   </p>
                 </div>
               </div>
 
-              <p className="text-sm text-stone-300 font-sans-ui leading-relaxed font-light">
+              <p className="text-sm text-[#29242D]/80 font-sans leading-relaxed">
                 Every natural mineral, bracelet, and geode at Sumuk Crystalz 5 is personally inspected for natural authenticity, cleansed with traditional sound vibrations, and packaged with care. Whether you are seeking a specific vibration or bespoke guidance, our sanctuary is here to assist.
               </p>
 
               <div className="pt-2">
                 <Link
                   href="/about"
-                  className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#E5C378] hover:text-[#F3E2B8] transition-colors font-bold"
+                  className="inline-flex items-center gap-2 text-xs font-sans uppercase tracking-widest text-[#79539B] hover:text-[#684587] transition-colors font-bold"
                 >
                   <span>Read Full Founder Story &amp; Philosophy</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -134,11 +134,11 @@ export default function DirectFounderContactSection() {
             </div>
 
             {/* Sacred Quote Card */}
-            <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
-              <p className="font-editorial text-xs italic text-stone-300 leading-relaxed">
+            <div className="p-5 rounded-2xl bg-white/80 backdrop-blur-md border border-[#EAE2F2] shadow-sm space-y-2">
+              <p className="font-serif text-sm italic text-[#29242D] leading-relaxed">
                 &ldquo;Crystals are bridges between ancient geological memory and our present intentional consciousness.&rdquo;
               </p>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#E5C378] block">
+              <span className="text-[10px] font-sans uppercase tracking-widest text-[#C8A65E] font-semibold block">
                 &mdash; Soumyaa Naveen
               </span>
             </div>
@@ -146,11 +146,11 @@ export default function DirectFounderContactSection() {
 
           {/* Right Column: Unified Luxury Contact Channels */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h4 className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-stone-300">
+            <div className="flex items-center justify-between pb-3 border-b border-[#EAE2F2]">
+              <h4 className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-[#29242D]">
                 Official Communication Channels
               </h4>
-              <div className="inline-flex items-center gap-2 text-[10.5px] font-mono text-emerald-400 font-bold tracking-wider">
+              <div className="inline-flex items-center gap-2 text-[10.5px] font-sans text-emerald-700 font-bold tracking-wider">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>ONLINE &bull; 9 AM &ndash; 9 PM IST</span>
               </div>
@@ -166,8 +166,8 @@ export default function DirectFounderContactSection() {
                     key={item.key}
                     className={`p-4 sm:p-5 rounded-2xl transition-all border ${
                       item.isPrimary
-                        ? 'bg-gradient-to-r from-emerald-950/30 to-purple-950/20 border-emerald-500/40 hover:border-emerald-400 shadow-md'
-                        : 'bg-white/[0.03] hover:bg-white/[0.05] border-white/10 hover:border-white/20'
+                        ? 'bg-gradient-to-r from-emerald-50/80 to-[#EAE2F2]/60 border-emerald-400/50 shadow-sm'
+                        : 'bg-white/80 hover:bg-white backdrop-blur-md border-[#EAE2F2] hover:border-[#79539B]/40 shadow-xs'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -175,8 +175,8 @@ export default function DirectFounderContactSection() {
                         <div
                           className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
                             item.isPrimary
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-white/5 text-stone-300 border border-white/10'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : 'bg-[#EAE2F2] text-[#79539B] border border-[#EAE2F2]'
                           }`}
                         >
                           <IconComponent className="w-5 h-5 stroke-[1.8]" />
@@ -184,19 +184,19 @@ export default function DirectFounderContactSection() {
 
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <h5 className="font-editorial text-sm font-bold text-white tracking-wide">
+                            <h5 className="font-serif text-base font-bold text-[#29242D] tracking-wide">
                               {item.title}
                             </h5>
                             {item.isPrimary && (
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-mono font-bold uppercase tracking-wider">
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-sans font-bold uppercase tracking-wider">
                                 Direct Routing
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-stone-400 font-sans-ui">
+                          <p className="text-xs text-[#29242D]/70 font-sans">
                             {item.subtitle}
                           </p>
-                          <span className="font-mono text-xs text-[#E5C378] font-bold block pt-0.5">
+                          <span className="font-sans text-xs text-[#C8A65E] font-bold block pt-0.5">
                             {item.value}
                           </span>
                         </div>
@@ -207,10 +207,10 @@ export default function DirectFounderContactSection() {
                         <button
                           type="button"
                           onClick={() => handleCopy(item.value, item.key)}
-                          className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-stone-300 text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer border border-white/10"
+                          className="px-3 py-2 rounded-xl bg-[#F8F6F2] hover:bg-[#EAE2F2] text-[#29242D] text-xs font-sans flex items-center gap-1.5 transition-colors cursor-pointer border border-[#EAE2F2]"
                           title="Copy details"
                         >
-                          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                           <span>{isCopied ? 'Copied' : 'Copy'}</span>
                         </button>
 
@@ -218,10 +218,10 @@ export default function DirectFounderContactSection() {
                           href={item.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm ${
+                          className={`px-4 py-2 rounded-xl text-xs font-sans font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm ${
                             item.isPrimary
-                              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white'
-                              : 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
+                              ? 'bg-[#79539B] hover:bg-[#684587] text-white'
+                              : 'bg-[#EAE2F2] hover:bg-[#79539B] hover:text-white text-[#29242D] border border-[#EAE2F2]'
                           }`}
                         >
                           <span>{item.actionLabel}</span>

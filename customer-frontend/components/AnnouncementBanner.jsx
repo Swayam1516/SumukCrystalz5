@@ -55,7 +55,7 @@ export default function AnnouncementBanner() {
 
   const displayMessage = announcement?.is_active && announcement?.message?.trim()
     ? announcement.message
-    : 'WELCOME TO SUMUK CRYSTALZ 5 — Consecrated by Usui Reiki Master Soumyaa Naveen';
+    : 'Holy Navaratri Blessing: Complimentary Vedic 432Hz Sound Attunement on All Crystal Vault Orders with Code SUMUK108';
 
   const handleOpenBlessing = () => {
     if (typeof window !== 'undefined') {
@@ -76,29 +76,25 @@ export default function AnnouncementBanner() {
     <div
       role="region"
       aria-label="Site Announcement"
-      className="relative z-50 bg-gradient-to-r from-[#171207] via-[#2a1d08] to-[#171207] border-b border-[#D4AF37]/35 text-[#f6e6be] shadow-[0_4px_25px_rgba(212,175,55,0.15)] overflow-hidden transition-all duration-300"
+      className="relative z-50 bg-[#EAE2F2]/90 backdrop-blur-md border-b border-[#D8CBE4] text-[#29242D] shadow-xs overflow-hidden transition-all duration-300"
     >
-      {/* Ambient subtle shimmer lines */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.12)_0%,transparent_75%)] pointer-events-none" />
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#ffd978]/60 to-transparent pointer-events-none" />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-3 text-xs sm:text-sm">
         {/* Banner Content */}
         <div className="flex-1 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-center">
-          <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#ffd978] flex-shrink-0 animate-pulse">
+          <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white border border-[#D8CBE4] text-[#C8A65E] flex-shrink-0 shadow-xs">
             <Sparkles className="w-3 h-3" />
           </div>
-          <span className="font-sans font-medium tracking-wide text-[#f7e8c3] leading-snug text-xs sm:text-[13px]">
+          <span className="font-sans font-medium tracking-wide text-[#29242D] leading-snug text-xs sm:text-[13px]">
             {displayMessage}
           </span>
           <button
             type="button"
             onClick={handleOpenBlessing}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 hover:bg-[#D4AF37]/35 border border-[#D4AF37]/45 text-[#ffd978] text-[10px] font-mono uppercase tracking-wider font-bold transition-all cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white hover:bg-[#F8F6F2] border border-[#D8CBE4] text-[#79539B] text-[10px] font-sans uppercase tracking-wider font-semibold transition-all cursor-pointer shadow-xs"
             title="Open Welcome Blessing Artwork"
           >
             <span>View Blessing</span>
-            <Sparkles className="w-2.5 h-2.5 text-amber-300" />
+            <Sparkles className="w-2.5 h-2.5 text-[#C8A65E]" />
           </button>
         </div>
 
@@ -106,7 +102,7 @@ export default function AnnouncementBanner() {
         <button
           type="button"
           onClick={handleDismiss}
-          className="p-1 rounded-lg bg-black/30 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 text-stone-300 hover:text-[#ffd978] transition-colors flex-shrink-0 cursor-pointer"
+          className="p-1 rounded-lg bg-white/60 hover:bg-white border border-[#D8CBE4] text-[#5C5562] hover:text-[#29242D] transition-colors flex-shrink-0 cursor-pointer shadow-xs"
           title="Dismiss Announcement"
           aria-label="Dismiss Announcement"
         >

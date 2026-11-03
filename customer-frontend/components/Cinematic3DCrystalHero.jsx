@@ -1,199 +1,387 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight,
   Sparkles,
   Crown,
-  User,
-  Heart,
-  MapPin,
-  Bell,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  ShoppingBag,
 } from 'lucide-react';
 
-// Dynamic client-side import for real-time Three.js / WebGL 3D Amethyst stage
-const PhotorealisticAmethyst3DStage = dynamic(
-  () => import('./PhotorealisticAmethyst3DStage'),
+export const HERO_SLIDES = [
   {
-    ssr: false,
-    loading: () => (
-      <div className="relative w-full h-[400px] sm:h-[480px] lg:h-[540px] flex items-center justify-center select-none">
-        {/* Soft ambient violet pre-glow */}
-        <div className="absolute w-[420px] h-[420px] bg-purple-900/25 rounded-full blur-[140px] pointer-events-none" />
-        <div
-          className="relative w-full h-full max-w-[580px] max-h-[500px] flex items-center justify-center"
-          style={{
-            maskImage:
-              'radial-gradient(ellipse 85% 85% at 50% 50%, black 50%, transparent 100%)',
-            WebkitMaskImage:
-              'radial-gradient(ellipse 85% 85% at 50% 50%, black 50%, transparent 100%)',
-          }}
-        >
-          <Image
-            src="/images/hero-amethyst-4k.jpg"
-            alt="Authentic 4K Glowing Amethyst Natural Specimen - Sumuk Crystalz 5"
-            fill
-            priority
-            quality={98}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 580px"
-            className="object-contain filter drop-shadow-[0_20px_50px_rgba(147,51,234,0.45)]"
-          />
-        </div>
-      </div>
-    ),
-  }
-);
+    id: 'ganesha-sanctuary',
+    badge: 'DIVINE BLESSINGS • AUTHENTIC NATURAL CRYSTALS',
+    titleLine1: 'DIVINE ENERGY.',
+    titleLine2: 'TIMELESS CRYSTALS.',
+    subtitle: 'Blessed by the divine. Inspired by nature.',
+    description:
+      'Discover authentic natural crystals, thoughtfully curated to bring beauty, meaning and positive energy into your everyday spaces.',
+    imageDesktop: '/images/ganesha-hero-sanctuary-desktop.jpg',
+    imageMobile: '/images/ganesha-hero-sanctuary-mobile.jpg',
+    ctaPrimary: {
+      label: 'EXPLORE COLLECTION',
+      href: '/shop',
+      icon: Crown,
+    },
+    ctaSecondary: {
+      label: 'DISCOVER YOUR CRYSTAL',
+      href: '/shop',
+      icon: Sparkles,
+    },
+    accentColor: '#D4AF37',
+  },
+  {
+    id: 'bracelets-masterwork',
+    badge: '100% NATURAL • CONSECRATED ENERGY BANDS',
+    titleLine1: 'SACRED WRISTWEAR.',
+    titleLine2: 'UNYIELDING HARMONY.',
+    subtitle: 'Handcrafted 8mm AAA natural mineral gemstone bands.',
+    description:
+      'Tiger’s Eye, Golden Pyrite, Rose Quartz and Amethyst strung on durable elastic cord, attuned for daily protection, courage, and prosperity.',
+    imageDesktop: '/assets/banners/bracelets-banner.jpg',
+    imageMobile: '/assets/banners/bracelets-banner.jpg',
+    ctaPrimary: {
+      label: 'SHOP BRACELETS',
+      href: '/shop?pillar=jewellery&filter=jewellery:bracelets',
+      icon: ShoppingBag,
+    },
+    ctaSecondary: {
+      label: 'EXPLORE SANCTUARY',
+      href: '/shop',
+      icon: Sparkles,
+    },
+    accentColor: '#E5C378',
+  },
+  {
+    id: 'malas-meditation',
+    badge: 'VEDIC ATTUNEMENT • 108 SACRED BEADS',
+    titleLine1: 'CONSECRATED MALAS.',
+    titleLine2: 'INNER STILLNESS.',
+    subtitle: '108 authentic prayer beads for meditation & spiritual growth.',
+    description:
+      'Hand-knotted with silk tassels and guru beads, sound-cleansed with 432Hz Solfeggio bowls by Reiki Master Soumyaa Naveen.',
+    imageDesktop: '/assets/banners/malas-banner.jpg',
+    imageMobile: '/assets/banners/malas-banner.jpg',
+    ctaPrimary: {
+      label: 'SHOP MALAS',
+      href: '/shop?filter=energy:chakras',
+      icon: Crown,
+    },
+    ctaSecondary: {
+      label: 'SACRED MEDITATION',
+      href: '/shop',
+      icon: Sparkles,
+    },
+    accentColor: '#D4AF37',
+  },
+  {
+    id: 'stones-geodes',
+    badge: 'ETHICALLY SOURCED • UNHEATED SPECIMENS',
+    titleLine1: 'RAW MASTERWORKS.',
+    titleLine2: 'EARTH’S PURE FORCE.',
+    subtitle: 'Uncut Brazilian Amethyst, Peruvian Pyrite & Himalayan Quartz.',
+    description:
+      'Unheated, ethically sourced mineral clusters and geodes radiating unadulterated high vibrational frequency into your sanctuary.',
+    imageDesktop: '/assets/banners/stones-banner.jpg',
+    imageMobile: '/assets/banners/stones-banner.jpg',
+    ctaPrimary: {
+      label: 'SHOP RAW STONES',
+      href: '/shop?filter=energy:numerology',
+      icon: ShoppingBag,
+    },
+    ctaSecondary: {
+      label: 'VIEW ALL SPECIMENS',
+      href: '/shop',
+      icon: Sparkles,
+    },
+    accentColor: '#FBBF24',
+  },
+  {
+    id: 'trees-vastu',
+    badge: 'VASTU COMPLIANT • 300+ GEMSTONE BEADS',
+    titleLine1: 'VASTU BONSAI.',
+    titleLine2: 'TREES OF PROSPERITY.',
+    subtitle: '300+ natural gemstone wire-wrapped beads on geode bases.',
+    description:
+      'Sacred Feng Shui & Vastu home décor engineered to draw wealth, family peace, and uplifting vitality into every room.',
+    imageDesktop: '/assets/banners/trees-banner.jpg',
+    imageMobile: '/assets/banners/trees-banner.jpg',
+    ctaPrimary: {
+      label: 'SHOP GEMSTONE TREES',
+      href: '/shop?filter=specimen:crystal-trees',
+      icon: Crown,
+    },
+    ctaSecondary: {
+      label: 'DISCOVER HOME DÉCOR',
+      href: '/shop',
+      icon: Sparkles,
+    },
+    accentColor: '#D4AF37',
+  },
+];
 
 export default function Cinematic3DCrystalHero() {
-  const handleOpenAssistant = () => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('toggle-ai-chat'));
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const autoPlayTimer = useRef(null);
+
+  const totalSlides = HERO_SLIDES.length;
+
+  // Reduced motion detection
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    const listener = (e) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+  }, [totalSlides]);
+
+  const handlePrev = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  }, [totalSlides]);
+
+  // Autoplay every 5.5 seconds
+  useEffect(() => {
+    if (isPaused || prefersReducedMotion) {
+      if (autoPlayTimer.current) clearInterval(autoPlayTimer.current);
+      return;
+    }
+
+    autoPlayTimer.current = setInterval(() => {
+      handleNext();
+    }, 5500);
+
+    return () => {
+      if (autoPlayTimer.current) clearInterval(autoPlayTimer.current);
+    };
+  }, [isPaused, prefersReducedMotion, handleNext, currentSlide]);
+
+  // Mouse Parallax
+  const handleMouseMove = (e) => {
+    if (prefersReducedMotion) return;
+    const { clientX, clientY, currentTarget } = e;
+    const { width, height } = currentTarget.getBoundingClientRect();
+    const x = (clientX / width - 0.5) * 16;
+    const y = (clientY / height - 0.5) * 16;
+    setParallaxOffset({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setParallaxOffset({ x: 0, y: 0 });
+    setIsPaused(false);
+  };
+
+  // Touch Swipe Handlers
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    setIsPaused(true);
+  };
+
+  const handleTouchEnd = (e) => {
+    setIsPaused(false);
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+      if (deltaX < 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
     }
   };
 
+  const active = HERO_SLIDES[currentSlide];
+
   return (
-    <section className="relative w-full min-h-[92vh] bg-[#000000] text-white overflow-hidden flex flex-col justify-between pt-8 sm:pt-14 pb-8 px-4 sm:px-8 lg:px-12 select-none">
+    <section
+      className="relative w-full min-h-[82vh] sm:min-h-[86vh] lg:min-h-[88vh] xl:min-h-[90vh] bg-[#05020A] text-white overflow-hidden flex items-center select-none"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={handleMouseLeave}
+      onMouseMove={handleMouseMove}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      aria-label="Sumuk Crystalz 5 Cinematic Hero Slider"
+    >
       {/* ══════════════════════════════════════════════════════════
-          ATMOSPHERIC AMBIANCE (Deep midnight violet aura)
-          ══════════════════════════════════════════════════════════ */}
-      <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-purple-950/30 rounded-full blur-[180px] pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-[420px] h-[420px] bg-amber-700/10 rounded-full blur-[150px] pointer-events-none" />
+          1. 4K CINEMATIC SLIDESHOW BACKGROUNDS (Zoom, Fade & Parallax)
+         ══════════════════════════════════════════════════════════ */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={active.id}
+          initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 1.05 }}
+          animate={{
+            opacity: 1,
+            scale: prefersReducedMotion ? 1 : 1,
+            x: prefersReducedMotion ? 0 : parallaxOffset.x * -0.5,
+            y: prefersReducedMotion ? 0 : parallaxOffset.y * -0.5,
+          }}
+          exit={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.98 }}
+          transition={{ duration: 1.1, ease: [0.25, 1, 0.5, 1] }}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+        >
+          {/* Desktop 16:9 Asset */}
+          <div className="hidden sm:block absolute inset-0 w-full h-full">
+            <Image
+              src={active.imageDesktop}
+              alt={active.titleLine1}
+              fill
+              priority
+              quality={95}
+              sizes="100vw"
+              className="object-cover object-center lg:object-[80%_center] filter brightness-[1.03] contrast-[1.02] transform transition-transform duration-[6000ms] ease-out scale-[1.02]"
+            />
+          </div>
+
+          {/* Mobile Asset */}
+          <div className="block sm:hidden absolute inset-0 w-full h-full">
+            <Image
+              src={active.imageMobile}
+              alt={active.titleLine1}
+              fill
+              priority
+              quality={95}
+              sizes="100vw"
+              className="object-cover object-center filter brightness-[1.03] contrast-[1.02]"
+            />
+          </div>
+
+          {/* Directional Luxury Scrims */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/55 via-35% sm:via-black/40 sm:via-48% to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none" />
+          <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-purple-900/15 rounded-full blur-[160px] pointer-events-none" />
+          <div className="absolute top-1/4 right-1/4 w-[450px] h-[450px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
+        </motion.div>
+      </AnimatePresence>
 
       {/* ══════════════════════════════════════════════════════════
-          MAIN EDITORIAL HERO GRID (40-50% Visual Balance)
-          ══════════════════════════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center relative z-10 flex-1 my-auto">
-        {/* LEFT COLUMN: Editorial Luxury Narrative (7 Columns) */}
-        <div className="lg:col-span-7 space-y-6 text-left">
-          {/* Badge: Ethically Sourced Sus Gaon, Pune */}
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.15 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-stone-700/60 text-[#E5C378] text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.22em] backdrop-blur-md shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#E5C378]" />
-            <span>ETHICALLY SOURCED &bull; SUS GAON, PUNE</span>
-          </motion.div>
+          2. FLOATING NAVIGATION ARROWS
+         ══════════════════════════════════════════════════════════ */}
+      <button
+        type="button"
+        onClick={handlePrev}
+        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/40 hover:bg-black/70 border border-[#D4AF37]/60 hover:border-[#D4AF37] text-white hover:text-amber-300 backdrop-blur-md flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl cursor-pointer"
+        aria-label="Previous Slide"
+      >
+        <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
+      </button>
 
-          {/* Headline Matching Exact Screenshot with Cinematic Entrance */}
-          <motion.h1
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.95, delay: 0.35 }}
-            className="text-4xl sm:text-6xl lg:text-[76px] font-bold text-white tracking-tight leading-[1.02] uppercase font-sans"
-          >
-            AUTHENTIC <br />
-            HIGH-VIBRATIONAL <br />
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1.1, delay: 0.65 }}
-              className="font-serif italic font-normal text-purple-200/90 lowercase first-letter:uppercase block leading-[1.08] mt-1"
+      <button
+        type="button"
+        onClick={handleNext}
+        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/40 hover:bg-black/70 border border-[#D4AF37]/60 hover:border-[#D4AF37] text-white hover:text-amber-300 backdrop-blur-md flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl cursor-pointer"
+        aria-label="Next Slide"
+      >
+        <ChevronRight className="w-5 h-5 stroke-[2.2]" />
+      </button>
+
+      {/* ══════════════════════════════════════════════════════════
+          3. MAIN HERO CONTENT CONTAINER (Aligned Typography & CTAs)
+         ══════════════════════════════════════════════════════════ */}
+      <div className="relative z-10 max-w-7xl mx-auto w-full px-5 sm:px-8 lg:px-12 py-12 sm:py-16 lg:py-20 flex items-center">
+        <div className="max-w-xl sm:max-w-2xl lg:max-w-2xl space-y-5 text-left">
+          
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={active.id + '-content'}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.65, ease: 'easeOut' }}
+              className="space-y-4 sm:space-y-5"
             >
-              Natural minerals.
-            </motion.span>
-          </motion.h1>
+              {/* Top Pill Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 hover:bg-black/50 border border-[#D4AF37]/50 backdrop-blur-md shadow-md">
+                <Sparkles className="w-3.5 h-3.5 text-[#E5C378]" />
+                <span className="text-[#E5C378] text-[10.5px] sm:text-xs font-sans uppercase tracking-[0.2em] font-bold">
+                  {active.badge}
+                </span>
+              </div>
 
-          {/* Description Paragraph */}
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.85, delay: 0.85 }}
-            className="text-sm sm:text-base text-stone-300 font-sans leading-relaxed max-w-xl font-light"
-          >
-            Each raw specimen and hand-crafted masterwork is personally curated by Usui Reiki Master{' '}
-            <strong className="text-white font-medium">Soumyaa Naveen</strong> and cleansed with pure sound resonance
-            to elevate your sanctuary.
-          </motion.p>
+              {/* Two-Tone Headline */}
+              <div className="space-y-1 sm:space-y-1.5">
+                <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[66px] xl:text-[74px] font-black uppercase tracking-tight leading-[1.0] font-sans">
+                  <span className="block text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]">
+                    {active.titleLine1}
+                  </span>
+                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FFF1C5] to-[#C99D2A] drop-shadow-[0_4px_20px_rgba(212,175,55,0.3)]">
+                    {active.titleLine2}
+                  </span>
+                </h1>
 
-          {/* Call-to-Action Buttons with Upward Entrance Reveal */}
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.85, delay: 1.15 }}
-            className="pt-2 flex flex-wrap items-center gap-4"
-          >
-            {/* Primary Solid White Pill */}
-            <Link
-              href="/shop"
-              className="px-6 py-3.5 rounded-full bg-white hover:bg-stone-100 text-stone-950 font-bold text-xs uppercase tracking-[0.16em] flex items-center gap-2.5 shadow-xl hover:shadow-[0_0_25px_rgba(255,255,255,0.4)] hover:scale-[1.02] transition-all cursor-pointer"
-            >
-              <Crown className="w-4 h-4 text-stone-950 stroke-[2.2]" />
-              <span>EXPLORE COLLECTION</span>
-              <ArrowRight className="w-4 h-4 text-stone-950 stroke-[2.2]" />
-            </Link>
+                {/* Subtitle in Cormorant / Playfair Italic Serif */}
+                <p className="font-serif italic text-white/95 text-lg sm:text-2xl md:text-3xl lg:text-[30px] pt-1 sm:pt-1.5 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] font-normal">
+                  {active.subtitle}
+                </p>
+              </div>
 
-            {/* Secondary Outline Pill */}
-            <Link
-              href="/services"
-              className="px-6 py-3.5 rounded-full bg-transparent hover:bg-white/[0.08] border border-stone-600/80 hover:border-purple-400/60 text-white font-mono text-xs uppercase tracking-[0.16em] hover:scale-[1.02] transition-all cursor-pointer"
-            >
-              <span>CONSULTATION SERVICES</span>
-            </Link>
-          </motion.div>
-        </div>
+              {/* Description Paragraph */}
+              <p className="text-xs sm:text-sm md:text-base text-stone-200/90 font-sans leading-relaxed max-w-lg font-normal drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                {active.description}
+              </p>
 
-        {/* RIGHT COLUMN: Photorealistic Real-Time 3D Amethyst Cluster (5 Columns) */}
-        <div className="lg:col-span-5 relative w-full flex items-center justify-center">
-          <PhotorealisticAmethyst3DStage />
+              {/* Call-to-Action Buttons */}
+              <div className="pt-2 sm:pt-3 flex flex-wrap items-center gap-3.5 sm:gap-4">
+                {/* 1. Solid White Pill: Primary CTA */}
+                <Link
+                  href={active.ctaPrimary.href}
+                  className="px-6 sm:px-7 py-3 sm:py-3.5 rounded-full bg-white hover:bg-stone-100 text-stone-950 font-bold text-xs uppercase tracking-[0.16em] flex items-center gap-2.5 shadow-[0_10px_30px_rgba(255,255,255,0.25)] hover:shadow-[0_10px_35px_rgba(255,255,255,0.45)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer font-sans"
+                >
+                  <active.ctaPrimary.icon className="w-4 h-4 text-stone-950 stroke-[2.2]" />
+                  <span>{active.ctaPrimary.label}</span>
+                  <ArrowRight className="w-4 h-4 text-stone-950 stroke-[2.2]" />
+                </Link>
+
+                {/* 2. Gold Outlined Pill: Secondary CTA */}
+                <Link
+                  href={active.ctaSecondary.href}
+                  className="px-6 sm:px-7 py-3 sm:py-3.5 rounded-full bg-black/40 hover:bg-black/60 border border-[#D4AF37]/80 hover:border-[#D4AF37] text-[#E5C378] hover:text-[#FFF1C5] font-bold text-xs uppercase tracking-[0.16em] flex items-center gap-2.5 backdrop-blur-md hover:scale-[1.02] active:scale-95 transition-all cursor-pointer font-sans shadow-md"
+                >
+                  <active.ctaSecondary.icon className="w-4 h-4 text-[#E5C378]" />
+                  <span>{active.ctaSecondary.label}</span>
+                  <ArrowRight className="w-4 h-4 text-[#E5C378]" />
+                </Link>
+              </div>
+
+            </motion.div>
+          </AnimatePresence>
+
         </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════
-          BOTTOM REGISTER BAR & FLOATING ASSISTANT
-          ══════════════════════════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto w-full pt-8 sm:pt-10 mt-6 border-t border-white/[0.08] flex flex-col lg:flex-row items-center justify-between gap-6 z-10">
-        {/* Left Links: Collector Profile, Saved Wishlist, Saved Sanctuaries, Notifications */}
-        <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-stone-400 font-sans">
-          <Link href="/account" className="flex items-center gap-2 hover:text-white transition">
-            <User className="w-3.5 h-3.5 text-stone-400" />
-            <span>Collector Profile</span>
-          </Link>
-
-          <Link href="/shop" className="flex items-center gap-2 hover:text-white transition">
-            <Heart className="w-3.5 h-3.5 text-stone-400" />
-            <span>Saved Wish list</span>
-          </Link>
-
-          <Link href="/about" className="flex items-center gap-2 hover:text-white transition">
-            <MapPin className="w-3.5 h-3.5 text-stone-400" />
-            <span>Saved Sanctuaries</span>
-          </Link>
-
-          <span className="hidden sm:inline-block text-stone-600">|</span>
-
-          <div className="flex items-center gap-2 text-stone-400">
-            <Bell className="w-3.5 h-3.5 text-stone-400" />
-            <span>Notifications &amp; Vedic Alerts</span>
-          </div>
-        </div>
-
-        {/* Right: Floating Pill Widget for Sumuk Assistant */}
-        <button
-          type="button"
-          onClick={handleOpenAssistant}
-          className="self-end lg:self-auto px-5 py-2.5 rounded-full bg-white hover:bg-stone-50 text-stone-900 shadow-2xl flex items-center gap-3 border border-stone-200/50 hover:scale-[1.02] transition-transform cursor-pointer"
-          aria-label="Open Sumuk Assistant"
-        >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-amber-400 flex items-center justify-center text-white shadow-sm flex-shrink-0">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <div className="text-left">
-            <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-stone-900 font-mono">
-              <span>SUMUK ASSISTANT</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-            <div className="text-[11px] text-stone-500 font-sans">
-              Sacred Consecrated AI Guide
-            </div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-stone-700 ml-1 stroke-[2.2]" />
-        </button>
+          4. PAGINATION INDICATORS (Slide Bars)
+         ══════════════════════════════════════════════════════════ */}
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+        {HERO_SLIDES.map((slide, idx) => (
+          <button
+            key={slide.id}
+            type="button"
+            onClick={() => setCurrentSlide(idx)}
+            className={`transition-all duration-300 rounded-full cursor-pointer ${
+              currentSlide === idx
+                ? 'w-8 h-2 bg-gradient-to-r from-[#D4AF37] to-[#FFF1C5] shadow-[0_0_10px_rgba(212,175,55,0.8)]'
+                : 'w-2 h-2 bg-white/40 hover:bg-white/70'
+            }`}
+            aria-label={`Go to Slide ${idx + 1}`}
+          />
+        ))}
       </div>
     </section>
   );

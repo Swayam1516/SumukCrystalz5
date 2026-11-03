@@ -43,6 +43,7 @@ import AdminFilterManager from '@/components/AdminFilterManager';
 import AdminOccasionBannerManager from '@/components/AdminOccasionBannerManager';
 import AdminChatbotManager from '@/components/AdminChatbotManager';
 import AdminServiceEditorModal from '@/components/AdminServiceEditorModal';
+import { LotusLogo } from '@/components/CrystalArtwork';
 
 // Lucide Icons
 import {
@@ -574,43 +575,43 @@ export default function AdminDashboardPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center text-[#D4AF37]">
-        <div className="w-10 h-10 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-purple-700">
+        <div className="w-10 h-10 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  // LOGIN SCREEN
+  // LOGIN SCREEN (PORCELAIN SANCTUARY VAULT)
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-[#0C0A09] text-stone-100 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Ambient Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#D4AF37]/5 rounded-full blur-[140px] pointer-events-none" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#B8860B]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="min-h-screen bg-[#FAF8F5] sanctuary-canvas-bg text-stone-900 flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Subtle Ethereal Auras */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-200/30 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-amber-200/20 rounded-full blur-[120px] pointer-events-none" />
 
-        <div className="w-full max-w-md bg-[#141210]/95 border border-[#D4AF37]/35 rounded-3xl p-8 backdrop-blur-2xl shadow-2xl relative z-10 space-y-6">
+        <div className="w-full max-w-md bg-white/95 border border-stone-200/90 rounded-3xl p-8 backdrop-blur-2xl shadow-xl relative z-10 space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D4AF37]/20 to-[#B8860B]/10 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] mx-auto shadow-lg shadow-[#D4AF37]/10">
-              <Crown className="w-8 h-8" />
+            <div className="w-16 h-16 rounded-2xl bg-purple-50 border border-purple-200/80 flex items-center justify-center mx-auto shadow-xs">
+              <LotusLogo className="w-10 h-10" />
             </div>
-            <h1 className="text-2xl font-serif font-bold text-[#F3E5AB] tracking-wide">
-              Founder Sanctuary Vault
+            <h1 className="text-2xl font-serif font-bold text-stone-900 tracking-wide">
+              Founder Sanctum Vault
             </h1>
-            <p className="text-xs text-stone-400">
+            <p className="text-xs text-stone-500">
               Sumuk Crystalz 5 • Secure Administrator &amp; Inventory Portal
             </p>
           </div>
 
           {loginError && (
-            <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
               <span>{loginError}</span>
             </div>
           )}
 
           <form onSubmit={handleAdminLogin} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-stone-300">
+              <label className="text-xs font-semibold text-stone-700">
                 Founder Administrator Email
               </label>
               <input
@@ -618,19 +619,19 @@ export default function AdminDashboardPage() {
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
                 placeholder="sumukcrystalz5@gmail.com"
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-[#D4AF37] transition-colors"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
               />
             </div>
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-stone-300">
+                <label className="text-xs font-semibold text-stone-700">
                   Master Security Password
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-[11px] text-[#D4AF37] hover:text-[#f3e5ab] transition-colors"
+                  className="text-[11px] text-purple-700 hover:text-purple-900 transition-colors font-medium"
                 >
                   {showPassword ? 'Hide' : 'Show'}
                 </button>
@@ -641,22 +642,22 @@ export default function AdminDashboardPage() {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-[#D4AF37] transition-colors pr-10"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all pr-10"
                 />
-                <Lock className="w-4 h-4 text-stone-600 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-stone-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loadingAuth}
-              className="w-full py-3.5 bg-gradient-to-r from-[#D4AF37] via-[#C59B27] to-[#B8860B] text-black font-semibold text-xs uppercase tracking-widest rounded-xl hover:brightness-110 shadow-lg shadow-[#D4AF37]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+              className="w-full py-3.5 bg-gradient-to-r from-[#6D28D9] via-[#7C3AED] to-[#5B21B6] text-white font-semibold text-xs uppercase tracking-widest rounded-xl hover:brightness-105 shadow-md shadow-purple-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {loadingAuth ? (
-                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <Key className="w-4 h-4" /> Unlock Sanctuary Vault
+                  <Key className="w-4 h-4" /> Unlock Sanctum Vault
                 </>
               )}
             </button>
@@ -670,14 +671,14 @@ export default function AdminDashboardPage() {
                 setLoginPassword('Sumukcrystalz@555');
                 setLoginError('');
               }}
-              className="w-full py-2 px-3 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-mono transition flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-sans font-medium transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
               <span>⚡ Fill Master Credentials (Founder)</span>
             </button>
           </div>
 
-          <div className="pt-2 text-center text-[11px] text-stone-500 border-t border-stone-800/80">
+          <div className="pt-2 text-center text-[11px] text-stone-400 border-t border-stone-100">
             Protected under secure cryptographic token authentication • Founder Access Only
           </div>
         </div>
@@ -685,26 +686,26 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // MAIN LUXURY 3D ADMIN PORTAL
+  // MAIN LUXURY SANCTUARY ADMIN PORTAL
   return (
-    <div className="min-h-screen bg-[#0A0908] text-stone-100 flex">
+    <div className="min-h-screen bg-[#FAF8F5] sanctuary-canvas-bg text-stone-900 flex relative">
       {/* Toast Notifications Overlay */}
       <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border text-xs font-medium flex items-center gap-2.5 animate-in slide-in-from-bottom-5 duration-300 pointer-events-auto ${
+            className={`px-4 py-3 rounded-2xl shadow-xl backdrop-blur-xl border text-xs font-medium flex items-center gap-2.5 animate-in slide-in-from-bottom-5 duration-300 pointer-events-auto ${
               t.type === 'error'
-                ? 'bg-rose-950/90 border-rose-800 text-rose-200'
+                ? 'bg-rose-50 border-rose-200 text-rose-800'
                 : t.type === 'info'
-                ? 'bg-stone-900/90 border-stone-700 text-stone-200'
-                : 'bg-stone-950/90 border-[#D4AF37]/50 text-[#F3E5AB]'
+                ? 'bg-stone-50 border-stone-200 text-stone-800'
+                : 'bg-white/95 border-purple-200 text-stone-900'
             }`}
           >
             {t.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 text-rose-400" />
+              <AlertCircle className="w-4 h-4 text-rose-600" />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
+              <CheckCircle2 className="w-4 h-4 text-purple-600" />
             )}
             <span>{t.message}</span>
           </div>

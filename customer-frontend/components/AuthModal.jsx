@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../store/useAuth';
+import Floating3DSpheres from './Floating3DSpheres';
 import {
   Lock,
   Mail,
@@ -214,7 +215,7 @@ export default function AuthModal() {
           setSuccessMsg('Welcome back, Founder Soumyaa Naveen! Opening Admin Sanctuary...');
           setTimeout(() => {
             handleClose();
-            router.push('/admin');
+            router.push('http://localhost:3001');
           }, 1000);
         } else {
           setSuccessMsg(`Welcome back, ${res?.user?.name || 'Patron'}!`);
@@ -231,13 +232,13 @@ export default function AuthModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#29242D]/50 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto"
       onClick={handleClose}
     >
       <div
         className={`relative w-full my-auto ${
           isRegister ? 'max-w-4xl' : isForgot ? 'max-w-md' : 'max-w-3xl'
-        } bg-white rounded-3xl sm:rounded-[32px] shadow-[0_25px_60px_-15px_rgba(76,29,149,0.3)] border border-purple-100 overflow-hidden flex flex-col ${
+        } bg-white/95 rounded-3xl sm:rounded-[32px] shadow-[0_25px_60px_-15px_rgba(41,36,45,0.14)] border border-[#EAE2F2] overflow-hidden flex flex-col ${
           !isForgot ? 'md:flex-row' : ''
         } transition-all duration-300`}
         onClick={(e) => e.stopPropagation()}
@@ -246,7 +247,7 @@ export default function AuthModal() {
         <button
           type="button"
           onClick={handleClose}
-          className="absolute top-4 right-4 z-20 p-2 rounded-full text-slate-400 hover:text-slate-800 hover:bg-purple-50 transition-colors cursor-pointer"
+          className="absolute top-4 right-4 z-20 p-2 rounded-full text-[#5C5562] hover:text-[#29242D] hover:bg-[#EAE2F2]/60 transition-colors cursor-pointer"
           aria-label="Close modal"
         >
           <X className="w-5 h-5 stroke-[2.2]" />
@@ -264,14 +265,14 @@ export default function AuthModal() {
         >
           {/* Mode Switching Tabs for Login / Register */}
           {!isForgot && (
-            <div className="flex items-center p-1 bg-purple-50/80 rounded-2xl mb-5 border border-purple-100">
+            <div className="flex items-center p-1 bg-[#EAE2F2]/60 rounded-2xl mb-5 border border-[#D8CBE4]/60">
               <button
                 type="button"
                 onClick={() => handleSwitchMode('login')}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold font-mono tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 py-2 rounded-xl text-xs font-semibold font-sans tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   !isRegister
-                    ? 'bg-[#1C132B] text-white shadow-md'
-                    : 'text-purple-900 hover:text-purple-950'
+                    ? 'bg-[#79539B] text-white shadow-xs'
+                    : 'text-[#29242D] hover:text-[#79539B]'
                 }`}
               >
                 <span>SIGN IN</span>
@@ -279,10 +280,10 @@ export default function AuthModal() {
               <button
                 type="button"
                 onClick={() => handleSwitchMode('register')}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold font-mono tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 py-2 rounded-xl text-xs font-semibold font-sans tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   isRegister
-                    ? 'bg-[#1C132B] text-white shadow-md'
-                    : 'text-purple-900 hover:text-purple-950'
+                    ? 'bg-[#79539B] text-white shadow-xs'
+                    : 'text-[#29242D] hover:text-[#79539B]'
                 }`}
               >
                 <span>REGISTER</span>
@@ -294,31 +295,31 @@ export default function AuthModal() {
           <div className="mb-5">
             {isForgot ? (
               <>
-                <div className="w-10 h-10 rounded-2xl bg-purple-100/70 border border-purple-200 flex items-center justify-center text-purple-700 mb-3 shadow-xs">
+                <div className="w-10 h-10 rounded-2xl bg-[#EAE2F2] border border-[#D8CBE4] flex items-center justify-center text-[#79539B] mb-3 shadow-xs">
                   <KeyRound className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold font-serif text-[#1C132B]">
+                <h2 className="text-xl sm:text-2xl font-bold font-serif text-[#29242D]">
                   Reset Your Password
                 </h2>
-                <p className="text-xs text-[#6B5C82] mt-1">
+                <p className="text-xs text-[#5C5562] mt-1">
                   Enter your registered email address. We&apos;ll send a secure password reset link.
                 </p>
               </>
             ) : isRegister ? (
               <>
-                <h2 className="text-2xl sm:text-3xl font-bold font-serif text-[#1C132B]">
+                <h2 className="text-2xl sm:text-3xl font-bold font-serif text-[#29242D]">
                   Patron Registration
                 </h2>
-                <p className="text-xs text-[#6B5C82] mt-1">
+                <p className="text-xs text-[#5C5562] mt-1">
                   Create your sacred collector account for consecrated provenance &amp; insured courier tracking.
                 </p>
               </>
             ) : (
               <>
-                <h2 className="text-2xl sm:text-3xl font-bold font-serif text-[#1C132B]">
+                <h2 className="text-2xl sm:text-3xl font-bold font-serif text-[#29242D]">
                   Patron Sign In
                 </h2>
-                <p className="text-xs text-[#6B5C82] mt-1">
+                <p className="text-xs text-[#5C5562] mt-1">
                   Access your consecrated crystals, order provenance, and saved energy bands.
                 </p>
               </>
@@ -327,8 +328,8 @@ export default function AuthModal() {
 
           {/* Validation and Server Errors */}
           {(validationError || authError) && (
-            <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
               <div className="leading-snug">{validationError || authError}</div>
             </div>
           )}
@@ -346,21 +347,21 @@ export default function AuthModal() {
             {/* 1. FORGOT PASSWORD MODE */}
             {isForgot && (
               <div className="space-y-1.5">
-                <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                   Email Address *
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                   <input
                     type="email"
                     required
                     placeholder="Enter your registered email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-xs text-[#1C132B] placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs text-[#29242D] placeholder:text-[#8B8593] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner"
                   />
                 </div>
-                <p className="text-[10px] text-slate-500 italic pt-1">
+                <p className="text-[10px] text-[#5C5562] italic pt-1">
                   Didn&apos;t receive it? Check your Spam or Promotions folder.
                 </p>
               </div>
@@ -371,82 +372,82 @@ export default function AuthModal() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Full Name */}
                 <div className="sm:col-span-2 space-y-1">
-                  <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                  <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                     Full Name *
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Shresht A H"
+                      placeholder="e.g. Swayam A H"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-xs text-[#1C132B] placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs text-[#29242D] placeholder:text-[#8B8593] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner"
                     />
                   </div>
                 </div>
 
                 {/* Email Address */}
                 <div className="space-y-1">
-                  <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                  <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                     Email Address *
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                     <input
                       type="email"
                       required
                       placeholder="patron@gmail.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-xs text-[#1C132B] placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs text-[#29242D] placeholder:text-[#8B8593] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner"
                     />
                   </div>
                 </div>
 
                 {/* Contact Number (Phone) */}
                 <div className="space-y-1">
-                  <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                  <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                     Contact Number *
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                     <input
                       type="tel"
                       required
                       placeholder="+91 98765 43210"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-xs text-[#1C132B] placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs text-[#29242D] placeholder:text-[#8B8593] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner"
                     />
                   </div>
                 </div>
 
                 {/* Date of Birth */}
                 <div className="space-y-1">
-                  <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                  <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                     Date of Birth *
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                     <input
                       type="date"
                       required
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-xs text-[#1C132B] focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs cursor-pointer"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs text-[#29242D] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner cursor-pointer"
                     />
                   </div>
                 </div>
 
                 {/* Pincode */}
                 <div className="space-y-1">
-                  <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                  <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                     Pincode *
                   </label>
                   <div className="relative">
-                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                     <input
                       type="text"
                       required
@@ -454,7 +455,7 @@ export default function AuthModal() {
                       placeholder="e.g. 411001"
                       value={pincode}
                       onChange={(e) => setPincode(e.target.value)}
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-xs font-mono font-bold text-[#1C132B] placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs font-mono font-bold text-[#29242D] placeholder:text-[#8B8593] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner"
                     />
                   </div>
                 </div>
@@ -462,29 +463,29 @@ export default function AuthModal() {
                 {/* Password */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                    <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                       Password *
                     </label>
                     {password && (
-                      <span className={`text-[10px] font-mono font-bold ${strength.color.split(' ')[1]}`}>
+                      <span className={`text-[10px] font-sans font-bold ${strength.color.split(' ')[1]}`}>
                         {strength.text}
                       </span>
                     )}
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       placeholder="Create secure password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-xs text-[#1C132B] placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs text-[#29242D] placeholder:text-[#8B8593] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-700"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5C5562] hover:text-[#79539B]"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -493,23 +494,23 @@ export default function AuthModal() {
 
                 {/* Confirm Password */}
                 <div className="space-y-1">
-                  <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                  <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                     Confirm Password *
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       required
                       placeholder="Re-enter password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-xs text-[#1C132B] placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs text-[#29242D] placeholder:text-[#8B8593] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-700"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5C5562] hover:text-[#79539B]"
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -523,18 +524,18 @@ export default function AuthModal() {
               <div className="space-y-3.5">
                 {/* Email Address */}
                 <div className="space-y-1.5">
-                  <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                  <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                     Email Address *
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                     <input
                       type="email"
                       required
                       placeholder="patron@gmail.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl bg-purple-50/40 border border-purple-200 text-xs text-[#1C132B] placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs"
+                      className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs text-[#29242D] placeholder:text-[#8B8593] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner"
                     />
                   </div>
                 </div>
@@ -542,31 +543,31 @@ export default function AuthModal() {
                 {/* Password */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10.5px] font-mono font-bold tracking-wider uppercase text-[#1C132B]">
+                    <label className="block text-[11px] font-sans font-bold tracking-wider uppercase text-[#29242D]">
                       Password *
                     </label>
                     <button
                       type="button"
                       onClick={() => handleSwitchMode('forgot-password')}
-                      className="text-[11px] font-semibold text-purple-700 hover:text-purple-900 transition cursor-pointer"
+                      className="text-[11px] font-medium text-[#79539B] hover:text-[#55376F] transition cursor-pointer"
                     >
                       Forgot Password?
                     </button>
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-700" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#79539B]" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
-                      placeholder="Enter your registered password"
+                      placeholder="Enter your confidential password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-xl bg-purple-50/40 border border-purple-200 text-xs text-[#1C132B] placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/15 transition-all shadow-xs"
+                      className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-full bg-[#F8F6F2] border border-[#EAE2F2] text-xs text-[#29242D] placeholder:text-[#8B8593] focus:outline-none focus:border-[#79539B] focus:ring-2 focus:ring-[#79539B]/20 transition-all shadow-inner"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-700"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5C5562] hover:text-[#79539B]"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -575,12 +576,12 @@ export default function AuthModal() {
               </div>
             )}
 
-            {/* Submit Action Button */}
+            {/* Submit Action Button (Restrained Purple Accent) */}
             <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-[#1C132B] via-[#2D1B4E] to-[#1C132B] hover:from-[#2D1B4E] hover:to-[#3D256B] text-white font-extrabold text-xs uppercase tracking-[0.16em] shadow-lg shadow-purple-950/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3 sm:py-3.5 rounded-xl bg-[#79539B] hover:bg-[#684587] text-white font-semibold text-xs uppercase tracking-wider shadow-md shadow-[#79539B]/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -596,7 +597,7 @@ export default function AuthModal() {
                         ? 'Create Sanctuary Account'
                         : 'Sign In to Sanctuary'}
                     </span>
-                    <ArrowRight className="w-4 h-4 text-[#D4AF37]" />
+                    <ArrowRight className="w-4 h-4 text-[#C8A65E]" />
                   </>
                 )}
               </button>
@@ -604,12 +605,12 @@ export default function AuthModal() {
           </form>
 
           {/* Footer Mode Switchers */}
-          <div className="mt-5 pt-4 border-t border-purple-100 text-center text-xs text-[#6B5C82]">
+          <div className="mt-5 pt-4 border-t border-[#EAE2F2] text-center text-xs text-[#5C5562]">
             {isForgot ? (
               <button
                 type="button"
                 onClick={() => handleSwitchMode('login')}
-                className="font-bold text-purple-800 hover:text-purple-950 transition cursor-pointer"
+                className="font-semibold text-[#79539B] hover:text-[#55376F] transition cursor-pointer"
               >
                 ← Back to Sign In
               </button>
@@ -619,7 +620,7 @@ export default function AuthModal() {
                 <button
                   type="button"
                   onClick={() => handleSwitchMode('login')}
-                  className="font-bold text-purple-800 hover:text-purple-950 underline transition cursor-pointer"
+                  className="font-semibold text-[#79539B] hover:text-[#55376F] underline transition cursor-pointer"
                 >
                   Sign In
                 </button>
@@ -630,7 +631,7 @@ export default function AuthModal() {
                 <button
                   type="button"
                   onClick={() => handleSwitchMode('register')}
-                  className="font-bold text-purple-800 hover:text-purple-950 underline transition cursor-pointer"
+                  className="font-semibold text-[#79539B] hover:text-[#55376F] underline transition cursor-pointer"
                 >
                   Create Account
                 </button>
@@ -639,19 +640,21 @@ export default function AuthModal() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Luxury Art Visual (for Login / Register) */}
+        {/* RIGHT COLUMN: Luxury Art Visual with Floating 3D Spheres on Light Sanctuary Background */}
         {!isForgot && (
           <div
             className={`w-full ${
               isRegister ? 'md:w-[42%]' : 'md:w-[46%]'
-            } relative bg-gradient-to-br from-[#1C132B] via-[#2A1647] to-[#120B20] text-white p-7 sm:p-9 flex flex-col justify-between overflow-hidden`}
+            } relative bg-gradient-to-br from-[#F8F6F2] via-[#EAE2F2]/60 to-[#F8F6F2] text-[#29242D] p-7 sm:p-9 flex flex-col justify-between overflow-hidden border-t md:border-t-0 md:border-l border-[#EAE2F2]`}
           >
-            {/* Ambient Purple Glow */}
-            <div className="absolute -top-12 -right-12 w-64 h-64 bg-purple-500/25 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+            {/* Embedded Floating 3D Crystal Spheres */}
+            <Floating3DSpheres />
+            {/* Ambient Soft Glows */}
+            <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#79539B]/25 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-[#C8A65E]/20 rounded-full blur-3xl pointer-events-none" />
 
             {/* Background Crystal Image */}
-            <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity">
+            <div className="absolute inset-0 z-0 opacity-30 mix-blend-luminosity">
               <Image
                 src="/images/crystal-sanctuary-bg.jpg"
                 alt="Sumuk Crystalz Sanctuary"
@@ -662,30 +665,30 @@ export default function AuthModal() {
 
             {/* Top Badge */}
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[10px] font-mono tracking-widest text-purple-200 uppercase font-bold">
-                <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-[#EAE2F2] text-[10px] font-sans tracking-widest text-[#79539B] uppercase font-semibold shadow-xs">
+                <Sparkles className="w-3 h-3 text-[#C8A65E]" />
                 <span>SACRED PATRON SANCTUARY</span>
               </div>
             </div>
 
-            {/* Middle Quote */}
+            {/* Middle Quote in Cormorant Garamond / Serif */}
             <div className="relative z-10 py-8 space-y-2">
-              <h3 className="font-serif text-xl sm:text-2xl font-bold leading-tight text-white">
+              <h3 className="font-serif text-xl sm:text-2xl font-bold leading-tight text-[#29242D]">
                 &ldquo;Pure crystals for a brighter, consecrated tomorrow.&rdquo;
               </h3>
-              <p className="text-xs text-purple-200/80 leading-relaxed font-sans">
-                Each specimen is authenticated, vibrationally consecrated, and protected with insured door-to-door transit.
+              <p className="text-xs text-[#29242D]/70 leading-relaxed font-sans">
+                Each specimen is authenticated, vibrationally consecrated with traditional sound vibrations, and protected with insured door-to-door transit.
               </p>
             </div>
 
             {/* Bottom Trust Row */}
-            <div className="relative z-10 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-purple-200/90 font-mono">
+            <div className="relative z-10 pt-4 border-t border-[#EAE2F2] flex items-center justify-between text-[11px] text-[#29242D]/80 font-sans">
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#C8A65E]" />
                 <span>Secure Cloud Auth</span>
               </span>
               <span>•</span>
-              <span>Genuine Crystals</span>
+              <span className="text-[#79539B] font-semibold">Genuine Natural Crystals</span>
             </div>
           </div>
         )}

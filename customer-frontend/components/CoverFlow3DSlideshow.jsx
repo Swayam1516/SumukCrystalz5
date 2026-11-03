@@ -15,6 +15,8 @@ import {
   Eye,
   ArrowRight,
   ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 // The 6 Flagship Crystal Products specified in the Master Prompt
@@ -271,7 +273,19 @@ export default function CoverFlow3DSlideshow({ className = '' }) {
       }}
       aria-label="Sumuk Crystalz 3D Cover Flow Product Slideshow"
     >
-
+      {/* ── Section Title & Badge ── */}
+      <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-8 space-y-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono uppercase tracking-widest text-[#B45309] bg-amber-50 border border-amber-200 shadow-xs">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Interactive 3D Cover Flow</span>
+        </div>
+        <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold text-stone-900 tracking-tight">
+          Featured Sanctuary Masterworks
+        </h2>
+        <p className="text-xs sm:text-sm text-stone-600 font-sans max-w-lg mx-auto">
+          Drag, swipe, or click through our consecrated gemstone specimens attuned with authentic Vedic energy.
+        </p>
+      </div>
 
       {/* ── 3D Cover Flow Stage ── */}
       <div
@@ -287,6 +301,32 @@ export default function CoverFlow3DSlideshow({ className = '' }) {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
+        {/* Floating Left Navigation Arrow */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePrev();
+          }}
+          className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-[#D4AF37]/50 hover:border-[#D4AF37] text-stone-800 hover:text-amber-700 shadow-[0_8px_25px_rgba(212,175,55,0.25)] flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md"
+          aria-label="Previous Featured Product"
+        >
+          <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
+        </button>
+
+        {/* Floating Right Navigation Arrow */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNext();
+          }}
+          className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-[#D4AF37]/50 hover:border-[#D4AF37] text-stone-800 hover:text-amber-700 shadow-[0_8px_25px_rgba(212,175,55,0.25)] flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md"
+          aria-label="Next Featured Product"
+        >
+          <ChevronRight className="w-5 h-5 stroke-[2.2]" />
+        </button>
+
         {/* Carousel 3D Viewport Track */}
         <div
           className="relative w-full h-[480px] sm:h-[520px] flex items-center justify-center"

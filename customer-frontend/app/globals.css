@@ -4,33 +4,38 @@
 
 @layer base {
   :root {
-    --bg-main: #FDFBF7;
-    --bg-card: rgba(255, 255, 255, 0.94);
-    --crystal-glow: rgba(212, 175, 55, 0.35);
-    --crystal-accent: #B45309;
-    --crystal-border: rgba(212, 175, 55, 0.28);
-    --crystal-shadow: rgba(180, 130, 40, 0.12);
-    --pointer-x: 50%;
-    --pointer-y: 50%;
+    /* Sumuk Crystalz5 Design System Palette Tokens */
+    --color-ivory: #F8F6F2;
+    --color-lavender: #EAE2F2;
+    --color-purple: #79539B;
+    --color-gold: #C8A65E;
+    --color-charcoal: #29242D;
 
-    /* Ivory Gold Light Luxury Theme Tokens (Matching Image 2) */
+    --bg-main: #F8F6F2;
+    --bg-card: rgba(255, 255, 255, 0.88);
+    --crystal-glow: rgba(200, 166, 94, 0.25);
+    --crystal-accent: #79539B;
+    --crystal-border: rgba(234, 226, 242, 0.9);
+    --crystal-shadow: rgba(41, 36, 45, 0.05);
+
+    /* Ivory Lavender Luxury Theme Tokens */
     --sanctuary-bg-image: url('/images/luxury-crystal-sanctuary-light.jpg');
-    --sanctuary-overlay: rgba(253, 251, 247, 0.88);
+    --sanctuary-overlay: rgba(248, 246, 242, 0.92);
     --sanctuary-glass: rgba(255, 255, 255, 0.85);
-    --sanctuary-glass-border: rgba(212, 175, 55, 0.25);
-    --sanctuary-text-primary: #1F1A15;
-    --sanctuary-text-secondary: #5C5245;
-    --sanctuary-accent-gold: #B45309;
-    --sanctuary-accent-amethyst: #7E22CE;
+    --sanctuary-glass-border: rgba(234, 226, 242, 0.85);
+    --sanctuary-text-primary: #29242D;
+    --sanctuary-text-secondary: #5C5562;
+    --sanctuary-accent-gold: #C8A65E;
+    --sanctuary-accent-amethyst: #79539B;
 
     /* Light Spiritual Store Tokens */
-    --store-bg: #FDFBF7;
-    --store-card-bg: #ffffff;
-    --store-border: #EAE3D5;
-    --store-text-main: #1F1A15;
-    --store-text-muted: #6B6357;
-    --store-accent-red: #BA3C2A;
-    --store-accent-gold: #D4AF37;
+    --store-bg: #F8F6F2;
+    --store-card-bg: #FFFFFF;
+    --store-border: #EAE2F2;
+    --store-text-main: #29242D;
+    --store-text-muted: #5C5562;
+    --store-accent-red: #BE123C;
+    --store-accent-gold: #C8A65E;
   }
 
   html {
@@ -39,27 +44,102 @@
   }
 
   body {
-    background-color: #FAF7F2;
+    background-color: #F8F6F2;
     background-image: 
-      radial-gradient(ellipse at 50% 0%, rgba(253, 230, 138, 0.22) 0%, transparent 60%),
-      radial-gradient(ellipse at 50% 100%, rgba(212, 175, 55, 0.12) 0%, transparent 50%),
-      linear-gradient(180deg, rgba(250, 247, 242, 0.92) 0%, rgba(253, 251, 247, 0.96) 100%),
-      url('/images/luxury-crystal-sanctuary-light.jpg');
+      radial-gradient(ellipse at 50% 0%, rgba(234, 226, 242, 0.35) 0%, transparent 60%),
+      radial-gradient(ellipse at 85% 85%, rgba(200, 166, 94, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 15% 100%, rgba(121, 83, 155, 0.06) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(248, 246, 242, 0.95) 0%, rgba(248, 246, 242, 0.98) 100%);
     background-size: cover;
     background-position: center top;
     background-attachment: fixed;
     background-repeat: no-repeat;
-    color: #1F1A15;
-    font-family: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #29242D;
+    font-family: 'Inter', 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     overflow-x: hidden;
     max-width: 100vw;
     letter-spacing: 0.01em;
   }
 
   ::selection {
-    background-color: #FBBF24;
-    color: #1F1A15;
+    background-color: #EAE2F2;
+    color: #79539B;
   }
+}
+
+/* Glassmorphism System Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(234, 226, 242, 0.9);
+  box-shadow: 0 4px 24px -2px rgba(41, 36, 45, 0.04);
+}
+
+.glass-panel-subtle {
+  background: rgba(248, 246, 242, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(234, 226, 242, 0.7);
+  box-shadow: 0 2px 12px rgba(41, 36, 45, 0.03);
+}
+
+.glass-card-interactive {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(234, 226, 242, 0.9);
+  box-shadow: 0 4px 20px rgba(41, 36, 45, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: rgba(121, 83, 155, 0.4);
+  box-shadow: 0 10px 30px rgba(121, 83, 155, 0.08);
+}
+
+/* Restrained Primary Button */
+.btn-primary-purple {
+  background-color: #79539B;
+  color: #FFFFFF;
+  border: 1px solid #684587;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(121, 83, 155, 0.22);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-purple:hover {
+  background-color: #684587;
+  box-shadow: 0 6px 20px rgba(121, 83, 155, 0.32);
+  transform: translateY(-1px);
+}
+
+/* Secondary Button */
+.btn-secondary-ivory {
+  background-color: #FFFFFF;
+  color: #29242D;
+  border: 1px solid #EAE2F2;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(41, 36, 45, 0.03);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-ivory:hover {
+  background-color: #F8F6F2;
+  border-color: #D8CBE4;
+  color: #79539B;
+}
+
+/* Highly Readable Price Typography */
+.price-tag {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #29242D;
+  letter-spacing: -0.015em;
 }
 
 /* ==========================================================================

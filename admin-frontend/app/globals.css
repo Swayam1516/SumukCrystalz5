@@ -3,70 +3,109 @@
 @tailwind utilities;
 
 :root {
-  --background: #06050a;
-  --foreground: #f3f2fa;
+  /* Sumuk Crystalz5 Design System Palette Tokens */
+  --color-ivory: #F8F6F2;
+  --color-lavender: #EAE2F2;
+  --color-purple: #79539B;
+  --color-gold: #C8A65E;
+  --color-charcoal: #29242D;
+
+  --background: #F8F6F2;
+  --foreground: #29242D;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Luxury Glass Panel */
-.glass-panel-3d {
-  background: linear-gradient(135deg, rgba(20, 16, 32, 0.85) 0%, rgba(10, 8, 18, 0.95) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 1.5rem;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+/* Fluid Sanctuary Marble Background Effect */
+.sanctuary-canvas-bg {
+  background-color: #F8F6F2;
+  background-image: 
+    radial-gradient(ellipse at 50% 0%, rgba(234, 226, 242, 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse at 90% 90%, rgba(200, 166, 94, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 10% 100%, rgba(121, 83, 155, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(248, 246, 242, 0.95) 0%, rgba(248, 246, 242, 0.98) 100%);
 }
 
-/* Luxury Gold & Obsidian Buttons */
-.btn-pill-primary {
-  background: linear-gradient(135deg, #f5d47a 0%, #e5b84c 50%, #c69527 100%);
-  color: #07060a;
-  font-weight: 700;
+/* Glassmorphism System Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(234, 226, 242, 0.9);
+  box-shadow: 0 4px 24px -2px rgba(41, 36, 45, 0.04);
+}
+
+.glass-panel-subtle {
+  background: rgba(248, 246, 242, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(234, 226, 242, 0.7);
+  box-shadow: 0 2px 12px rgba(41, 36, 45, 0.03);
+}
+
+.glass-card-interactive {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(234, 226, 242, 0.9);
+  box-shadow: 0 4px 20px rgba(41, 36, 45, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25);
 }
 
-.btn-pill-primary:hover {
+.glass-card-interactive:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+  border-color: rgba(121, 83, 155, 0.4);
+  box-shadow: 0 10px 30px rgba(121, 83, 155, 0.08);
 }
 
-.btn-pill-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #f5d47a;
+/* Restrained Primary Button */
+.btn-primary-purple {
+  background-color: #79539B;
+  color: #FFFFFF;
+  border: 1px solid #684587;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-pill-secondary:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: rgba(212, 175, 55, 0.6);
-  color: #ffffff;
-}
-
-.badge-3d {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.4) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.option-btn-3d {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 14px rgba(121, 83, 155, 0.22);
   transition: all 0.2s ease;
 }
 
-.option-btn-3d:hover {
-  background: rgba(212, 175, 55, 0.12);
-  border-color: rgba(212, 175, 55, 0.4);
+.btn-primary-purple:hover {
+  background-color: #684587;
+  box-shadow: 0 6px 20px rgba(121, 83, 155, 0.32);
+  transform: translateY(-1px);
+}
+
+/* Secondary Button */
+.btn-secondary-ivory {
+  background-color: #FFFFFF;
+  color: #29242D;
+  border: 1px solid #EAE2F2;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(41, 36, 45, 0.03);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-ivory:hover {
+  background-color: #F8F6F2;
+  border-color: #D8CBE4;
+  color: #79539B;
+}
+
+/* Highly Readable Price Typography */
+.price-tag {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #29242D;
+  letter-spacing: -0.015em;
 }
 
 /* Custom Scrollbar */
@@ -75,12 +114,12 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #07050d;
+  background: #F8F6F2;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.3);
+  background: #D8CBE4;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.6);
+  background: #BEA6D3;
 }

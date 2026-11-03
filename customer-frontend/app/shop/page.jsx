@@ -344,7 +344,8 @@ function StorefrontContent() {
         const name = (p.name || '').toLowerCase();
         const cat = (p.category || '').toLowerCase();
         const crystal = (p.crystal_type || p.crystalType || '').toLowerCase();
-        return name.includes(q) || cat.includes(q) || crystal.includes(q);
+        const pid = (p.product_id || p.productId || '').toLowerCase();
+        return name.includes(q) || cat.includes(q) || crystal.includes(q) || pid.includes(q);
       });
     }
 
@@ -757,6 +758,14 @@ function StorefrontContent() {
                           {prod.name}
                         </h3>
                       </Link>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] font-mono font-bold text-[#79539B] bg-[#EAE2F2] px-1.5 py-0.5 rounded border border-[#79539B]/30">
+                          {prod.product_id || prod.productId || 'BR001'}
+                        </span>
+                        <span className="text-[10px] text-stone-500 font-sans truncate">
+                          {prod.category || 'Bracelet'}
+                        </span>
+                      </div>
                       <p className="text-sm font-extrabold text-stone-950 font-sans mt-0.5">
                         ₹{prodPrice.toLocaleString('en-IN')}
                       </p>
@@ -837,6 +846,11 @@ function StorefrontContent() {
                         {prod.name}
                       </h3>
                     </Link>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className="text-[9px] font-mono font-bold text-[#79539B] bg-[#EAE2F2] px-1 py-0.2 rounded border border-[#79539B]/30">
+                        {prod.product_id || prod.productId || 'BR001'}
+                      </span>
+                    </div>
                     <p className="text-xs font-black text-stone-950 font-sans mt-0.5">
                       ₹{prodPrice.toLocaleString('en-IN')}
                     </p>

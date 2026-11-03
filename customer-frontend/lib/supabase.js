@@ -25,6 +25,36 @@ export function markSupabaseOffline() {
 }
 
 /**
+ * =========================================================================
+ * PRODUCT ID GENERATION & SEQUENCE SYSTEM (SUMUK CRYSTALZ 5)
+ * =========================================================================
+ */
+export const CANONICAL_PRODUCT_CATEGORIES = [
+  { category: 'Bracelet', prefix: 'BR', description: 'Sacred wrist adornments & energy bands' },
+  { category: 'Mala', prefix: 'MA', description: '108 bead prayer & meditation malas' },
+  { category: 'Home Decor', prefix: 'HO', description: 'Geodes, clusters, spheres & altar decor' },
+  { category: 'Other', prefix: 'OT', description: 'Curated specimens, wands & miscellaneous masterworks' },
+];
+
+export function deriveCategoryPrefix(categoryName) {
+  if (!categoryName || typeof categoryName !== 'string') return 'OT';
+  const clean = categoryName.trim().toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+  if (clean === 'BRACELET' || clean.startsWith('BRACELET') || clean === 'ENERGY BANDS') return 'BR';
+  if (clean === 'MALA' || clean.startsWith('MALA') || clean === 'SACRED MALAS') return 'MA';
+  if (clean === 'HOME DECOR' || clean.startsWith('HOME DECOR') || clean === 'RAW GEODES' || clean === 'TUMBLE STONES') return 'HO';
+  if (clean === 'OTHER') return 'OT';
+  if (clean === 'CRYSTAL TREES') return 'CT';
+  if (clean === 'RAW CRYSTALS') return 'RA';
+  if (clean === 'GIFT SETS') return 'GI';
+
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase().slice(0, 2);
+  }
+  return (words[0] || 'OT').toUpperCase().slice(0, 2).padEnd(2, 'X');
+}
+
+/**
  * Normalizes a raw Supabase product record into a unified object
  */
 export function normalizeProduct(raw) {
@@ -64,9 +94,15 @@ export function normalizeProduct(raw) {
     ? Math.round(((originalPrice - sellingPrice) / originalPrice) * 100)
     : Number(raw.discount_percentage || 0);
 
+  const rawCat = raw.category || 'Bracelet';
+  const explicitProductId = (raw.product_id || raw.productId || '').trim();
+  const resolvedProductId = explicitProductId || `${deriveCategoryPrefix(rawCat)}001`;
+
   return {
     ...raw,
     id: raw.id,
+    product_id: resolvedProductId,
+    productId: resolvedProductId,
     slug: raw.slug || (raw.name ? raw.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : `specimen-${raw.id}`),
     name: raw.name || raw.title || 'Sacred Crystal Specimen',
     title: raw.name || raw.title || 'Sacred Crystal Specimen',

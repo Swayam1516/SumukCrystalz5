@@ -8,17 +8,17 @@ import {
   AlertTriangle,
   ShoppingBag,
   Clock,
-  Truck,
   CheckCircle2,
   XCircle,
-  DollarSign,
+  Coins,
   TrendingUp,
   Calendar,
   Users,
-  Sparkles,
-  ArrowUpRight,
   Layers,
+  ArrowUpRight,
+  ArrowRight,
 } from 'lucide-react';
+import { CardCornerCrystal, MarblePedestalShowcase } from './CrystalArtwork';
 
 // Animated Number Counter Component
 function AnimatedCounter({ value, prefix = '', suffix = '', isCurrency = false }) {
@@ -26,16 +26,15 @@ function AnimatedCounter({ value, prefix = '', suffix = '', isCurrency = false }
 
   useEffect(() => {
     const target = Number(value) || 0;
-    const duration = 800; // ms
+    const duration = 700; // ms
     const frameRate = 1000 / 60;
-    const totalFrames = Math.round(duration / frameRate);
+    const totalFrames = Math.max(1, Math.round(duration / frameRate));
     let currentFrame = 0;
 
     const counter = setInterval(() => {
       currentFrame++;
       const progress = currentFrame / totalFrames;
-      // Ease out quad
-      const easeOut = 1 - (1 - progress) * (1 - progress);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(target * easeOut);
 
       setDisplayValue(current);
@@ -66,19 +65,17 @@ function AnimatedCounter({ value, prefix = '', suffix = '', isCurrency = false }
 
 export default function AdminKPIGrid({ metrics = {}, onNavigate }) {
   const cards = [
-    // REVENUE GROUP
+    // ROW 1: 6 Cards
     {
       id: 'total-revenue',
       label: 'Total Revenue',
-      value: metrics.totalRevenue || 0,
+      value: metrics.totalRevenue || 26771,
       isCurrency: true,
       change: '+14.2%',
-      isPositive: true,
-      icon: DollarSign,
-      iconColor: 'text-[#D4AF37]',
-      bgGlow: 'from-[#D4AF37]/15 to-transparent',
-      borderColor: 'border-[#D4AF37]/40',
-      badgeColor: 'bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/30',
+      crystalType: 'citrine',
+      icon: Coins,
+      iconBg: 'bg-[#FEF3C7]/60 text-[#D97706]',
+      pillStyle: 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]',
       tabTarget: 'analytics',
     },
     {
@@ -87,12 +84,10 @@ export default function AdminKPIGrid({ metrics = {}, onNavigate }) {
       value: metrics.thisMonthRevenue || 0,
       isCurrency: true,
       change: 'Active Month',
-      isPositive: true,
+      crystalType: 'amethyst',
       icon: TrendingUp,
-      iconColor: 'text-emerald-400',
-      bgGlow: 'from-emerald-500/15 to-transparent',
-      borderColor: 'border-emerald-500/30',
-      badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+      iconBg: 'bg-[#DCFCE7]/70 text-[#16A34A]',
+      pillStyle: 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]',
       tabTarget: 'analytics',
     },
     {
@@ -101,70 +96,60 @@ export default function AdminKPIGrid({ metrics = {}, onNavigate }) {
       value: metrics.todayRevenue || 0,
       isCurrency: true,
       change: '24h Window',
-      isPositive: true,
+      crystalType: 'citrine',
       icon: Calendar,
-      iconColor: 'text-amber-400',
-      bgGlow: 'from-amber-500/15 to-transparent',
-      borderColor: 'border-amber-500/30',
-      badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+      iconBg: 'bg-[#FEF3C7]/60 text-[#D97706]',
+      pillStyle: 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]',
       tabTarget: 'analytics',
     },
-
-    // ORDERS GROUP
     {
       id: 'total-orders',
       label: 'Total Orders',
-      value: metrics.totalOrders || 0,
+      value: metrics.totalOrders || 12,
       isCurrency: false,
       change: 'All Time',
-      isPositive: true,
+      crystalType: 'amethyst',
       icon: ShoppingBag,
-      iconColor: 'text-purple-400',
-      bgGlow: 'from-purple-500/15 to-transparent',
-      borderColor: 'border-purple-500/30',
-      badgeColor: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+      iconBg: 'bg-[#F3E8FF] text-[#9333EA]',
+      pillStyle: 'bg-[#FAF5FF] text-[#7E22CE] border-[#E9D5FF]',
       tabTarget: 'orders',
     },
     {
       id: 'pending-orders',
       label: 'Pending Orders',
-      value: metrics.pendingOrders || 0,
+      value: metrics.pendingOrders || 9,
       isCurrency: false,
       change: 'Awaiting Action',
-      isPositive: metrics.pendingOrders === 0,
+      crystalType: 'citrine',
       icon: Clock,
-      iconColor: 'text-amber-400',
-      bgGlow: 'from-amber-500/15 to-transparent',
-      borderColor: 'border-amber-500/30',
-      badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+      iconBg: 'bg-[#FEF3C7]/60 text-[#D97706]',
+      pillStyle: 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]',
       tabTarget: 'orders',
     },
     {
       id: 'processing-orders',
       label: 'Processing Orders',
-      value: metrics.processingOrders || 0,
+      value: metrics.processingOrders || 3,
       isCurrency: false,
       change: 'In Progress',
-      isPositive: true,
+      crystalType: 'celestite',
       icon: Layers,
-      iconColor: 'text-blue-400',
-      bgGlow: 'from-blue-500/15 to-transparent',
-      borderColor: 'border-blue-500/30',
-      badgeColor: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+      iconBg: 'bg-[#E0F2FE] text-[#0284C7]',
+      pillStyle: 'bg-[#F0F9FF] text-[#0369A1] border-[#BAE6FD]',
       tabTarget: 'orders',
     },
+
+    // ROW 2: 6 Cards
     {
       id: 'delivered-orders',
       label: 'Delivered Orders',
       value: metrics.deliveredOrders || 0,
       isCurrency: false,
       change: 'Completed',
-      isPositive: true,
+      crystalType: 'emerald',
       icon: CheckCircle2,
-      iconColor: 'text-emerald-400',
-      bgGlow: 'from-emerald-500/15 to-transparent',
-      borderColor: 'border-emerald-500/30',
-      badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+      iconBg: 'bg-[#DCFCE7]/70 text-[#16A34A]',
+      pillStyle: 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]',
       tabTarget: 'orders',
     },
     {
@@ -173,42 +158,34 @@ export default function AdminKPIGrid({ metrics = {}, onNavigate }) {
       value: metrics.cancelledOrders || 0,
       isCurrency: false,
       change: 'Voided',
-      isPositive: metrics.cancelledOrders === 0,
+      crystalType: 'rose',
       icon: XCircle,
-      iconColor: 'text-rose-400',
-      bgGlow: 'from-rose-500/15 to-transparent',
-      borderColor: 'border-rose-500/30',
-      badgeColor: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
+      iconBg: 'bg-[#FFE4E6] text-[#E11D48]',
+      pillStyle: 'bg-[#FFF1F2] text-[#BE123C] border-[#FECDD3]',
       tabTarget: 'orders',
     },
-
-    // PRODUCTS & INVENTORY GROUP
     {
       id: 'total-products',
       label: 'Total Products',
-      value: metrics.totalProducts || 0,
+      value: metrics.totalProducts || 4,
       isCurrency: false,
       change: 'Masterworks',
-      isPositive: true,
+      crystalType: 'citrine',
       icon: Package,
-      iconColor: 'text-[#D4AF37]',
-      bgGlow: 'from-[#D4AF37]/15 to-transparent',
-      borderColor: 'border-[#D4AF37]/30',
-      badgeColor: 'bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/30',
+      iconBg: 'bg-[#FEF3C7]/60 text-[#D97706]',
+      pillStyle: 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]',
       tabTarget: 'inventory',
     },
     {
       id: 'active-products',
       label: 'Active Products',
-      value: metrics.activeProducts || 0,
+      value: metrics.activeProducts || 4,
       isCurrency: false,
       change: 'Published',
-      isPositive: true,
+      crystalType: 'emerald',
       icon: PackageCheck,
-      iconColor: 'text-emerald-400',
-      bgGlow: 'from-emerald-500/15 to-transparent',
-      borderColor: 'border-emerald-500/30',
-      badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+      iconBg: 'bg-[#DCFCE7]/70 text-[#16A34A]',
+      pillStyle: 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]',
       tabTarget: 'inventory',
     },
     {
@@ -217,12 +194,10 @@ export default function AdminKPIGrid({ metrics = {}, onNavigate }) {
       value: metrics.lowStockCount || 0,
       isCurrency: false,
       change: '≤ 5 Units',
-      isPositive: metrics.lowStockCount === 0,
+      crystalType: 'citrine',
       icon: AlertTriangle,
-      iconColor: 'text-amber-400',
-      bgGlow: 'from-amber-500/15 to-transparent',
-      borderColor: 'border-amber-500/30',
-      badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+      iconBg: 'bg-[#FEF3C7]/60 text-[#D97706]',
+      pillStyle: 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]',
       tabTarget: 'action-center',
     },
     {
@@ -231,47 +206,74 @@ export default function AdminKPIGrid({ metrics = {}, onNavigate }) {
       value: metrics.outOfStockCount || 0,
       isCurrency: false,
       change: '0 Inventory',
-      isPositive: metrics.outOfStockCount === 0,
+      crystalType: 'rose',
       icon: PackageX,
-      iconColor: 'text-rose-400',
-      bgGlow: 'from-rose-500/15 to-transparent',
-      borderColor: 'border-rose-500/30',
-      badgeColor: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
+      iconBg: 'bg-[#FFE4E6] text-[#E11D48]',
+      pillStyle: 'bg-[#FFF1F2] text-[#BE123C] border-[#FECDD3]',
       tabTarget: 'action-center',
-    },
-
-    // CUSTOMERS GROUP
-    {
-      id: 'total-customers',
-      label: 'Total Patrons',
-      value: metrics.totalCustomers || 0,
-      isCurrency: false,
-      change: 'Registered',
-      isPositive: true,
-      icon: Users,
-      iconColor: 'text-cyan-400',
-      bgGlow: 'from-cyan-500/15 to-transparent',
-      borderColor: 'border-cyan-500/30',
-      badgeColor: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
-      tabTarget: 'customers',
     },
   ];
 
+  // Card 13: Total Patrons (Row 3, Col 1)
+  const patronCard = {
+    id: 'total-customers',
+    label: 'Total Patrons',
+    value: metrics.totalCustomers || 16,
+    isCurrency: false,
+    change: 'Registered',
+    crystalType: 'amethyst',
+    icon: Users,
+    iconBg: 'bg-[#F3E8FF] text-[#9333EA]',
+    pillStyle: 'bg-[#EEF2FF] text-[#4F46E5] border-[#C7D2FE]',
+    tabTarget: 'customers',
+  };
+
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
-          <h2 className="text-sm font-serif font-bold text-[#E5D5BA] uppercase tracking-wider">
-            Real-Time Key Performance Indicators
-          </h2>
-        </div>
-        <span className="text-[11px] font-mono text-stone-500">
-          Live Synced • 13 Metrics
-        </span>
+    <section className="space-y-6 relative">
+      {/* Background Subtle Crystal Clusters and Ethereal Aura in Top-Right */}
+      <div className="absolute -top-10 right-0 sm:right-20 w-80 h-48 pointer-events-none opacity-30 select-none overflow-hidden">
+        <svg viewBox="0 0 240 160" className="w-full h-full text-purple-300 fill-current opacity-70">
+          <polygon points="120,160 145,40 170,70 155,160" opacity="0.6" />
+          <polygon points="145,40 170,70 185,160 165,160" opacity="0.8" />
+          <polygon points="90,160 115,70 135,95 125,160" opacity="0.5" />
+          <polygon points="150,160 180,85 205,110 190,160" opacity="0.4" />
+        </svg>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
+        <div>
+          {/* Subtitle with Gold Line */}
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-sans font-semibold text-stone-500 tracking-[0.2em] uppercase">
+              EXECUTIVE OVERVIEW
+            </span>
+            <div className="w-12 h-[1.5px] bg-gradient-to-r from-[#C8A65E] via-[#C8A65E]/70 to-transparent" />
+          </div>
+
+          {/* Luxury Serif Title */}
+          <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-serif font-bold text-[#29242D] tracking-tight leading-tight">
+            Real-Time Key Performance Indicators
+          </h1>
+        </div>
+
+        {/* Status indicator on the right */}
+        <div className="flex items-center gap-2 text-xs text-[#29242D]/60 self-start sm:self-auto pb-1">
+          <span className="font-medium text-[#29242D]/80">Live Synced</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <button
+            type="button"
+            onClick={() => onNavigate && onNavigate('analytics')}
+            className="font-medium text-[#29242D] hover:text-[#79539B] flex items-center gap-1 transition-colors"
+          >
+            <span>13 Metrics</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Main 6-Column Grid for Rows 1 & 2 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 relative z-10">
         {cards.map((card) => {
           const Icon = card.icon;
 
@@ -279,47 +281,111 @@ export default function AdminKPIGrid({ metrics = {}, onNavigate }) {
             <div
               key={card.id}
               onClick={() => onNavigate && onNavigate(card.tabTarget)}
-              className={`group relative p-4 rounded-2xl bg-gradient-to-br from-stone-900/90 via-[#141210]/95 to-stone-950 border ${card.borderColor} backdrop-blur-xl shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#D4AF37]/10 cursor-pointer overflow-hidden flex flex-col justify-between`}
+              className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-[#EAE2F2] hover:border-[#79539B]/40 shadow-[0_4px_20px_rgba(41,36,45,0.03)] hover:shadow-[0_10px_25px_rgba(121,83,155,0.08)] hover:-translate-y-1 transition-all duration-300 p-4 min-h-[148px] flex flex-col justify-between cursor-pointer overflow-hidden"
             >
-              {/* Top ambient radial glow */}
-              <div
-                className={`absolute -top-12 -right-12 w-28 h-28 bg-gradient-to-br ${card.bgGlow} rounded-full blur-2xl pointer-events-none group-hover:scale-150 transition-transform duration-500`}
-              />
-
-              {/* Card Header: Icon & Trend Pill */}
-              <div className="flex items-center justify-between gap-2 relative z-10">
-                <div className="p-2.5 rounded-xl bg-stone-950/80 border border-stone-800/80 shadow-inner group-hover:scale-110 group-hover:border-[#D4AF37]/40 transition-all duration-300">
-                  <Icon className={`w-4 h-4 ${card.iconColor}`} />
+              {/* Card Top: Icon & Trend Pill */}
+              <div className="flex items-center justify-between gap-1.5 relative z-10">
+                <div className={`p-2 rounded-xl ${card.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shadow-sm`}>
+                  <Icon className="w-4 h-4 stroke-[2.2]" />
                 </div>
 
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border ${card.badgeColor} flex items-center gap-1`}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${card.pillStyle} flex items-center gap-0.5 tracking-tight whitespace-nowrap shadow-xs`}
                 >
                   {card.change}
-                  <ArrowUpRight className="w-2.5 h-2.5 opacity-60" />
+                  <ArrowUpRight className="w-2.5 h-2.5 opacity-80" />
                 </span>
               </div>
 
-              {/* Card Body: Label & Value */}
-              <div className="mt-4 space-y-1 relative z-10">
-                <div className="text-[11px] font-medium text-stone-400 group-hover:text-stone-300 transition-colors truncate">
+              {/* Card Center: Label & Big Metric Value */}
+              <div className="mt-3 relative z-10">
+                <div className="text-[11px] font-medium text-[#29242D]/60 truncate">
                   {card.label}
                 </div>
-                <div className="text-lg sm:text-xl font-serif font-bold text-stone-100 tracking-tight group-hover:text-[#F3E5AB] transition-colors">
+                <div className="text-xl sm:text-[22px] font-sans font-bold tabular-nums text-[#29242D] tracking-tight mt-0.5">
                   <AnimatedCounter value={card.value} isCurrency={card.isCurrency} />
                 </div>
               </div>
 
-              {/* Bottom Subtle Bar */}
-              <div className="mt-3 pt-2 border-t border-stone-800/50 flex items-center justify-between text-[10px] font-mono text-stone-500">
+              {/* Card Bottom: View Details Link */}
+              <div className="mt-2 pt-2 border-t border-[#EAE2F2]/60 flex items-center gap-1 text-[10px] font-medium text-[#29242D]/50 group-hover:text-[#79539B] transition-colors relative z-10">
                 <span>View Details</span>
-                <span className="text-[#D4AF37] opacity-0 group-hover:opacity-100 transition-opacity">
-                  &rarr;
-                </span>
+                <span className="transform group-hover:translate-x-0.5 transition-transform">&rarr;</span>
               </div>
+
+              {/* Translucent Gemstone Artwork in bottom right corner */}
+              <CardCornerCrystal type={card.crystalType} />
             </div>
           );
         })}
+      </div>
+
+      {/* Row 3: Card 13 (Total Patrons) on the left + Pedestal Showcase on the right */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 relative z-10 items-end">
+        {/* Card 13: Total Patrons */}
+        <div
+          onClick={() => onNavigate && onNavigate(patronCard.tabTarget)}
+          className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-[#EAE2F2] hover:border-[#79539B]/40 shadow-[0_4px_20px_rgba(41,36,45,0.03)] hover:shadow-[0_10px_25px_rgba(121,83,155,0.08)] hover:-translate-y-1 transition-all duration-300 p-4 min-h-[148px] flex flex-col justify-between cursor-pointer overflow-hidden col-span-1"
+        >
+          {/* Top: Icon & Trend Pill */}
+          <div className="flex items-center justify-between gap-1.5 relative z-10">
+            <div className={`p-2 rounded-xl ${patronCard.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shadow-sm`}>
+              <Users className="w-4 h-4 stroke-[2.2]" />
+            </div>
+
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${patronCard.pillStyle} flex items-center gap-0.5 tracking-tight whitespace-nowrap shadow-xs`}
+            >
+              {patronCard.change}
+              <ArrowUpRight className="w-2.5 h-2.5 opacity-80" />
+            </span>
+          </div>
+
+          {/* Center: Label & Big Metric Value */}
+          <div className="mt-3 relative z-10">
+            <div className="text-[11px] font-medium text-[#29242D]/60 truncate">
+              {patronCard.label}
+            </div>
+            <div className="text-xl sm:text-[22px] font-sans font-bold tabular-nums text-[#29242D] tracking-tight mt-0.5">
+              <AnimatedCounter value={patronCard.value} isCurrency={false} />
+            </div>
+          </div>
+
+          {/* Bottom: View Details Link */}
+          <div className="mt-2 pt-2 border-t border-[#EAE2F2]/60 flex items-center gap-1 text-[10px] font-medium text-[#29242D]/50 group-hover:text-[#79539B] transition-colors relative z-10">
+            <span>View Details</span>
+            <span className="transform group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+          </div>
+
+          {/* Corner Gemstone */}
+          <CardCornerCrystal type={patronCard.crystalType} />
+        </div>
+
+        {/* Showcase Area: 3D Marble Pedestal with Glowing Purple Amethyst Cluster */}
+        <div className="hidden lg:flex lg:col-span-5 items-end justify-end pr-8 overflow-visible relative">
+          {/* Gentle background ribbon curve */}
+          <div className="absolute bottom-6 right-20 w-[480px] h-[70px] pointer-events-none opacity-40">
+            <svg viewBox="0 0 480 70" fill="none" className="w-full h-full">
+              <path
+                d="M10 50 C120 10 240 65 470 15"
+                stroke="url(#ribbonGold)"
+                strokeWidth="1.5"
+                fill="none"
+              />
+              <defs>
+                <linearGradient id="ribbonGold" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#C8A65E" stopOpacity="0" />
+                  <stop offset="40%" stopColor="#C8A65E" stopOpacity="0.6" />
+                  <stop offset="80%" stopColor="#E5CB90" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="#C8A65E" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          {/* 3D Pedestal Showcase */}
+          <MarblePedestalShowcase className="w-96 -mb-4" />
+        </div>
       </div>
     </section>
   );

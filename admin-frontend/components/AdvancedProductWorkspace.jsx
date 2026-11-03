@@ -37,7 +37,17 @@ import {
 } from 'lucide-react';
 import LuxuryImageUploader from './LuxuryImageUploader';
 import LuxuryVariantBuilder from './LuxuryVariantBuilder';
-import { supabase, saveProductToSupabase, getSupabaseStoreFilters, saveSupabaseStoreFilters } from '../lib/supabase';
+import {
+  supabase,
+  saveProductToSupabase,
+  getSupabaseStoreFilters,
+  saveSupabaseStoreFilters,
+  getRegisteredCategories,
+  registerNewProductCategory,
+  previewNextProductId,
+  deriveCategoryPrefix,
+  CANONICAL_PRODUCT_CATEGORIES,
+} from '../lib/supabase';
 import { useAuthStore } from '../store/useAuth';
 import { DISCOVERY_PILLARS, formatProductMultiTags, getFilterLabel } from '../lib/discoveryTaxonomy';
 
@@ -94,15 +104,33 @@ export default function AdvancedProductWorkspace({
   if (!isOpen) return null;
 
   const { token } = useAuthStore();
+  const isEditing = Boolean(initialProduct?.id || initialProduct?.slug);
 
   // Active Tab State (10 Tabs)
   const [activeTab, setActiveTab] = useState('general'); // 'general' | 'media' | 'pricing' | 'inventory' | 'variants' | 'attributes' | 'filters' | 'features' | 'seo' | 'preview'
+
+  // Categories & Product ID State
+  const [categoriesList, setCategoriesList] = useState(CANONICAL_PRODUCT_CATEGORIES);
+  const [previewId, setPreviewId] = useState(
+    initialProduct?.product_id || initialProduct?.productId || 'BR001'
+  );
+  const [isLoadingId, setIsLoadingId] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
+
+  // New Category Modal State
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatPrefix, setNewCatPrefix] = useState('');
+  const [catCollisionWarning, setCatCollisionWarning] = useState('');
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
 
   // Master Product Form State
   const [productData, setProductData] = useState({
     name: '',
     subtitle: '',
-    category: 'Energy Bands',
+    category: initialProduct?.category || 'Bracelet',
+    productId: initialProduct?.product_id || initialProduct?.productId || 'BR001',
+    product_id: initialProduct?.product_id || initialProduct?.productId || 'BR001',
     collection: 'Masterworks Collection',
     crystalType: 'Pyrite',
     zodiac: 'Leo, Sagittarius, Aries',
@@ -211,7 +239,21 @@ export default function AdvancedProductWorkspace({
       }
     };
     loadDynamicFilters();
-    return () => { isMounted = false; };
+
+    // Load registered category sequences
+    let isMountedCats = true;
+    getRegisteredCategories()
+      .then((cats) => {
+        if (isMountedCats && Array.isArray(cats) && cats.length > 0) {
+          setCategoriesList(cats);
+        }
+      })
+      .catch((e) => console.warn('Category load note:', e.message));
+
+    return () => {
+      isMounted = false;
+      isMountedCats = false;
+    };
   }, []);
 
   // Quick Add Filter Handler
@@ -287,7 +329,7 @@ export default function AdvancedProductWorkspace({
   const [newAttrKey, setNewAttrKey] = useState('');
   const [newAttrVal, setNewAttrVal] = useState('');
 
-  // Hydrate on mount/change of initialProduct
+  // Hydrate on mount/change of initialProduct or preview generation for new product
   useEffect(() => {
     if (initialProduct) {
       const initialAssigned = Array.isArray(initialProduct.assignedFilters) && initialProduct.assignedFilters.length > 0
@@ -296,12 +338,23 @@ export default function AdvancedProductWorkspace({
             ? initialProduct.assigned_filters
             : (Array.isArray(initialProduct.tags) ? initialProduct.tags : []));
 
+      const existingId = (initialProduct.product_id || initialProduct.productId || '').trim();
+      if (existingId) {
+        setPreviewId(existingId);
+      } else {
+        const cat = initialProduct.category || 'Bracelet';
+        const fallbackId = `${deriveCategoryPrefix(cat)}001`;
+        setPreviewId(fallbackId);
+      }
+
       setProductData({
         id: initialProduct.id,
+        productId: existingId,
+        product_id: existingId,
         slug: initialProduct.slug,
         name: initialProduct.name || initialProduct.title || '',
         subtitle: initialProduct.subtitle || initialProduct.short_description || initialProduct.shortDescription || '',
-        category: initialProduct.category || 'Energy Bands',
+        category: initialProduct.category || 'Bracelet',
         collection: initialProduct.collection || 'Masterworks Collection',
         crystalType: initialProduct.crystalType || initialProduct.crystal_type || 'Pyrite',
         zodiac: initialProduct.zodiac || 'Leo, Sagittarius, Aries',
@@ -337,8 +390,105 @@ export default function AdvancedProductWorkspace({
         assignedFilters: initialAssigned,
       });
       setIsDirty(false);
+    } else {
+      // Brand new product: generate preview ID for the selected category
+      setIsLoadingId(true);
+      previewNextProductId(productData.category || 'Bracelet')
+        .then((id) => {
+          setPreviewId(id);
+          setProductData((prev) => ({
+            ...prev,
+            productId: id,
+            product_id: id,
+          }));
+        })
+        .catch((e) => console.warn('Preview ID fetch note:', e.message))
+        .finally(() => setIsLoadingId(false));
     }
   }, [initialProduct]);
+
+  // Dynamic category change handler with automatic ID preview
+  const handleCategoryChange = async (newCategory) => {
+    handleFieldChange('category', newCategory);
+    // If editing existing product, rule: Changing product category must NOT regenerate ID!
+    if (!isEditing) {
+      setIsLoadingId(true);
+      try {
+        const nextId = await previewNextProductId(newCategory);
+        setPreviewId(nextId);
+        setProductData((prev) => ({
+          ...prev,
+          productId: nextId,
+          product_id: nextId,
+        }));
+      } catch (err) {
+        console.warn('Error previewing next Product ID:', err);
+      } finally {
+        setIsLoadingId(false);
+      }
+    }
+  };
+
+  // Copy Product ID to clipboard
+  const handleCopyProductId = () => {
+    if (!previewId) return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(previewId);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    }
+  };
+
+  // Add New Category Handlers
+  const handleNewCatNameChange = (val) => {
+    setNewCatName(val);
+    const derived = deriveCategoryPrefix(val);
+    setNewCatPrefix(derived);
+    const collision = categoriesList.find(
+      (c) => c.prefix.toUpperCase() === derived.toUpperCase() && c.category.toLowerCase() !== val.trim().toLowerCase()
+    );
+    if (collision) {
+      setCatCollisionWarning(`Prefix "${derived}" is already used by "${collision.category}". Please provide a unique 2-letter prefix.`);
+    } else {
+      setCatCollisionWarning('');
+    }
+  };
+
+  const handlePrefixInputChange = (val) => {
+    const clean = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 2);
+    setNewCatPrefix(clean);
+    const collision = categoriesList.find(
+      (c) => c.prefix.toUpperCase() === clean && c.category.toLowerCase() !== newCatName.trim().toLowerCase()
+    );
+    if (collision) {
+      setCatCollisionWarning(`Prefix "${clean}" is already assigned to "${collision.category}".`);
+    } else {
+      setCatCollisionWarning('');
+    }
+  };
+
+  const handleSaveNewCategory = async () => {
+    if (!newCatName.trim() || newCatPrefix.length !== 2) return;
+    setIsSavingCategory(true);
+    try {
+      const res = await registerNewProductCategory(newCatName.trim(), newCatPrefix);
+      if (res.success) {
+        const newEntry = { category: newCatName.trim(), prefix: newCatPrefix, description: newCatName.trim() };
+        setCategoriesList((prev) => [
+          ...prev.filter((c) => c.category.toLowerCase() !== newEntry.category.toLowerCase()),
+          newEntry,
+        ]);
+        setIsAddCategoryOpen(false);
+        await handleCategoryChange(newEntry.category);
+      } else {
+        setCatCollisionWarning(res.message || 'Failed to register category.');
+      }
+    } catch (err) {
+      setCatCollisionWarning(err.message || 'Error saving category.');
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
 
   // Compute discount percentage
   const discountPercent =
@@ -383,6 +533,12 @@ export default function AdvancedProductWorkspace({
   const validateForm = () => {
     if (!productData.name.trim()) {
       setValidationError('Crystal Specimen Name is mandatory.');
+      setActiveTab('general');
+      return false;
+    }
+
+    if (!productData.category || !productData.category.trim()) {
+      setValidationError('Category selection is mandatory.');
       setActiveTab('general');
       return false;
     }
@@ -441,9 +597,17 @@ export default function AdvancedProductWorkspace({
       const isEditing = !!(initialProduct?.id || initialProduct?.slug);
       const targetId = initialProduct?.id || initialProduct?.slug;
 
+      // Rule: Permanent Product ID cannot be changed once assigned
+      const permanentProductId = isEditing
+        ? (initialProduct?.product_id || initialProduct?.productId || productData.product_id || previewId)
+        : (previewId || productData.product_id);
+
       const productPayload = {
         ...productData,
         id: initialProduct?.id || undefined,
+        product_id: permanentProductId,
+        productId: permanentProductId,
+        category: productData.category,
         slug,
         title: productData.name,
         name: productData.name,
@@ -638,20 +802,102 @@ export default function AdvancedProductWorkspace({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-stone-300">Category</label>
-                  <select
-                    value={productData.category}
-                    onChange={(e) => handleFieldChange('category', e.target.value)}
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3.5 py-2.5 text-xs text-stone-200 focus:outline-none focus:border-[#D4AF37]"
-                  >
-                    {CRYSTAL_CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
+              {/* CATEGORY & UNIQUE PRODUCT ID SYSTEM (SUMUK CRYSTALZ 5) */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/20 via-stone-900/40 to-[#D4AF37]/10 border border-[#D4AF37]/20 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                  {/* Category Dropdown */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-stone-200 flex items-center gap-1.5">
+                        <span>Product Category</span>
+                        <span className="text-[#D4AF37]">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddCategoryOpen(true);
+                          setNewCatName('');
+                          setNewCatPrefix('');
+                          setCatCollisionWarning('');
+                        }}
+                        className="text-[11px] text-[#D4AF37] hover:text-[#F3E5AB] flex items-center gap-1 font-medium transition cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add Category</span>
+                      </button>
+                    </div>
 
+                    <select
+                      value={productData.category}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
+                      className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3.5 py-2.5 text-xs text-stone-100 focus:outline-none focus:border-[#D4AF37]"
+                    >
+                      {categoriesList.map((catObj) => (
+                        <option key={catObj.category} value={catObj.category}>
+                          {catObj.category} ({catObj.prefix})
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="flex items-center justify-between text-[10px] text-stone-400 px-1">
+                      <span>Category Prefix: <strong className="font-mono text-[#D4AF37]">{deriveCategoryPrefix(productData.category)}</strong></span>
+                      <span className="text-stone-500">Independent Sequence</span>
+                    </div>
+                  </div>
+
+                  {/* Generated Product ID (Read-Only) */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-[#D4AF37] flex items-center gap-1.5">
+                        <span>Generated Product ID</span>
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-900/60 border border-purple-500/40 text-purple-200 font-mono tracking-wider font-semibold">
+                          {isEditing ? 'PERMANENT • IMMUTABLE' : 'AUTO-GENERATED • READ-ONLY'}
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        readOnly
+                        value={isLoadingId ? 'Generating ID...' : (previewId || 'BR001')}
+                        className="w-full bg-stone-950/90 border border-purple-500/40 rounded-xl px-3.5 py-2 text-sm font-mono font-bold text-[#F3E5AB] tracking-widest cursor-not-allowed select-all focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCopyProductId}
+                        disabled={!previewId}
+                        className="absolute right-1.5 px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-700 text-xs font-mono font-semibold text-stone-200 flex items-center gap-1 transition cursor-pointer"
+                        title="Copy Product ID"
+                      >
+                        {copiedId ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-emerald-400 text-[11px]">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5 text-stone-400" />
+                            <span className="text-[11px]">Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="text-[10px] text-stone-400 flex items-center gap-1 px-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
+                      <span>
+                        {isEditing
+                          ? 'Product ID is permanently assigned and preserved across all edits.'
+                          : `Next sequential ${deriveCategoryPrefix(productData.category)} ID. Permanently reserved upon save.`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Collection and Crystal Family */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-stone-300">Collection</label>
                   <select
@@ -1510,6 +1756,90 @@ export default function AdvancedProductWorkspace({
           </div>
         </div>
       </div>
+
+      {/* ADD NEW PRODUCT CATEGORY MODAL */}
+      {isAddCategoryOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-[#120F1D] border border-purple-500/40 rounded-3xl p-6 space-y-5 shadow-2xl text-stone-200">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-800">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                <h3 className="text-sm font-bold font-serif text-white">Create New Specimen Category</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddCategoryOpen(false)}
+                className="p-1.5 rounded-full hover:bg-stone-800 text-stone-400 hover:text-white transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-semibold text-stone-300">Category Name <span className="text-[#D4AF37]">*</span></label>
+                <input
+                  type="text"
+                  value={newCatName}
+                  onChange={(e) => handleNewCatNameChange(e.target.value)}
+                  placeholder="e.g. Crystal Trees, Raw Crystals, Gift Sets"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-stone-600 focus:outline-none focus:border-[#D4AF37]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-stone-300">Two-Character Prefix <span className="text-[#D4AF37]">*</span></label>
+                  <span className="text-[10px] text-stone-400 font-mono">Auto-Derived / Custom</span>
+                </div>
+                <input
+                  type="text"
+                  maxLength={2}
+                  value={newCatPrefix}
+                  onChange={(e) => handlePrefixInputChange(e.target.value)}
+                  placeholder="e.g. CT"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold uppercase tracking-widest text-[#F3E5AB] placeholder-stone-600 focus:outline-none focus:border-[#D4AF37]"
+                />
+                <p className="text-[10px] text-stone-400">
+                  This prefix will form the base of all product IDs in this category (e.g. {newCatPrefix ? `${newCatPrefix}001` : 'CT001'}).
+                </p>
+              </div>
+
+              {catCollisionWarning && (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-start gap-2 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <span>{catCollisionWarning}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-stone-800/80">
+              <button
+                type="button"
+                onClick={() => setIsAddCategoryOpen(false)}
+                className="px-4 py-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 hover:text-white text-xs font-semibold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveNewCategory}
+                disabled={!newCatName.trim() || newCatPrefix.length !== 2 || Boolean(catCollisionWarning) || isSavingCategory}
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#79539B] to-[#C8A65E] hover:opacity-95 text-white font-semibold text-xs transition shadow-lg disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
+              >
+                {isSavingCategory ? (
+                  <span>Saving...</span>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Confirm &amp; Select</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
