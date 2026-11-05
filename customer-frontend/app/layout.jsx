@@ -6,7 +6,6 @@ import AuthModal from '../components/AuthModal';
 import ServiceWorkerCleaner from '../components/ServiceWorkerCleaner';
 import AnnouncementBanner from '../components/AnnouncementBanner';
 import IntroductorySacredBanner from '../components/IntroductorySacredBanner';
-import AICustomerChatbot from '../components/AICustomerChatbot';
 import MobileBottomNav from '../components/MobileBottomNav';
 
 export const metadata = {
@@ -143,7 +142,6 @@ export default function RootLayout({ children }) {
         <Footer />
         <CartDrawer />
         <AuthModal />
-        <AICustomerChatbot />
         <MobileBottomNav />
       </body>
     </html>

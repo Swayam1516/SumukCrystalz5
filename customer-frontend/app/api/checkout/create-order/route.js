@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { calculateDeliveryFee } from '../../../../lib/shippingEngine';
-import { getSupabaseDeliverySettings } from '../../../../lib/supabase';
+import { getSupabaseDeliverySettings, supabase } from '../../../../lib/supabase';
+import { generateNextOrderNumber } from '../../../../lib/orderNumber';
 
 const KEY_ID = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
@@ -77,7 +78,7 @@ export async function POST(request) {
     const total = subtotal + shippingFee;
     const amountInPaise = Math.round(total * 100);
 
-    const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+    const orderNumber = await generateNextOrderNumber(supabase);
     let razorpayOrderId = `order_sim_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     let isSimulated = true;
 

@@ -7,14 +7,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCartStore } from '../../store/useCart';
 import {
   getSupabaseProducts,
-  getSupabaseStoreFilters,
-  getSupabaseOccasionBanner,
-  DEFAULT_OCCASION_BANNER,
-  DEFAULT_STORE_FILTERS,
 } from '../../lib/supabase';
 import {
   DISCOVERY_PILLARS,
   getFilterLabel,
+  getPillarForFilter,
+  formatProductMultiTags,
+  productMatchesDiscoveryFilters,
 } from '../../lib/discoveryTaxonomy';
 import {
   Search,
@@ -27,6 +26,7 @@ import {
   ArrowRight,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   SlidersHorizontal,
   Filter,
   Check,
@@ -42,6 +42,9 @@ import {
   Bell,
   CircleDot,
   Trees,
+  Crown,
+  Layers,
+  Zap,
 } from 'lucide-react';
 
 // Golden Blooming Lotus Logo SVG matching Image 1 & Image 2
@@ -65,15 +68,11 @@ function GoldenLotusLogo({ className = 'w-9 h-9' }) {
           <stop offset="100%" stopColor="#5E410B" />
         </linearGradient>
       </defs>
-      {/* Central Petal */}
       <path d="M24 3 C21 13 20 23 24 34 C28 23 27 13 24 3 Z" fill="url(#lotusGoldGrad1)" />
-      {/* Mid Petals */}
       <path d="M24 12 C18 16 13 24 17 33 C20 31 22 26 24 22 Z" fill="url(#lotusGoldGrad2)" opacity="0.95" />
       <path d="M24 12 C30 16 35 24 31 33 C28 31 26 26 24 22 Z" fill="url(#lotusGoldGrad1)" opacity="0.95" />
-      {/* Outer Petals */}
       <path d="M20 18 C10 20 5 28 11 34 C15 33 18 28 20 24 Z" fill="url(#lotusGoldGrad2)" opacity="0.85" />
       <path d="M28 18 C38 20 43 28 37 34 C33 33 30 28 28 24 Z" fill="url(#lotusGoldGrad1)" opacity="0.85" />
-      {/* Base Golden Aura line */}
       <path d="M11 36 Q24 39 37 36 Q24 37 11 36 Z" fill="#D4AF37" />
     </svg>
   );
@@ -111,158 +110,205 @@ function PremiumQualityShield({ id = 'crest' }) {
   );
 }
 
-// Desktop Category Story Avatars (matching Image 1)
+// Desktop Category Story Avatars with authentic category photography
 const DESKTOP_CATEGORY_AVATARS = [
-  { id: 'for_you', label: 'For You', image: '/images/products/amethyst.jpg', categoryKey: 'all' },
-  { id: 'energy_bands', label: 'Energy Bands', image: '/images/products/tigers-eye.jpg', categoryKey: 'Energy Bands' },
-  { id: 'raw_crystals', label: 'Raw Crystals', image: '/images/products/clear-quartz.jpg', categoryKey: 'Raw Crystals' },
-  { id: 'bracelets', label: 'Bracelets', image: '/images/products/obsidian.jpg', categoryKey: 'Bracelets' },
-  { id: 'pendants', label: 'Pendants', image: '/images/products/pendant.jpg', categoryKey: 'Pendants' },
-  { id: 'home_decor', label: 'Home Decor', image: '/images/products/tree.jpg', categoryKey: 'Home Decor' },
-  { id: 'combos', label: 'Combos', image: '/images/products/combos.jpg', categoryKey: 'Combos' },
-  { id: 'more', label: 'More', isMoreButton: true },
+  { id: 'for_you', label: 'All Vault', image: '/images/categories/category-stones.jpg', filterId: null },
+  { id: 'bracelets', label: 'Bracelets', image: '/images/categories/category-bracelets.jpg', filterId: 'jewellery:bracelets' },
+  { id: 'malas', label: 'Malas', image: '/images/categories/category-malas.jpg', filterId: 'jewellery:malas' },
+  { id: 'raw_crystals', label: 'Raw Crystals', image: '/images/categories/category-stones.jpg', filterId: 'specimen:raw-stones' },
+  { id: 'home_decor', label: 'Gemstone Trees', image: '/images/categories/category-trees.jpg', filterId: 'home:crystal-trees' },
+  { id: 'energy_bands', label: '7 Chakras', image: '/images/categories/category-chakras-clean.jpg', filterId: 'energy:root-chakra' },
+  { id: 'combos', label: 'Towers & Points', image: '/images/categories/category-towers-clean.jpg', filterId: 'specimen:towers-points' },
+  { id: 'more', label: 'All Filters', isMoreButton: true },
 ];
 
 // Mobile Category Icons (matching Image 2 crimson icon pills)
 const MOBILE_CATEGORY_ICONS = [
-  { id: 'for_you', label: 'For You', icon: Home, categoryKey: 'all' },
-  { id: 'bracelets', label: 'Bracelets', icon: CircleDot, categoryKey: 'Bracelets' },
-  { id: 'malas', label: 'Malas', icon: Heart, categoryKey: 'Malas' },
-  { id: 'crystals', label: 'Crystals', icon: Sparkles, categoryKey: 'Raw Crystals' },
-  { id: 'home_decor', label: 'Home Decor', icon: Trees, categoryKey: 'Home Decor' },
-  { id: 'combos', label: 'Gift Sets', icon: Gift, categoryKey: 'Combos' },
-  { id: 'more', label: 'All', icon: LayoutGrid, isMoreButton: true },
-];
-
-// The exact 6 featured reference products from Image 1 & Image 2
-const FEATURED_REFERENCE_PRODUCTS = [
-  {
-    id: 'prod-amethyst-bracelet',
-    slug: 'amethyst-sacred-wealth-bracelet',
-    name: 'Amethyst Bracelet',
-    price: 1299,
-    originalPrice: 1899,
-    rating: 4.8,
-    reviewsCount: 142,
-    images: ['/images/products/amethyst.jpg'],
-    category: 'Bracelets',
-  },
-  {
-    id: 'prod-tigers-eye-bracelet',
-    slug: 'tigers-eye-courage-bracelet',
-    name: "Tiger's Eye Bracelet",
-    price: 1199,
-    originalPrice: 1699,
-    rating: 4.7,
-    reviewsCount: 98,
-    images: ['/images/products/tigers-eye.jpg'],
-    category: 'Bracelets',
-  },
-  {
-    id: 'prod-rose-quartz-bracelet',
-    slug: 'rose-quartz-love-bracelet',
-    name: 'Rose Quartz Bracelet',
-    price: 899,
-    originalPrice: 1299,
-    rating: 4.8,
-    reviewsCount: 112,
-    images: ['/images/products/rose-quartz.jpg'],
-    category: 'Bracelets',
-  },
-  {
-    id: 'prod-clear-quartz-cluster',
-    slug: 'clear-quartz-amplifier-cluster',
-    name: 'Clear Quartz Cluster',
-    price: 2499,
-    originalPrice: 3499,
-    rating: 4.9,
-    reviewsCount: 86,
-    images: ['/images/products/clear-quartz.jpg'],
-    category: 'Raw Crystals',
-  },
-  {
-    id: 'prod-golden-pyrite-cluster',
-    slug: 'pyrite-manifestation-cluster',
-    name: 'Golden Pyrite Cluster',
-    price: 1899,
-    originalPrice: 2699,
-    rating: 4.7,
-    reviewsCount: 124,
-    images: ['/images/products/pyrite.jpg'],
-    category: 'Raw Crystals',
-  },
-  {
-    id: 'prod-obsidian-sphere',
-    slug: 'black-obsidian-grounding-sphere',
-    name: 'Obsidian Sphere',
-    price: 1499,
-    originalPrice: 2199,
-    rating: 4.6,
-    reviewsCount: 65,
-    images: ['/images/products/obsidian.jpg'],
-    category: 'Energy Bands',
-  },
+  { id: 'for_you', label: 'For You', icon: Home, filterId: null },
+  { id: 'bracelets', label: 'Bracelets', icon: CircleDot, filterId: 'jewellery:bracelets' },
+  { id: 'malas', label: 'Malas', icon: Heart, filterId: 'jewellery:malas' },
+  { id: 'crystals', label: 'Crystals', icon: Sparkles, filterId: 'specimen:raw-stones' },
+  { id: 'home_decor', label: 'Home Decor', icon: Trees, filterId: 'home:crystal-trees' },
+  { id: 'chakras', label: 'Chakras', icon: Zap, filterId: 'energy:root-chakra' },
+  { id: 'more', label: 'All Filters', icon: LayoutGrid, isMoreButton: true },
 ];
 
 function StorefrontContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialCategory = searchParams.get('category') || 'for_you';
-  const initialQuery = searchParams.get('q') || searchParams.get('search') || '';
 
   const { addItem, openDrawer, getTotalCount } = useCartStore();
 
-  const [catalog, setCatalog] = useState(FEATURED_REFERENCE_PRODUCTS);
-  const [loadingCatalog, setLoadingCatalog] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(initialCategory);
-  const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [quickAddedId, setQuickAddedId] = useState(null);
+  // Strict Admin-Only Catalog (Zero Mock Products)
+  const [catalog, setCatalog] = useState([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
 
-  // Modals / Drawers
-  const [menuDrawerOpen, setMenuDrawerOpen] = useState(false);
-  const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
-  const [scannerOpen, setScannerOpen] = useState(false);
-  const [voiceSearchActive, setVoiceSearchActive] = useState(false);
-
-  // Advanced filters state
+  // Filter States
   const [selectedDiscoveryFilters, setSelectedDiscoveryFilters] = useState([]);
+  const [activeCategory, setActiveCategory] = useState('for_you');
+  const [searchQuery, setSearchQuery] = useState('');
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(50000);
   const [sortBy, setSortBy] = useState('bestselling');
+  const [quickAddedId, setQuickAddedId] = useState(null);
+
+  // Drawers & Modals
+  const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
+  const [expandedPillars, setExpandedPillars] = useState({
+    purpose: true,
+    energy_system: true,
+    crystal_specimen: true,
+    jewellery: true,
+    bead_size: true,
+    home_space: false,
+  });
 
   const searchInputRef = useRef(null);
   const desktopCarouselRef = useRef(null);
 
-  // 1. Load Supabase Products & merge with reference defaults
+  // 1. Fetch live products from Supabase (Strictly admin-uploaded items)
   useEffect(() => {
     let isMounted = true;
+    setLoadingCatalog(true);
 
-    async function loadData() {
-      try {
-        const productsData = await getSupabaseProducts(true);
-        if (isMounted && productsData && productsData.length > 0) {
-          // Merge so reference 6 products appear first, followed by others
-          const refIds = new Set(FEATURED_REFERENCE_PRODUCTS.map((p) => p.slug));
-          const uniqueApiProducts = productsData.filter((p) => !refIds.has(p.slug));
-          setCatalog([...FEATURED_REFERENCE_PRODUCTS, ...uniqueApiProducts]);
+    getSupabaseProducts(true)
+      .then((items) => {
+        if (!isMounted) return;
+        setCatalog(items || []);
+        setLoadingCatalog(false);
+      })
+      .catch((err) => {
+        console.warn('Could not sync live products:', err.message);
+        if (isMounted) {
+          setCatalog([]);
+          setLoadingCatalog(false);
         }
-      } catch (err) {
-        console.warn('Storefront data sync note:', err.message);
-      }
-    }
-
-    loadData();
+      });
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // Sync category param with activeCategory
+  // 2. Parse URL parameters into discovery filters
   useEffect(() => {
+    const filtersFromUrl = [];
+
+    // Direct filter tag parameter: ?filter=purpose:money-abundance
+    const filterParam = searchParams.get('filter');
+    if (filterParam) {
+      filterParam.split(',').forEach((f) => {
+        if (f.trim() && !filtersFromUrl.includes(f.trim())) {
+          filtersFromUrl.push(f.trim());
+        }
+      });
+    }
+
+    // Specific dimension parameters: ?purpose=money-abundance
+    const purposeParam = searchParams.get('purpose');
+    if (purposeParam) {
+      const tag = purposeParam.startsWith('purpose:') ? purposeParam : `purpose:${purposeParam}`;
+      if (!filtersFromUrl.includes(tag)) filtersFromUrl.push(tag);
+    }
+
+    const energyParam = searchParams.get('energy') || searchParams.get('energy_system');
+    if (energyParam) {
+      const tag = energyParam.startsWith('energy:') ? energyParam : `energy:${energyParam}`;
+      if (!filtersFromUrl.includes(tag)) filtersFromUrl.push(tag);
+    }
+
+    const crystalParam = searchParams.get('crystal') || searchParams.get('crystal_specimen');
+    if (crystalParam) {
+      const tag = crystalParam.startsWith('crystal:') || crystalParam.startsWith('specimen:')
+        ? crystalParam
+        : `crystal:${crystalParam}`;
+      if (!filtersFromUrl.includes(tag)) filtersFromUrl.push(tag);
+    }
+
+    const jewelleryParam = searchParams.get('jewellery');
+    if (jewelleryParam) {
+      const tag = jewelleryParam.startsWith('jewellery:') ? jewelleryParam : `jewellery:${jewelleryParam}`;
+      if (!filtersFromUrl.includes(tag)) filtersFromUrl.push(tag);
+    }
+
+    const beadParam = searchParams.get('bead') || searchParams.get('bead_size');
+    if (beadParam) {
+      const tag = beadParam.startsWith('bead:') ? beadParam : `bead:${beadParam}`;
+      if (!filtersFromUrl.includes(tag)) filtersFromUrl.push(tag);
+    }
+
+    const homeParam = searchParams.get('home') || searchParams.get('home_space');
+    if (homeParam) {
+      const tag = homeParam.startsWith('home:') ? homeParam : `home:${homeParam}`;
+      if (!filtersFromUrl.includes(tag)) filtersFromUrl.push(tag);
+    }
+
+    // Search query
+    const q = searchParams.get('q') || searchParams.get('search');
+    if (q) setSearchQuery(q);
+
+    // Pillar navigation: ?pillar=purpose -> expand that pillar in drawer
+    const pillarParam = searchParams.get('pillar');
+    if (pillarParam) {
+      setExpandedPillars((prev) => ({ ...prev, [pillarParam]: true }));
+      setFiltersDrawerOpen(true);
+    }
+
+    // Category avatar
     const cat = searchParams.get('category');
     if (cat) setActiveCategory(cat);
+
+    if (filtersFromUrl.length > 0) {
+      setSelectedDiscoveryFilters(filtersFromUrl);
+    }
   }, [searchParams]);
+
+  // Toggle filter in active filters set
+  const toggleFilter = (filterId) => {
+    setSelectedDiscoveryFilters((prev) => {
+      const exists = prev.includes(filterId);
+      const next = exists ? prev.filter((id) => id !== filterId) : [...prev, filterId];
+
+      // Update URL query string
+      const params = new URLSearchParams(window.location.search);
+      if (next.length > 0) {
+        params.set('filter', next.join(','));
+      } else {
+        params.delete('filter');
+        params.delete('purpose');
+        params.delete('energy');
+        params.delete('crystal');
+        params.delete('jewellery');
+        params.delete('bead');
+        params.delete('home');
+      }
+      const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+      window.history.replaceState(null, '', newUrl);
+
+      return next;
+    });
+  };
+
+  // Remove specific filter chip
+  const removeFilter = (filterId) => {
+    toggleFilter(filterId);
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSelectedDiscoveryFilters([]);
+    setActiveCategory('for_you');
+    setSearchQuery('');
+    setMinPrice(0);
+    setMaxPrice(50000);
+    const newUrl = window.location.pathname;
+    window.history.replaceState(null, '', newUrl);
+  };
+
+  // Toggle accordion expand
+  const togglePillarExpand = (pillarId) => {
+    setExpandedPillars((prev) => ({ ...prev, [pillarId]: !prev[pillarId] }));
+  };
 
   // Handle Quick Add to Cart
   const handleQuickAdd = (product, e) => {
@@ -275,7 +321,7 @@ function StorefrontContent() {
       slug: product.slug,
       name: product.name,
       image: product.images?.[0] || product.heroImage || product.image,
-      variantLabel: product.beadSize || '8mm Regular Standard',
+      variantLabel: product.variants?.[0]?.name || product.beadSize || 'Standard Sanctum Calibrated',
       price: product.price || product.selling_price || 699,
       unitPrice: product.price || product.selling_price || 699,
       quantity: 1,
@@ -289,52 +335,18 @@ function StorefrontContent() {
   // Scroll desktop carousel horizontally
   const handleScrollCarousel = (direction) => {
     if (desktopCarouselRef.current) {
-      const scrollAmount = direction === 'left' ? -320 : 320;
+      const scrollAmount = direction === 'left' ? -340 : 340;
       desktopCarouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
-  // Filter products by Active Category + Search + Price + Discovery Tags
+  // Filter products across all 6 dimensions with strict OR within dimension and AND across dimensions
   const filteredProducts = useMemo(() => {
     let list = [...catalog];
 
-    // 1. Category Filter
-    if (activeCategory && activeCategory !== 'for_you') {
-      const activeObj = DESKTOP_CATEGORY_AVATARS.find((c) => c.id === activeCategory);
-      const catKey = activeObj?.categoryKey?.toLowerCase() || '';
-
-      if (catKey && catKey !== 'all') {
-        list = list.filter((p) => {
-          const pCategory = (p.category || '').toLowerCase();
-          const pName = (p.name || '').toLowerCase();
-          const pSubtitle = (p.subtitle || '').toLowerCase();
-          const pTags = Array.isArray(p.tags) ? p.tags.join(' ').toLowerCase() : '';
-
-          if (catKey.includes('bracelet') || catKey.includes('energy band')) {
-            return (
-              pCategory.includes('bracelet') ||
-              pCategory.includes('band') ||
-              pName.includes('bracelet') ||
-              pName.includes('band') ||
-              pSubtitle.includes('bracelet') ||
-              pSubtitle.includes('band') ||
-              pTags.includes('bracelet')
-            );
-          }
-
-          if (catKey.includes('raw') || catKey.includes('crystal') || catKey.includes('cluster')) {
-            return (
-              pCategory.includes('raw') ||
-              pCategory.includes('crystal') ||
-              pCategory.includes('cluster') ||
-              pName.includes('cluster') ||
-              pName.includes('raw')
-            );
-          }
-
-          return pCategory.includes(catKey) || pName.includes(catKey) || pTags.includes(catKey);
-        });
-      }
+    // 1. Multi-Dimensional Discovery Filters (The 6 Pillars)
+    if (selectedDiscoveryFilters.length > 0) {
+      list = list.filter((p) => productMatchesDiscoveryFilters(p, selectedDiscoveryFilters));
     }
 
     // 2. Search query filter
@@ -343,15 +355,16 @@ function StorefrontContent() {
       list = list.filter((p) => {
         const name = (p.name || '').toLowerCase();
         const cat = (p.category || '').toLowerCase();
-        const crystal = (p.crystal_type || p.crystalType || '').toLowerCase();
+        const crystal = (p.crystal_type || p.crystal || '').toLowerCase();
         const pid = (p.product_id || p.productId || '').toLowerCase();
-        return name.includes(q) || cat.includes(q) || crystal.includes(q) || pid.includes(q);
+        const desc = (p.description || '').toLowerCase();
+        return name.includes(q) || cat.includes(q) || crystal.includes(q) || pid.includes(q) || desc.includes(q);
       });
     }
 
     // 3. Price filter
     list = list.filter((p) => {
-      const price = Number(p.price || p.sellingPrice || p.selling_price || 0);
+      const price = Number(p.price || p.selling_price || 0);
       return price >= minPrice && price <= maxPrice;
     });
 
@@ -365,22 +378,25 @@ function StorefrontContent() {
     }
 
     return list;
-  }, [catalog, activeCategory, searchQuery, minPrice, maxPrice, sortBy]);
+  }, [catalog, selectedDiscoveryFilters, searchQuery, minPrice, maxPrice, sortBy]);
 
   const activeCategoryTitle = useMemo(() => {
-    if (activeCategory === 'for_you' || !activeCategory) return 'Suggested For You';
+    if (selectedDiscoveryFilters.length > 0) {
+      return `Filtered Specimens (${filteredProducts.length})`;
+    }
+    if (activeCategory === 'for_you' || !activeCategory) return 'All Sanctuary Specimens';
     const found = DESKTOP_CATEGORY_AVATARS.find((c) => c.id === activeCategory);
-    return found ? found.label : 'Suggested For You';
-  }, [activeCategory]);
+    return found ? found.label : 'All Sanctuary Specimens';
+  }, [selectedDiscoveryFilters, filteredProducts.length, activeCategory]);
 
   const cartTotalItems = getTotalCount();
-  const displayCartCount = cartTotalItems > 0 ? cartTotalItems : 3;
+  const displayCartCount = cartTotalItems > 0 ? cartTotalItems : 0;
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-stone-900 font-sans pb-24 md:pb-16 selection:bg-amber-400 selection:text-black">
+    <div className="min-h-screen bg-[#FDFBF7] text-stone-900 font-sans pb-24 md:pb-16 selection:bg-[#EAE2F2] selection:text-[#79539B]">
       
       {/* ══════════════════════════════════════════════════════════
-          1A. DESKTOP BRAND HEADER BAR (MATCHING IMAGE 1 EXACTLY)
+          1A. DESKTOP BRAND HEADER BAR
          ══════════════════════════════════════════════════════════ */}
       <header className="hidden md:block sticky top-0 z-40 bg-[#FAF7F2] border-b border-stone-200/80 px-6 lg:px-12 py-3 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
@@ -388,7 +404,7 @@ function StorefrontContent() {
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 select-none">
             <GoldenLotusLogo className="w-9 h-9" />
             <div>
-              <div className="flex items-center gap-1.5 font-serif text-lg lg:text-xl font-bold tracking-[0.14em] text-[#A67812] uppercase leading-tight">
+              <div className="flex items-center gap-1.5 font-serif text-lg lg:text-xl font-bold tracking-[0.14em] text-[#79539B] uppercase leading-tight">
                 <span>SUMUK CRYSTALZ 5</span>
                 <span className="text-[#C59B27] font-bold text-sm">✦</span>
               </div>
@@ -400,14 +416,14 @@ function StorefrontContent() {
 
           {/* Integrated Desktop Pill Search Bar */}
           <div className="flex-1 max-w-2xl mx-4">
-            <div className="w-full rounded-full bg-white border border-stone-300/80 hover:border-amber-400 py-2 px-4 flex items-center gap-3 shadow-xs focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500 transition-all">
+            <div className="w-full rounded-full bg-white border border-stone-300/80 hover:border-[#79539B] py-2 px-4 flex items-center gap-3 shadow-xs focus-within:ring-2 focus-within:ring-[#79539B]/20 focus-within:border-[#79539B] transition-all">
               <Search className="w-4 h-4 text-stone-400 flex-shrink-0" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search crystals, bracelets, malas, home decor..."
+                placeholder="Search crystals, bracelets, malas, home decor, intentions..."
                 className="w-full bg-transparent text-xs sm:text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none"
               />
               {searchQuery && (
@@ -415,33 +431,38 @@ function StorefrontContent() {
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
-              <button type="button" onClick={() => setVoiceSearchActive(true)} className="p-1 text-stone-500 hover:text-amber-700">
-                <Mic className="w-4 h-4" />
-              </button>
-              <button type="button" onClick={() => setScannerOpen(true)} className="p-1 text-stone-500 hover:text-amber-700">
-                <ScanLine className="w-4 h-4" />
-              </button>
             </div>
           </div>
 
-          {/* Right Action Icons: Wishlist, Account, Cart */}
-          <div className="flex items-center gap-6 text-stone-700">
-            <Link href="/account?tab=wishlist" className="flex flex-col items-center gap-1 hover:text-amber-800 transition">
+          {/* Right Action Icons: Filter Button, Wishlist, Account, Cart */}
+          <div className="flex items-center gap-5 text-stone-700">
+            <button
+              type="button"
+              onClick={() => setFiltersDrawerOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#79539B]/30 bg-[#EAE2F2]/60 hover:bg-[#EAE2F2] text-[#79539B] text-xs font-bold transition shadow-xs cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Filters ({selectedDiscoveryFilters.length})</span>
+            </button>
+
+            <Link href="/account?tab=wishlist" className="flex flex-col items-center gap-1 hover:text-[#79539B] transition">
               <Heart className="w-5 h-5 stroke-[1.8]" />
               <span className="text-[10px] font-medium font-sans">Wishlist</span>
             </Link>
 
-            <Link href="/account" className="flex flex-col items-center gap-1 hover:text-amber-800 transition">
+            <Link href="/account" className="flex flex-col items-center gap-1 hover:text-[#79539B] transition">
               <User className="w-5 h-5 stroke-[1.8]" />
               <span className="text-[10px] font-medium font-sans">Account</span>
             </Link>
 
-            <button type="button" onClick={openDrawer} className="flex flex-col items-center gap-1 relative hover:text-amber-800 transition cursor-pointer">
+            <button type="button" onClick={openDrawer} className="flex flex-col items-center gap-1 relative hover:text-[#79539B] transition cursor-pointer">
               <div className="relative">
                 <ShoppingCart className="w-5 h-5 stroke-[1.8]" />
-                <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-red-600 text-white font-extrabold text-[10px] flex items-center justify-center shadow-xs">
-                  {displayCartCount}
-                </span>
+                {displayCartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-[#79539B] text-white font-extrabold text-[10px] flex items-center justify-center shadow-xs">
+                    {displayCartCount}
+                  </span>
+                )}
               </div>
               <span className="text-[10px] font-medium font-sans">Cart</span>
             </button>
@@ -450,35 +471,39 @@ function StorefrontContent() {
       </header>
 
       {/* ══════════════════════════════════════════════════════════
-          1B. MOBILE BRAND HEADER BAR (MATCHING IMAGE 2 EXACTLY)
+          1B. MOBILE BRAND HEADER BAR
          ══════════════════════════════════════════════════════════ */}
-      <header className="block md:hidden sticky top-0 z-40 bg-gradient-to-r from-[#990033] via-[#C41E3A] to-[#800020] text-white px-4 py-3 shadow-md">
+      <header className="block md:hidden sticky top-0 z-40 bg-gradient-to-r from-[#2A153A] via-[#4A2066] to-[#1E0F2B] text-white px-4 py-3 shadow-md">
         <div className="flex items-center justify-between pb-2.5">
-          {/* Logo & Brand text */}
           <Link href="/" className="flex items-center gap-2 select-none">
             <GoldenLotusLogo className="w-8 h-8" />
             <div>
               <span className="font-serif text-sm font-bold tracking-wider text-amber-100 uppercase block leading-tight">
-                SUMUK CRYSTALZ
+                SUMUK CRYSTALZ 5
               </span>
               <span className="text-[8.5px] font-sans tracking-[0.16em] uppercase text-amber-200/90 font-medium">
-                CRYSTALS FOR A BRIGHTER YOU
+                SACRED SANCTUARY STORE
               </span>
             </div>
           </Link>
 
-          {/* Right Mobile Actions: Bell & Cart */}
-          <div className="flex items-center gap-3">
-            <div className="relative p-1 text-white">
-              <Bell className="w-5 h-5 stroke-[2]" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-300" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setFiltersDrawerOpen(true)}
+              className="px-2.5 py-1 rounded-full bg-white/15 border border-white/20 text-white text-[11px] font-semibold flex items-center gap-1"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{selectedDiscoveryFilters.length > 0 ? selectedDiscoveryFilters.length : 'Filter'}</span>
+            </button>
 
             <button type="button" onClick={openDrawer} className="relative p-1 text-white cursor-pointer" aria-label="Open Cart">
               <ShoppingCart className="w-5 h-5 stroke-[2]" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-white">
-                {displayCartCount}
-              </span>
+              {displayCartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#D4AF37] text-stone-950 text-[10px] font-bold flex items-center justify-center border border-white">
+                  {displayCartCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -493,12 +518,11 @@ function StorefrontContent() {
             placeholder="Search crystals, bracelets, malas..."
             className="w-full bg-transparent text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none"
           />
-          <button type="button" onClick={() => setVoiceSearchActive(true)} className="p-0.5 text-stone-500">
-            <Mic className="w-4 h-4" />
-          </button>
-          <button type="button" onClick={() => setScannerOpen(true)} className="p-0.5 text-stone-500">
-            <ScanLine className="w-4 h-4" />
-          </button>
+          {searchQuery && (
+            <button type="button" onClick={() => setSearchQuery('')} className="p-0.5 text-stone-400">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </header>
 
@@ -507,11 +531,13 @@ function StorefrontContent() {
          ══════════════════════════════════════════════════════════ */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-6">
 
-        {/* ── DESKTOP CATEGORY STORY AVATARS (MATCHING IMAGE 1) ── */}
+        {/* ── DESKTOP CATEGORY STORY AVATARS ── */}
         <section className="hidden md:block">
           <div className="flex items-center justify-center gap-6 lg:gap-8 py-2">
             {DESKTOP_CATEGORY_AVATARS.map((cat) => {
-              const isSelected = activeCategory === cat.id;
+              const isSelected = cat.filterId
+                ? selectedDiscoveryFilters.includes(cat.filterId)
+                : selectedDiscoveryFilters.length === 0 && activeCategory === cat.id;
 
               if (cat.isMoreButton) {
                 return (
@@ -521,8 +547,8 @@ function StorefrontContent() {
                     onClick={() => setFiltersDrawerOpen(true)}
                     className="flex flex-col items-center gap-1.5 group cursor-pointer focus:outline-none"
                   >
-                    <div className="w-14 h-14 rounded-full bg-stone-100 border border-stone-200 shadow-xs flex items-center justify-center text-stone-600 group-hover:scale-105 group-hover:border-amber-500 transition-all">
-                      <LayoutGrid className="w-5 h-5 stroke-[1.8]" />
+                    <div className="w-14 h-14 rounded-full bg-[#EAE2F2]/60 border border-[#79539B]/30 shadow-xs flex items-center justify-center text-[#79539B] group-hover:scale-105 group-hover:border-[#79539B] transition-all">
+                      <SlidersHorizontal className="w-5 h-5 stroke-[1.8]" />
                     </div>
                     <span className="text-xs font-medium text-stone-600 group-hover:text-stone-900 transition-colors">
                       {cat.label}
@@ -536,16 +562,20 @@ function StorefrontContent() {
                   key={cat.id}
                   type="button"
                   onClick={() => {
+                    if (cat.filterId) {
+                      toggleFilter(cat.filterId);
+                    } else {
+                      clearAllFilters();
+                    }
                     setActiveCategory(cat.id);
-                    setSearchQuery('');
                   }}
                   className="flex flex-col items-center group cursor-pointer focus:outline-none"
                 >
                   <div
                     className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full p-0.5 transition-all duration-200 ${
                       isSelected
-                        ? 'ring-2 ring-[#B45309] shadow-md scale-105'
-                        : 'ring-1 ring-stone-200 hover:ring-stone-400 group-hover:scale-102'
+                        ? 'ring-2 ring-[#79539B] shadow-md scale-105'
+                        : 'ring-1 ring-stone-200 hover:ring-[#79539B]/50 group-hover:scale-102'
                     }`}
                   >
                     <div className="relative w-full h-full rounded-full overflow-hidden bg-stone-900">
@@ -554,23 +584,25 @@ function StorefrontContent() {
                   </div>
                   <span
                     className={`mt-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-                      isSelected ? 'text-[#8C6208]' : 'text-stone-600 group-hover:text-stone-900'
+                      isSelected ? 'text-[#79539B]' : 'text-stone-600 group-hover:text-stone-900'
                     }`}
                   >
                     {cat.label}
                   </span>
-                  {isSelected && <div className="w-8 h-[2.5px] bg-[#B45309] rounded-full mt-1" />}
+                  {isSelected && <div className="w-8 h-[2.5px] bg-[#79539B] rounded-full mt-1" />}
                 </button>
               );
             })}
           </div>
         </section>
 
-        {/* ── MOBILE CATEGORY ICONS (MATCHING IMAGE 2 CRIMSON PILLS) ── */}
+        {/* ── MOBILE CATEGORY ICONS ── */}
         <section className="block md:hidden overflow-x-auto hide-scrollbar -mx-4 px-4">
-          <div className="flex items-center gap-3.5 min-w-max py-1">
+          <div className="flex items-center gap-3 min-w-max py-1">
             {MOBILE_CATEGORY_ICONS.map((cat) => {
-              const isSelected = activeCategory === cat.id;
+              const isSelected = cat.filterId
+                ? selectedDiscoveryFilters.includes(cat.filterId)
+                : selectedDiscoveryFilters.length === 0 && activeCategory === cat.id;
               const Icon = cat.icon;
 
               return (
@@ -580,23 +612,25 @@ function StorefrontContent() {
                   onClick={() => {
                     if (cat.isMoreButton) {
                       setFiltersDrawerOpen(true);
-                    } else {
+                    } else if (cat.filterId) {
+                      toggleFilter(cat.filterId);
                       setActiveCategory(cat.id);
-                      setSearchQuery('');
+                    } else {
+                      clearAllFilters();
                     }
                   }}
                   className="flex flex-col items-center gap-1 group cursor-pointer"
                 >
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
                       isSelected
-                        ? 'bg-[#C41E3A] text-white shadow-md ring-2 ring-amber-400/80 scale-105'
-                        : 'bg-[#800020] text-amber-100 hover:bg-[#990033]'
+                        ? 'bg-[#79539B] text-white shadow-md ring-2 ring-amber-400 scale-105'
+                        : 'bg-stone-200 text-stone-700 hover:bg-[#EAE2F2]'
                     }`}
                   >
-                    <Icon className="w-5 h-5 stroke-[2]" />
+                    <Icon className="w-4 h-4 stroke-[2]" />
                   </div>
-                  <span className={`text-[10.5px] font-semibold whitespace-nowrap ${isSelected ? 'text-[#C41E3A]' : 'text-stone-700'}`}>
+                  <span className={`text-[10px] font-semibold whitespace-nowrap ${isSelected ? 'text-[#79539B]' : 'text-stone-700'}`}>
                     {cat.label}
                   </span>
                 </button>
@@ -606,329 +640,381 @@ function StorefrontContent() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════
-            3A. DESKTOP SHOP BANNER (IMAGE 1 SPECIFICATION)
-            Widescreen: WELCOME TO SUMUK CRYSTALZ 5 • NATURE'S ENERGY IN YOUR HANDS
+            3. ACTIVE FILTER CHIPS SUMMARY BAR
            ══════════════════════════════════════════════════════════ */}
-        <section className="hidden md:block my-3">
-          <Link
-            href="/shop"
-            className="block relative w-full aspect-[6.6/1] rounded-2xl overflow-hidden shadow-lg group hover:shadow-xl transition-all"
-          >
-            <Image
-              src="/images/shop-banner-desktop.png"
-              alt="Welcome to Sumuk Crystalz 5 - Nature's Energy In Your Hands"
-              fill
-              priority
-              sizes="(max-width: 1280px) 100vw, 1200px"
-              className="object-cover object-center group-hover:scale-[1.01] transition-transform duration-500"
-            />
-          </Link>
-        </section>
+        {selectedDiscoveryFilters.length > 0 && (
+          <section className="bg-white rounded-2xl border border-stone-200/90 p-3.5 shadow-xs animate-fade-in flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-stone-500 font-bold uppercase tracking-wider flex items-center gap-1.5 mr-1">
+                <Sparkles className="w-3.5 h-3.5 text-[#C8A65E]" />
+                Active Discovery Filters:
+              </span>
+              {selectedDiscoveryFilters.map((fid) => (
+                <button
+                  key={fid}
+                  type="button"
+                  onClick={() => removeFilter(fid)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EAE2F2] hover:bg-[#D8CBE4] text-[#79539B] border border-[#79539B]/30 transition-all cursor-pointer group"
+                  title="Click to remove filter"
+                >
+                  <span>{getFilterLabel(fid)}</span>
+                  <X className="w-3.5 h-3.5 text-[#79539B] group-hover:scale-115 transition-transform" />
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="text-xs font-bold text-rose-600 hover:text-rose-800 transition underline cursor-pointer"
+            >
+              Clear All ({selectedDiscoveryFilters.length})
+            </button>
+          </section>
+        )}
 
         {/* ══════════════════════════════════════════════════════════
-            3B. MOBILE SHOP BANNER (IMAGE 2 SPECIFICATION)
-            Festive Diwali Banner: BIG BANG DIWALI SALE STARTS 28TH OCT
-           ══════════════════════════════════════════════════════════ */}
-        <section className="block md:hidden my-2">
-          <Link
-            href="/shop"
-            className="block relative w-full aspect-[3.7/1] rounded-xl overflow-hidden shadow-md group"
-          >
-            <Image
-              src="/images/shop-banner-mobile-diwali.png"
-              alt="Big Bang Diwali Sale - Sumuk Crystalz 5"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-center group-hover:scale-102 transition-transform duration-500"
-            />
-          </Link>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════
-            4. SUGGESTED FOR YOU SECTION HEADER
+            4. SECTION HEADER & RESULTS COUNT
            ══════════════════════════════════════════════════════════ */}
         <section className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
-            <span className="hidden md:inline-block text-amber-600 font-bold text-lg">✦</span>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-stone-900 font-sans">
+            <span className="text-[#C8A65E] font-bold text-lg">✦</span>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-stone-900 font-serif">
               {activeCategoryTitle}
             </h2>
-            {searchQuery && (
-              <span className="text-xs font-mono text-stone-500 bg-stone-200/70 px-2.5 py-0.5 rounded-full">
-                matching &quot;{searchQuery}&quot;
-              </span>
-            )}
+            <span className="text-xs font-mono text-stone-500 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
+              {filteredProducts.length} {filteredProducts.length === 1 ? 'specimen' : 'specimens'}
+            </span>
           </div>
 
-          {/* Desktop Right Actions: Explore All + Carousel Controls (< and >) */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/shop"
-              className="text-xs font-mono font-bold text-stone-600 hover:text-amber-800 uppercase tracking-wider flex items-center gap-1 transition"
+          <div className="flex items-center gap-2">
+            {/* Sort Dropdown */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="text-xs font-sans font-semibold rounded-lg border border-stone-200 bg-white py-1.5 px-2.5 text-stone-700 focus:outline-none focus:border-[#79539B] cursor-pointer"
             >
-              <span>Explore All</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              <option value="bestselling">Sort: Bestselling</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="rating">Customer Rating</option>
+            </select>
 
-            <div className="flex items-center gap-1.5 ml-2">
+            {/* Filter Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setFiltersDrawerOpen(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-[#79539B] text-white hover:bg-[#684587] transition shadow-xs cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Discovery Filters</span>
+              <span className="sm:hidden">Filters</span>
+            </button>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════════════════════
+            5. PRODUCT GRID (LIVE ADMIN UPLOADED SPECIMENS)
+           ══════════════════════════════════════════════════════════ */}
+        {loadingCatalog ? (
+          <div className="py-20 flex flex-col items-center justify-center gap-3">
+            <div className="w-10 h-10 border-2 border-[#79539B] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-stone-500 font-mono">Connecting to Sacred Sanctuary Vault...</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          /* ── ELEGANT SANCTUARY EMPTY STATE ── */
+          <div className="py-16 px-4 text-center max-w-md mx-auto space-y-4 bg-white rounded-3xl border border-stone-200/90 shadow-sm animate-fade-in my-6">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#EAE2F2] border border-[#79539B]/30 flex items-center justify-center text-[#79539B] shadow-inner">
+              <Sparkles className="w-8 h-8 text-[#79539B]" />
+            </div>
+            <h3 className="font-serif text-2xl font-bold text-stone-900">No Matching Specimens</h3>
+            <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-sans">
+              No products in our current consecrated collection match all of your selected energy dimensions.
+              Try clearing some filter tags or exploring by physical specimen.
+            </p>
+            <div className="pt-2">
               <button
                 type="button"
-                onClick={() => handleScrollCarousel('left')}
-                className="w-8 h-8 rounded-full border border-stone-300 bg-white hover:bg-stone-50 text-stone-700 flex items-center justify-center transition shadow-xs cursor-pointer"
-                aria-label="Previous Products"
+                onClick={clearAllFilters}
+                className="px-6 py-2.5 rounded-full bg-[#79539B] hover:bg-[#684587] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer active:scale-95"
               >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleScrollCarousel('right')}
-                className="w-8 h-8 rounded-full border border-stone-300 bg-white hover:bg-stone-50 text-stone-700 flex items-center justify-center transition shadow-xs cursor-pointer"
-                aria-label="Next Products"
-              >
-                <ChevronRight className="w-4 h-4" />
+                Clear All Filters &amp; View Vault
               </button>
             </div>
           </div>
+        ) : (
+          /* ── PRODUCT GRID ── */
+          <section className="pb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+              {filteredProducts.map((prod) => {
+                const prodId = prod.id || prod.slug;
+                const prodSlug = prod.slug || prodId;
+                const prodImg = prod.images?.[0] || prod.heroImage || '/images/products/amethyst.jpg';
+                const prodPrice = Number(prod.price || prod.selling_price || 999);
+                const originalPrice = Number(prod.original_price || prod.originalPrice || prodPrice * 1.3);
+                const multiTags = formatProductMultiTags(prod, 2);
 
-          {/* Mobile Right Action: Black Circle Arrow Button (matching Image 2) */}
-          <div className="block md:hidden">
-            <Link
-              href="/shop"
-              className="w-8 h-8 rounded-full bg-stone-900 text-white flex items-center justify-center shadow-xs"
-              aria-label="View All Suggested Items"
-            >
-              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-            </Link>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════
-            5A. DESKTOP PRODUCT SHOWCASE (MATCHING IMAGE 1 ROW/GRID)
-           ══════════════════════════════════════════════════════════ */}
-        <section className="hidden md:block pb-6">
-          <div
-            ref={desktopCarouselRef}
-            className="grid grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto no-scrollbar scroll-smooth"
-          >
-            {filteredProducts.map((prod) => {
-              const prodId = prod.id || prod.slug;
-              const prodSlug = prod.slug || prodId;
-              const prodImg = prod.images?.[0] || prod.heroImage || '/images/products/amethyst.jpg';
-              const prodPrice = Number(prod.price || prod.selling_price || 999);
-
-              return (
-                <article
-                  key={prodId}
-                  className="bg-white rounded-2xl border border-stone-200/90 shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-3 group relative"
-                >
-                  {/* Top Image Container */}
-                  <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-stone-100">
-                    <Link href={`/product/${prodSlug}`} className="block relative w-full h-full">
-                      <Image
-                        src={prodImg}
-                        alt={prod.name}
-                        fill
-                        sizes="240px"
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </Link>
-
-                    {/* Top-Right Heart Wishlist */}
-                    <button
-                      type="button"
-                      className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-stone-600 hover:text-red-500 transition shadow-xs cursor-pointer"
-                      title="Save to Wishlist"
-                    >
-                      <Heart className="w-3.5 h-3.5 stroke-[2]" />
-                    </button>
-
-                    {/* Bottom-Left Rating Pill: ⭐ 4.8 */}
-                    <div className="absolute bottom-2 left-2 z-10 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-full text-[11px] font-bold text-stone-900 shadow-xs flex items-center gap-1 border border-stone-100">
-                      <Star className="w-3 h-3 fill-emerald-600 text-emerald-600" />
-                      <span>{prod.rating || 4.8}</span>
-                    </div>
-                  </div>
-
-                  {/* Body: Title & Price */}
-                  <div className="pt-2.5 flex items-end justify-between gap-1.5">
-                    <div className="min-w-0">
-                      <Link href={`/product/${prodSlug}`}>
-                        <h3 className="font-semibold text-stone-900 text-xs truncate group-hover:text-amber-800 transition-colors">
-                          {prod.name}
-                        </h3>
+                return (
+                  <article
+                    key={prodId}
+                    className="bg-white rounded-2xl border border-stone-200/90 shadow-xs hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between p-2.5 sm:p-3 group relative"
+                  >
+                    {/* Media Container */}
+                    <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-stone-100">
+                      <Link href={`/product/${prodSlug}`} className="block relative w-full h-full">
+                        <Image
+                          src={prodImg}
+                          alt={prod.name}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 220px"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
                       </Link>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-mono font-bold text-[#79539B] bg-[#EAE2F2] px-1.5 py-0.5 rounded border border-[#79539B]/30">
-                          {prod.product_id || prod.productId || 'BR001'}
-                        </span>
-                        <span className="text-[10px] text-stone-500 font-sans truncate">
-                          {prod.category || 'Bracelet'}
-                        </span>
+
+                      {/* Top-Right Heart Wishlist */}
+                      <button
+                        type="button"
+                        className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-white/85 hover:bg-white flex items-center justify-center text-stone-600 hover:text-red-500 transition shadow-xs cursor-pointer"
+                        title="Save to Wishlist"
+                      >
+                        <Heart className="w-3.5 h-3.5 stroke-[2]" />
+                      </button>
+
+                      {/* Bottom-Left Rating Pill */}
+                      <div className="absolute bottom-2 left-2 z-10 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-full text-[10px] font-bold text-stone-900 shadow-xs flex items-center gap-1 border border-stone-100">
+                        <Star className="w-2.5 h-2.5 fill-emerald-600 text-emerald-600" />
+                        <span>{prod.rating || 5.0}</span>
                       </div>
-                      <p className="text-sm font-extrabold text-stone-950 font-sans mt-0.5">
-                        ₹{prodPrice.toLocaleString('en-IN')}
-                      </p>
+
+                      {/* Bottom-Right Golden Shield Badge */}
+                      <div className="absolute bottom-1 right-1 z-10">
+                        <PremiumQualityShield id={prodId} />
+                      </div>
                     </div>
 
-                    {/* Golden Round Add to Cart Button (Matching Image 1) */}
-                    <button
-                      type="button"
-                      onClick={(e) => handleQuickAdd(prod, e)}
-                      aria-label={`Add ${prod.name} to cart`}
-                      className="w-8 h-8 rounded-full bg-[#E6BF48] hover:bg-[#D4AF37] text-stone-950 flex items-center justify-center shadow-xs transition-transform active:scale-95 flex-shrink-0 cursor-pointer"
-                    >
-                      {quickAddedId === prodId ? (
-                        <Check className="w-4 h-4 stroke-[2.5]" />
-                      ) : (
-                        <ShoppingCart className="w-3.5 h-3.5 stroke-[2]" />
-                      )}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+                    {/* Product Body */}
+                    <div className="pt-2 flex flex-col justify-between flex-1">
+                      <div>
+                        {/* Multi-Discovery Filter Tags Preview */}
+                        <div className="flex flex-wrap gap-1 mb-1">
+                          {multiTags.map((t) => (
+                            <span
+                              key={t.id}
+                              className={`text-[8.5px] font-mono px-1.5 py-0.2 rounded border font-semibold truncate max-w-[120px] ${t.colorClass}`}
+                            >
+                              {t.label}
+                            </span>
+                          ))}
+                        </div>
 
-        {/* ══════════════════════════════════════════════════════════
-            5B. MOBILE PRODUCT GRID (MATCHING IMAGE 2 - 3 COLUMNS)
-           ══════════════════════════════════════════════════════════ */}
-        <section className="block md:hidden pb-4">
-          <div className="grid grid-cols-3 gap-2">
-            {filteredProducts.map((prod) => {
-              const prodId = prod.id || prod.slug;
-              const prodSlug = prod.slug || prodId;
-              const prodImg = prod.images?.[0] || prod.heroImage || '/images/products/amethyst.jpg';
-              const prodPrice = Number(prod.price || prod.selling_price || 999);
+                        <Link href={`/product/${prodSlug}`}>
+                          <h3 className="font-semibold text-stone-900 text-xs sm:text-[13px] line-clamp-2 leading-tight group-hover:text-[#79539B] transition-colors">
+                            {prod.name}
+                          </h3>
+                        </Link>
 
-              return (
-                <article
-                  key={prodId}
-                  className="bg-white rounded-xl border border-stone-200/90 shadow-2xs overflow-hidden flex flex-col justify-between p-1.5 group relative"
-                >
-                  {/* Media Container */}
-                  <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-stone-100">
-                    <Link href={`/product/${prodSlug}`} className="block relative w-full h-full">
-                      <Image
-                        src={prodImg}
-                        alt={prod.name}
-                        fill
-                        sizes="140px"
-                        className="object-cover"
-                      />
-                    </Link>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[9.5px] font-mono font-bold text-[#79539B] bg-[#EAE2F2] px-1.5 py-0.5 rounded border border-[#79539B]/30">
+                            {prod.product_id || prod.productId || 'SC5'}
+                          </span>
+                          <span className="text-[10px] text-stone-500 font-sans truncate">
+                            {prod.category || 'Sacred Gem'}
+                          </span>
+                        </div>
+                      </div>
 
-                    {/* Top-Right Heart Wishlist */}
-                    <button
-                      type="button"
-                      className="absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full bg-white/70 flex items-center justify-center text-stone-700"
-                    >
-                      <Heart className="w-3 h-3 stroke-[2]" />
-                    </button>
+                      {/* Price & Quick Add Button */}
+                      <div className="pt-2 mt-2 border-t border-stone-100 flex items-center justify-between gap-1.5">
+                        <div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xs sm:text-sm font-extrabold text-stone-950 font-sans">
+                              ₹{prodPrice.toLocaleString('en-IN')}
+                            </span>
+                            {originalPrice > prodPrice && (
+                              <span className="text-[10px] text-stone-400 line-through font-mono">
+                                ₹{originalPrice.toLocaleString('en-IN')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
-                    {/* Bottom-Left Rating Pill: ⭐ 4.8 */}
-                    <div className="absolute bottom-1 left-1 z-10 bg-white/95 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-stone-900 shadow-xs flex items-center gap-0.5">
-                      <Star className="w-2.5 h-2.5 fill-emerald-600 text-emerald-600" />
-                      <span>{prod.rating || 4.8}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleQuickAdd(prod, e)}
+                          aria-label={`Add ${prod.name} to vault`}
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EAE2F2] hover:bg-[#79539B] text-[#79539B] hover:text-white flex items-center justify-center transition-all duration-200 shadow-xs cursor-pointer active:scale-95 flex-shrink-0"
+                          title="Quick Add to Cart"
+                        >
+                          {quickAddedId === prodId ? (
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          ) : (
+                            <ShoppingCart className="w-3.5 h-3.5 stroke-[2]" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Bottom-Right Golden Premium Quality Shield Badge */}
-                    <div className="absolute bottom-1 right-1 z-10">
-                      <PremiumQualityShield id={prodId} />
-                    </div>
-                  </div>
-
-                  {/* Body: Title & Price */}
-                  <div className="pt-1.5">
-                    <Link href={`/product/${prodSlug}`}>
-                      <h3 className="font-bold text-stone-900 text-[10.5px] leading-tight line-clamp-1">
-                        {prod.name}
-                      </h3>
-                    </Link>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <span className="text-[9px] font-mono font-bold text-[#79539B] bg-[#EAE2F2] px-1 py-0.2 rounded border border-[#79539B]/30">
-                        {prod.product_id || prod.productId || 'BR001'}
-                      </span>
-                    </div>
-                    <p className="text-xs font-black text-stone-950 font-sans mt-0.5">
-                      ₹{prodPrice.toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════
-            6. MOBILE "IN THE SPOTLIGHT" BANNER (MATCHING IMAGE 2)
-           ══════════════════════════════════════════════════════════ */}
-        <section className="block md:hidden my-2">
-          <Link
-            href="/shop"
-            className="block relative w-full aspect-[3.7/1] rounded-xl overflow-hidden shadow-md group"
-          >
-            <Image
-              src="/images/shop-banner-mobile-spotlight.png"
-              alt="In The Spotlight - Premium Crystals for Positive Energy"
-              fill
-              sizes="100vw"
-              className="object-cover object-center group-hover:scale-102 transition-transform duration-500"
-            />
-          </Link>
-        </section>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
       </main>
 
       {/* ══════════════════════════════════════════════════════════
-          7. SLIDE-OUT FILTER DRAWER
+          6. COMPREHENSIVE 6-DIMENSION FILTER DRAWER
          ══════════════════════════════════════════════════════════ */}
       {filtersDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-sm bg-white h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-stone-200">
-                <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="w-5 h-5 text-amber-700" />
-                  <span className="font-bold text-base text-stone-900">Storefront Filters</span>
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-fade-in select-none">
+          <div className="w-full max-w-md sm:max-w-lg bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden">
+            
+            {/* Drawer Header */}
+            <div className="p-4 sm:p-5 border-b border-stone-200 flex items-center justify-between bg-[#FAF7F2]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#EAE2F2] border border-[#79539B]/30 flex items-center justify-center text-[#79539B]">
+                  <SlidersHorizontal className="w-4 h-4" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setFiltersDrawerOpen(false)}
-                  className="p-1 rounded-full text-stone-500 hover:text-stone-900"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div>
+                  <h3 className="font-serif text-base sm:text-lg font-bold text-stone-900 leading-tight">
+                    Discovery Dimensions
+                  </h3>
+                  <p className="text-[11px] text-stone-500 font-sans">
+                    6 independent filters calibrated for spiritual energy
+                  </p>
+                </div>
               </div>
 
-              {/* Discovery Pillar Categories */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-stone-500 font-bold">Categories</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {DESKTOP_CATEGORY_AVATARS.map((cat) => (
+              <button
+                type="button"
+                onClick={() => setFiltersDrawerOpen(false)}
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition cursor-pointer"
+                aria-label="Close filters drawer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Drawer Body (Scrollable 6 Dimensions) */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 divide-y divide-stone-100">
+              
+              {/* Active Filters Summary in Drawer */}
+              {selectedDiscoveryFilters.length > 0 && (
+                <div className="pb-3 flex items-center justify-between">
+                  <span className="text-xs font-bold text-stone-700 font-sans">
+                    {selectedDiscoveryFilters.length} Active {selectedDiscoveryFilters.length === 1 ? 'Filter' : 'Filters'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="text-xs font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              )}
+
+              {/* The 6 Pillars */}
+              {DISCOVERY_PILLARS.map((pillar) => {
+                const isExpanded = !!expandedPillars[pillar.id];
+                const activeCountInPillar = pillar.options.filter((o) =>
+                  selectedDiscoveryFilters.includes(o.id)
+                ).length;
+
+                return (
+                  <div key={pillar.id} className="pt-4 first:pt-0">
+                    {/* Pillar Title Toggle */}
                     <button
-                      key={cat.id}
                       type="button"
-                      onClick={() => {
-                        setActiveCategory(cat.id);
-                        setFiltersDrawerOpen(false);
-                      }}
-                      className={`p-2.5 rounded-xl border text-xs font-medium text-left transition ${
-                        activeCategory === cat.id
-                          ? 'bg-amber-100/70 border-amber-500 text-amber-900 font-bold'
-                          : 'bg-stone-50 border-stone-200 text-stone-700'
-                      }`}
+                      onClick={() => togglePillarExpand(pillar.id)}
+                      className="w-full flex items-center justify-between text-left group cursor-pointer py-1"
                     >
-                      {cat.label}
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-serif text-sm sm:text-base font-bold text-stone-900 group-hover:text-[#79539B] transition-colors">
+                          {pillar.name}
+                        </h4>
+                        {activeCountInPillar > 0 && (
+                          <span className="w-5 h-5 rounded-full bg-[#79539B] text-white text-[10px] font-bold flex items-center justify-center">
+                            {activeCountInPillar}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronDown
+                        className={`w-4 h-4 text-stone-400 transition-transform duration-200 ${
+                          isExpanded ? 'rotate-180 text-[#79539B]' : ''
+                        }`}
+                      />
                     </button>
-                  ))}
-                </div>
-              </div>
+                    <p className="text-[11px] text-stone-500 font-sans mt-0.5 mb-2.5">
+                      {pillar.subtitle}
+                    </p>
 
-              {/* Price Filter */}
-              <div className="space-y-3 pt-2 border-t border-stone-100">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-stone-500 font-bold">Price Ceiling</h4>
+                    {/* Pillar Options */}
+                    {isExpanded && (
+                      <div className="space-y-3 pt-1 animate-fade-in">
+                        {/* Subgroups rendering (for Energy System & Crystal / Specimen) */}
+                        {pillar.subGroups ? (
+                          pillar.subGroups.map((sg) => (
+                            <div key={sg.id} className="space-y-1.5 pl-2 border-l-2 border-stone-200">
+                              <span className="text-[10.5px] font-mono uppercase tracking-wider text-stone-500 font-bold block">
+                                {sg.title}
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {sg.options.map((opt) => {
+                                  const isSelected = selectedDiscoveryFilters.includes(opt.id);
+                                  return (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      onClick={() => toggleFilter(opt.id)}
+                                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-[#79539B] text-white font-bold shadow-xs'
+                                          : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
+                                      }`}
+                                    >
+                                      {isSelected && <Check className="w-3 h-3 stroke-[2.5]" />}
+                                      <span>{opt.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          /* Flat Options (Purpose, Jewellery, Bead Size, Home & Space) */
+                          <div className="flex flex-wrap gap-1.5">
+                            {pillar.options.map((opt) => {
+                              const isSelected = selectedDiscoveryFilters.includes(opt.id);
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => toggleFilter(opt.id)}
+                                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#79539B] text-white font-bold shadow-xs'
+                                      : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
+                                  }`}
+                                >
+                                  {isSelected && <Check className="w-3 h-3 stroke-[2.5]" />}
+                                  <span>{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Price Range Filter */}
+              <div className="pt-4 space-y-3">
+                <h4 className="font-serif text-sm sm:text-base font-bold text-stone-900">
+                  Price Filter
+                </h4>
                 <div className="flex items-center justify-between text-xs font-mono font-bold text-stone-800">
                   <span>₹0</span>
                   <span>₹{maxPrice.toLocaleString('en-IN')}</span>
@@ -936,49 +1022,47 @@ function StorefrontContent() {
                 <input
                   type="range"
                   min="500"
-                  max="15000"
+                  max="50000"
                   step="500"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="w-full accent-amber-600"
+                  className="w-full accent-[#79539B] cursor-pointer"
                 />
               </div>
+
             </div>
 
-            <div className="pt-4 border-t border-stone-200 flex gap-2">
+            {/* Drawer Footer Actions */}
+            <div className="p-4 border-t border-stone-200 bg-[#FAF7F2] flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  setMinPrice(0);
-                  setMaxPrice(50000);
-                  setActiveCategory('for_you');
-                  setFiltersDrawerOpen(false);
-                }}
-                className="flex-1 py-2.5 rounded-xl border border-stone-300 text-stone-700 text-xs font-bold"
+                onClick={clearAllFilters}
+                className="flex-1 py-2.5 rounded-xl border border-stone-300 hover:bg-stone-100 text-stone-700 text-xs font-bold transition cursor-pointer"
               >
-                Reset
+                Reset All
               </button>
               <button
                 type="button"
                 onClick={() => setFiltersDrawerOpen(false)}
-                className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm"
+                className="flex-1 py-2.5 rounded-xl bg-[#79539B] hover:bg-[#684587] text-white text-xs font-bold shadow-sm transition cursor-pointer"
               >
-                Apply
+                Apply Filters ({filteredProducts.length})
               </button>
             </div>
+
           </div>
         </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          8. MOBILE BOTTOM NAVIGATION (MATCHING IMAGE 2 EXACTLY)
+          7. MOBILE BOTTOM NAVIGATION
          ══════════════════════════════════════════════════════════ */}
       <nav
         className="block md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/98 backdrop-blur-lg border-t border-stone-200 py-1.5 px-3 shadow-[0_-2px_12px_rgba(0,0,0,0.06)]"
         aria-label="Mobile Bottom Navigation"
       >
         <div className="grid grid-cols-4 items-center text-center">
-          <Link href="/shop" className="flex flex-col items-center py-1 text-[#C41E3A] font-bold">
+          <Link href="/shop" className="flex flex-col items-center py-1 text-[#79539B] font-bold">
             <Home className="w-5 h-5 stroke-[2.5]" />
             <span className="text-[10px] mt-0.5">Shop</span>
           </Link>
@@ -990,7 +1074,7 @@ function StorefrontContent() {
 
           <Link href="/about" className="flex flex-col items-center py-1 text-stone-600 hover:text-stone-900 font-medium">
             <User className="w-5 h-5 stroke-[1.8]" />
-            <span className="text-[10px] mt-0.5">Founder Story</span>
+            <span className="text-[10px] mt-0.5">Founder</span>
           </Link>
 
           <button
@@ -1000,9 +1084,11 @@ function StorefrontContent() {
           >
             <div className="relative">
               <ShoppingCart className="w-5 h-5 stroke-[1.8]" />
-              <span className="absolute -top-1 -right-2 w-4 h-4 rounded-full bg-red-600 text-white font-extrabold text-[9px] flex items-center justify-center">
-                {displayCartCount}
-              </span>
+              {displayCartCount > 0 && (
+                <span className="absolute -top-1 -right-2 w-4 h-4 rounded-full bg-[#79539B] text-white font-extrabold text-[9px] flex items-center justify-center">
+                  {displayCartCount}
+                </span>
+              )}
             </div>
             <span className="text-[10px] mt-0.5">Cart</span>
           </button>
@@ -1018,7 +1104,7 @@ export default function StorefrontPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-          <div className="w-10 h-10 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-[#79539B] border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

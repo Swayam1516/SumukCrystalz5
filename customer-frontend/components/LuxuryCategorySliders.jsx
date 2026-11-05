@@ -102,24 +102,17 @@ export const CATEGORY_DEFINITIONS = [
 export default function LuxuryCategorySliders() {
   const { addItem, openDrawer } = useCartStore();
   const [activeTab, setActiveTab] = useState('all');
-  const [products, setProducts] = useState(ENERGY_STONES_CATALOG);
+  const [products, setProducts] = useState([]);
   const [quickAddedId, setQuickAddedId] = useState(null);
   const sliderRefs = useRef({});
 
-  // Fetch real live products from Supabase and merge with catalog
+  // Fetch strictly live products uploaded by admin from Supabase
   useEffect(() => {
     let isMounted = true;
     getSupabaseProducts(true)
       .then((items) => {
-        if (!isMounted || !items || items.length === 0) return;
-        // Merge Supabase products with catalog, avoiding duplicates by slug/id
-        const merged = [...items];
-        for (const catProd of ENERGY_STONES_CATALOG) {
-          if (!merged.some((m) => m.slug === catProd.slug || m.id === catProd.id)) {
-            merged.push(catProd);
-          }
-        }
-        setProducts(merged);
+        if (!isMounted) return;
+        setProducts(items || []);
       })
       .catch((err) => {
         console.warn('Luxury Category Sliders load note:', err.message);
@@ -274,40 +267,27 @@ export default function LuxuryCategorySliders() {
         return (
           <div key={catDef.id} className="space-y-6 pt-4">
             
-            {/* ── A. Masterwork Cinematic Artwork Banner ── */}
-            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[24/9] rounded-3xl overflow-hidden shadow-xl border border-[#EEDBBA] bg-stone-950 group">
-              <Image
-                src={catDef.banner}
-                alt={catDef.title}
-                fill
-                sizes="100vw"
-                priority
-                className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-700 filter brightness-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-
-              {/* Banner Floating Overlay Bar */}
-              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-8 sm:right-8 flex flex-col sm:flex-row sm:items-end justify-between gap-3 text-white">
-                <div>
-                  <span className="text-[11px] font-mono uppercase tracking-widest text-amber-300 font-bold block drop-shadow-md">
-                    Sumuk Crystalz 5 &bull; Sacred Sanctuary
-                  </span>
-                  <h3 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
-                    {catDef.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-stone-200 font-sans drop-shadow-md">
-                    {catDef.subtitle}
-                  </p>
-                </div>
-
-                <Link
-                  href="/shop"
-                  className="self-start sm:self-auto px-5 py-2.5 rounded-full bg-white/95 hover:bg-white text-stone-950 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md"
-                >
-                  <span>Explore Vault</span>
-                  <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
-                </Link>
+            {/* ── A. Category Collection Header (Replaced large banner) ── */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-[#EAE2F2]">
+              <div>
+                <span className="text-[11px] font-sans uppercase tracking-widest text-[#79539B] font-bold block">
+                  Sumuk Crystalz 5 &bull; Sacred Sanctuary
+                </span>
+                <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#29242D] tracking-tight">
+                  {catDef.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-[#29242D]/75 font-sans mt-0.5">
+                  {catDef.subtitle}
+                </p>
               </div>
+
+              <Link
+                href="/shop"
+                className="self-start sm:self-auto px-5 py-2.5 rounded-full bg-[#EAE2F2] hover:bg-[#D8CBE4] text-[#79539B] hover:text-[#684587] text-xs font-sans font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-xs"
+              >
+                <span>Explore All In Vault</span>
+                <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
+              </Link>
             </div>
 
             {/* ── B. Horizontal Touch-Friendly Product Slider ── */}

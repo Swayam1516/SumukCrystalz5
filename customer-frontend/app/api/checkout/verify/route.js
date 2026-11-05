@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabase, saveOrderToSupabase } from '../../../../lib/supabase';
+import { generateNextOrderNumber } from '../../../../lib/orderNumber';
 import {
   sendOrderConfirmationEmail,
   sendLuxuryEmail,
@@ -116,7 +117,10 @@ export async function POST(request) {
 
     // 4. Mark payment as processed to lock against replay
     processedPayments.add(razorpay_payment_id);
-    const confirmedOrderId = orderId || `ORD-${Date.now()}`;
+    let confirmedOrderId = orderId;
+    if (!confirmedOrderId || !confirmedOrderId.startsWith('SC5-')) {
+      confirmedOrderId = await generateNextOrderNumber(supabase);
+    }
 
     const orderRecord = {
       orderId: confirmedOrderId,

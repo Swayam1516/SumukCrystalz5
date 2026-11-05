@@ -179,13 +179,16 @@ export default function AICustomerChatbot() {
       const handleOpen = () => {
         setIsOpen(true);
         setIsMinimized(false);
+        setIsDismissed(false);
       };
 
       window.addEventListener('toggle-ai-chat', handleToggle);
       window.addEventListener('open-ai-chat', handleOpen);
+      window.addEventListener('open-sumuk-assistant', handleOpen);
       return () => {
         window.removeEventListener('toggle-ai-chat', handleToggle);
         window.removeEventListener('open-ai-chat', handleOpen);
+        window.removeEventListener('open-sumuk-assistant', handleOpen);
       };
     }
   }, []);

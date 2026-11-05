@@ -210,11 +210,11 @@ export default function CheckoutPage() {
     subtotal >= Number(deliverySettings.free_shipping_threshold || 5000);
 
   const shippingFee =
-    subtotal === 0
+    subtotal === 0 || deliverySettings.shipping_enabled === false
       ? 0
       : isFreeByThreshold || shippingCalculation.isFree
       ? 0
-      : Number(shippingCalculation.fee ?? deliverySettings.tier_1_fee ?? 50);
+      : Number(shippingCalculation.fee ?? deliverySettings.shipping_fee ?? 80);
 
   const total = subtotal + shippingFee;
 

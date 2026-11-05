@@ -72,25 +72,45 @@ export default function AnnouncementBanner() {
     }
   };
 
+  const isHomepage = pathname === '/';
+
   return (
     <div
       role="region"
       aria-label="Site Announcement"
-      className="relative z-50 bg-[#EAE2F2]/90 backdrop-blur-md border-b border-[#D8CBE4] text-[#29242D] shadow-xs overflow-hidden transition-all duration-300"
+      className={`relative z-50 backdrop-blur-md border-b shadow-xs overflow-hidden transition-all duration-300 ${
+        isHomepage
+          ? 'bg-[#120B04]/90 border-[#D4AF37]/30 text-[#FFF1C5]'
+          : 'bg-[#EAE2F2]/90 border-[#D8CBE4] text-[#29242D]'
+      }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-3 text-xs sm:text-sm">
         {/* Banner Content */}
         <div className="flex-1 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-center">
-          <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white border border-[#D8CBE4] text-[#C8A65E] flex-shrink-0 shadow-xs">
+          <div
+            className={`inline-flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 shadow-xs ${
+              isHomepage
+                ? 'bg-black/50 border border-[#D4AF37]/40 text-[#E5C378]'
+                : 'bg-white border border-[#D8CBE4] text-[#C8A65E]'
+            }`}
+          >
             <Sparkles className="w-3 h-3" />
           </div>
-          <span className="font-sans font-medium tracking-wide text-[#29242D] leading-snug text-xs sm:text-[13px]">
+          <span
+            className={`font-sans font-medium tracking-wide leading-snug text-xs sm:text-[13px] ${
+              isHomepage ? 'text-[#FFF1C5]' : 'text-[#29242D]'
+            }`}
+          >
             {displayMessage}
           </span>
           <button
             type="button"
             onClick={handleOpenBlessing}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white hover:bg-[#F8F6F2] border border-[#D8CBE4] text-[#79539B] text-[10px] font-sans uppercase tracking-wider font-semibold transition-all cursor-pointer shadow-xs"
+            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-sans uppercase tracking-wider font-semibold transition-all cursor-pointer shadow-xs ${
+              isHomepage
+                ? 'bg-black/60 hover:bg-black/90 border border-[#D4AF37]/50 text-[#E5C378]'
+                : 'bg-white hover:bg-[#F8F6F2] border border-[#D8CBE4] text-[#79539B]'
+            }`}
             title="Open Welcome Blessing Artwork"
           >
             <span>View Blessing</span>
@@ -102,7 +122,11 @@ export default function AnnouncementBanner() {
         <button
           type="button"
           onClick={handleDismiss}
-          className="p-1 rounded-lg bg-white/60 hover:bg-white border border-[#D8CBE4] text-[#5C5562] hover:text-[#29242D] transition-colors flex-shrink-0 cursor-pointer shadow-xs"
+          className={`p-1 rounded-lg border transition-colors flex-shrink-0 cursor-pointer shadow-xs ${
+            isHomepage
+              ? 'bg-black/40 hover:bg-black/60 border-white/10 text-stone-300 hover:text-white'
+              : 'bg-white/60 hover:bg-white border-[#D8CBE4] text-[#5C5562] hover:text-[#29242D]'
+          }`}
           title="Dismiss Announcement"
           aria-label="Dismiss Announcement"
         >

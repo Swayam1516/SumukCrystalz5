@@ -8,7 +8,7 @@ import LuxuryInvoiceModal from '@/components/LuxuryInvoiceModal';
 import ProductReviewModal from '@/components/ProductReviewModal';
 import { useAuthStore } from '@/store/useAuth';
 import { useCartStore } from '@/store/useCart';
-import { getSupabaseOrdersByUser } from '@/lib/supabase';
+import { getSupabaseOrdersByUser, getSupabaseOrderTracking, subscribeToOrderTracking, STAGE_CONFIGS } from '@/lib/supabase';
 import {
   LayoutGrid,
   ShoppingBag,
@@ -52,6 +52,7 @@ function AccountPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get('tab');
+  const orderIdParam = searchParams?.get('orderId');
 
   const { user, token, isAuthenticated, logout, openAuthModal, updateUser } = useAuthStore();
   const { addItem, openDrawer } = useCartStore();
@@ -60,7 +61,7 @@ function AccountPageContent() {
   
   // 8 Recommended Dashboard Tabs:
   // 'overview' | 'orders' | 'tracking' | 'wishlist' | 'addresses' | 'profile' | 'security' | 'support'
-  const [activeTab, setActiveTab] = useState(tabParam || 'overview');
+  const [activeTab, setActiveTab] = useState(tabParam || (orderIdParam ? 'tracking' : 'overview'));
 
   // Orders State
   const [orders, setOrders] = useState([]);
@@ -71,6 +72,8 @@ function AccountPageContent() {
 
   // Active tracking order selection
   const [activeTrackingIndex, setActiveTrackingIndex] = useState(0);
+  const [orderTrackingEvents, setOrderTrackingEvents] = useState([]);
+  const [loadingTracking, setLoadingTracking] = useState(false);
 
   // Review Modal State
   const [selectedReviewItem, setSelectedReviewItem] = useState(null);
@@ -292,13 +295,20 @@ function AccountPageContent() {
         const formatted = remoteOrders.map((ord, idx) => ({
           ...ord,
           _id: ord.id || ord._id || `ORD-${idx + 1}`,
-          orderNumber: ord.order_number || ord.orderNumber || `ORD-${idx + 1001}`,
+          id: ord.id || ord._id || ord.order_number,
+          orderNumber: ord.order_number || ord.orderNumber || `SC5-2026-${String(idx + 1).padStart(6, '0')}`,
           createdAt: ord.created_at || ord.createdAt || new Date().toISOString(),
-          status: ord.status || 'paid',
-          awbNumber: ord.awb_number || ord.awbNumber || 'BLUEDART-889210459',
-          courier: ord.courier || 'Blue Dart Express',
-          estimatedDelivery: ord.estimated_delivery || ord.estimatedDelivery || 'Estimated 2-3 Days',
-          total: Number(ord.total_amount || ord.total || 3499),
+          status: ord.order_status || ord.status || 'confirmed',
+          paymentStatus: ord.payment_status || (ord.status === 'paid' ? 'verified' : 'verified'),
+          paymentMethod: ord.payment_method || 'Razorpay',
+          currentStage: ord.current_stage || 'order_confirmed',
+          awbNumber: ord.tracking_number || ord.awb_code || ord.awb_number || ord.awbNumber || null,
+          courier: ord.delivery_partner_name || ord.carrier || ord.courier || null,
+          trackingUrl: ord.tracking_url || null,
+          estimatedDelivery: ord.estimated_delivery_text || (ord.estimated_delivery_at ? new Date(ord.estimated_delivery_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null),
+          shippingFee: Number(ord.shipping_fee ?? ord.shipping_charge ?? 0),
+          subtotal: Number(ord.subtotal || ord.total_amount || 0),
+          total: Number(ord.total_amount || ord.total || 0),
           items: (ord.order_items || ord.items || []).map((it) => ({
             ...it,
             productId: it.product_id || it.productId || it.product_sku || '',
@@ -313,6 +323,16 @@ function AccountPageContent() {
         }));
 
         setOrders(formatted);
+
+        // If orderIdParam was in URL, select that index
+        if (orderIdParam) {
+          const targetIdx = formatted.findIndex(
+            (o) => o.orderNumber === orderIdParam || o.id === orderIdParam || o._id === orderIdParam
+          );
+          if (targetIdx !== -1) {
+            setActiveTrackingIndex(targetIdx);
+          }
+        }
       } catch (err) {
         console.warn('Order loading note:', err);
       } finally {
@@ -321,7 +341,40 @@ function AccountPageContent() {
     };
 
     fetchOrders();
-  }, [token, user]);
+  }, [token, user, orderIdParam]);
+
+  // Live tracking milestones loader & Realtime subscription
+  useEffect(() => {
+    const activeOrder = orders[activeTrackingIndex] || orders[0];
+    if (!activeOrder) return;
+
+    let isMounted = true;
+    setLoadingTracking(true);
+
+    const loadTracking = async () => {
+      try {
+        const events = await getSupabaseOrderTracking(activeOrder.id || activeOrder.orderNumber);
+        if (isMounted && events && events.length > 0) {
+          setOrderTrackingEvents(events);
+        }
+      } catch (e) {
+        console.warn('Notice loading order tracking milestones:', e.message);
+      } finally {
+        if (isMounted) setLoadingTracking(false);
+      }
+    };
+
+    loadTracking();
+
+    const unsubscribe = subscribeToOrderTracking(activeOrder.id || activeOrder.orderNumber, () => {
+      loadTracking();
+    });
+
+    return () => {
+      isMounted = false;
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [activeTrackingIndex, orders]);
 
   const handleCopyAwb = (awb) => {
     if (!awb) return;
@@ -1030,163 +1083,197 @@ function AccountPageContent() {
               <div className="p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-[#EAE2F2] shadow-sm space-y-8">
                 
                 {/* Tracking Meta Box */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-[#F8F6F2] border border-[#EAE2F2]">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-[#C8A65E]">
-                      PACKAGE AIR WAYBILL (AWB)
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-sans font-bold text-base sm:text-lg text-[#29242D] tabular-nums">
-                        {currentTrackingOrder.awbNumber}
+                {currentTrackingOrder.courier || currentTrackingOrder.awbNumber ? (
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-[#F8F6F2] border border-[#EAE2F2]">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-[#C8A65E]">
+                        PACKAGE TRACKING &amp; COURIER ALLOCATION
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyAwb(currentTrackingOrder.awbNumber)}
-                        className="px-2.5 py-1 rounded-lg bg-white border border-[#EAE2F2] hover:bg-[#EAE2F2] text-[#79539B] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                        title="Copy AWB number"
-                      >
-                        {copiedAwb === currentTrackingOrder.awbNumber ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-600" />
-                            <span>Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3" />
-                            <span>Copy</span>
-                          </>
+                      <div className="flex items-center gap-2">
+                        <span className="font-sans font-bold text-base sm:text-lg text-[#29242D] tabular-nums">
+                          {currentTrackingOrder.awbNumber || 'Allocated'}
+                        </span>
+                        {currentTrackingOrder.awbNumber && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopyAwb(currentTrackingOrder.awbNumber)}
+                            className="px-2.5 py-1 rounded-lg bg-white border border-[#EAE2F2] hover:bg-[#EAE2F2] text-[#79539B] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Copy AWB number"
+                          >
+                            {copiedAwb === currentTrackingOrder.awbNumber ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                <span>Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copy</span>
+                              </>
+                            )}
+                          </button>
                         )}
-                      </button>
+                        {currentTrackingOrder.trackingUrl && (
+                          <a
+                            href={currentTrackingOrder.trackingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 rounded-lg bg-[#79539B]/10 hover:bg-[#79539B]/20 text-[#79539B] text-xs font-semibold flex items-center gap-1 transition"
+                          >
+                            <span>Live Courier Track</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                      <p className="text-xs text-[#29242D]/60">
+                        Carrier Partner: <strong>{currentTrackingOrder.courier || 'Assigned Courier'}</strong>
+                      </p>
                     </div>
-                    <p className="text-xs text-[#29242D]/60">
-                      Carrier Partner: <strong>{currentTrackingOrder.courier}</strong>
-                    </p>
-                  </div>
 
-                  <div className="space-y-1 md:text-right">
-                    <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-emerald-700">
-                      ESTIMATED ARRIVAL
-                    </span>
-                    <div className="font-serif font-bold text-lg text-[#29242D]">
-                      {currentTrackingOrder.estimatedDelivery}
+                    <div className="space-y-1 md:text-right">
+                      <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-emerald-700">
+                        ESTIMATED ARRIVAL
+                      </span>
+                      <div className="font-serif font-bold text-lg text-[#29242D]">
+                        {currentTrackingOrder.estimatedDelivery || 'To be updated upon dispatch'}
+                      </div>
+                      <span className="text-xs text-[#79539B] font-semibold flex items-center md:justify-end gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Sound-Consecration Verified</span>
+                      </span>
                     </div>
-                    <span className="text-xs text-[#79539B] font-semibold flex items-center md:justify-end gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>Sound-Consecration Verified</span>
-                    </span>
                   </div>
-                </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-amber-500/[0.08] border border-amber-500/25 flex items-start gap-3 text-xs text-amber-900">
+                    <Truck className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-sm text-[#29242D] mb-0.5">
+                        Courier Partner Allocation
+                      </span>
+                      <p className="text-[11px] leading-relaxed text-[#29242D]/75">
+                        Delivery partner allocation and tracking details will be available once your order is processed and dispatched.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Visual Progress Stepper (6 Milestones) */}
                 <div className="space-y-4">
-                  <h3 className="font-serif font-bold text-base text-[#29242D]">
-                    Journey Milestones
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-serif font-bold text-base text-[#29242D]">
+                      Journey Milestones
+                    </h3>
+                    {loadingTracking && (
+                      <span className="text-xs text-[#79539B] animate-pulse flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        <span>Syncing live milestones...</span>
+                      </span>
+                    )}
+                  </div>
 
                   <div className="relative pl-6 sm:pl-8 border-l-2 border-[#EAE2F2] space-y-8 ml-3">
-                    
-                    {/* Milestone 1: Confirmed */}
-                    <div className="relative">
-                      <div className="absolute -left-[31px] sm:-left-[39px] top-0.5 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-sm">
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-xs text-[#29242D]">
-                          Order Confirmed & Payment Verified
-                        </h4>
-                        <p className="text-[11px] text-[#29242D]/60 mt-0.5">
-                          Order placed securely on Sumuk Crystalz 5 sanctum.
-                        </p>
-                        <span className="text-[10px] text-[#29242D]/40 font-mono mt-1 block">
-                          Pune Sanctuary • Completed
-                        </span>
-                      </div>
-                    </div>
+                    {(orderTrackingEvents.length > 0 ? orderTrackingEvents : STAGE_CONFIGS.map((cfg) => ({
+                      milestone_key: cfg.key,
+                      stage_number: cfg.stageNumber,
+                      title: cfg.title,
+                      description: cfg.description,
+                      location: cfg.location,
+                      status: cfg.key === 'order_confirmed' ? 'completed' : 'pending',
+                      completed_at: cfg.key === 'order_confirmed' ? currentTrackingOrder.createdAt : null,
+                    }))).map((milestone, mIdx) => {
+                      const isCompleted = milestone.status === 'completed';
+                      const isInProgress = milestone.status === 'in_progress';
+                      const isPending = !isCompleted && !isInProgress;
 
-                    {/* Milestone 2: Consecrated */}
-                    <div className="relative">
-                      <div className="absolute -left-[31px] sm:-left-[39px] top-0.5 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-sm">
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-xs text-[#29242D] flex items-center gap-1.5">
-                          <span>Vedic Sound Cleansing & 432Hz Attunement</span>
-                          <Sparkles className="w-3.5 h-3.5 text-[#C8A65E]" />
-                        </h4>
-                        <p className="text-[11px] text-[#29242D]/60 mt-0.5">
-                          Personally inspected, vibrationally cleansed with traditional sound vibrations, and energized by Soumyaa Naveen.
-                        </p>
-                        <span className="text-[10px] text-[#29242D]/40 font-mono mt-1 block">
-                          Sanctuary Studio, Sus Gaon • Completed
-                        </span>
-                      </div>
-                    </div>
+                      return (
+                        <div key={mIdx} className={`relative transition-opacity ${isPending ? 'opacity-60' : 'opacity-100'}`}>
+                          {/* Dot / Icon */}
+                          <div className={`absolute -left-[31px] sm:-left-[39px] top-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-sm ${
+                            isCompleted
+                              ? 'bg-emerald-500 text-white'
+                              : isInProgress
+                              ? 'bg-[#79539B] text-white ring-4 ring-[#EAE2F2] animate-pulse'
+                              : 'bg-[#EAE2F2] border border-[#D8CBE4] text-[#29242D]/40'
+                          }`}>
+                            {isCompleted ? (
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            ) : isInProgress ? (
+                              <Truck className="w-3.5 h-3.5" />
+                            ) : (
+                              <span className="text-[10px] font-bold">{milestone.stage_number || mIdx + 1}</span>
+                            )}
+                          </div>
 
-                    {/* Milestone 3: Packed & Handed to Courier */}
-                    <div className="relative">
-                      <div className="absolute -left-[31px] sm:-left-[39px] top-0.5 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-sm">
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-xs text-[#29242D]">
-                          Insured Vault Packaging & Dispatch
-                        </h4>
-                        <p className="text-[11px] text-[#29242D]/60 mt-0.5">
-                          Specimen padded with shock-absorbing foam and sealed with wax authentication label.
-                        </p>
-                        <span className="text-[10px] text-[#29242D]/40 font-mono mt-1 block">
-                          Dispatched via {currentTrackingOrder.courier}
-                        </span>
-                      </div>
-                    </div>
+                          {/* Details */}
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className={`font-semibold text-xs ${
+                                isInProgress ? 'text-[#79539B]' : 'text-[#29242D]'
+                              }`}>
+                                {milestone.title}
+                              </h4>
+                              {isCompleted && (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold uppercase tracking-wider">
+                                  Completed
+                                </span>
+                              )}
+                              {isInProgress && (
+                                <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-ping" />
+                                  <span>In Progress</span>
+                                </span>
+                              )}
+                              {isPending && (
+                                <span className="px-2 py-0.5 rounded-full bg-[#F8F6F2] text-[#29242D]/40 text-[10px] font-bold uppercase tracking-wider">
+                                  Pending
+                                </span>
+                              )}
+                            </div>
 
-                    {/* Milestone 4: In Transit (Active) */}
-                    <div className="relative">
-                      <div className="absolute -left-[31px] sm:-left-[39px] top-0.5 w-6 h-6 rounded-full bg-[#79539B] text-white flex items-center justify-center text-xs ring-4 ring-[#EAE2F2] shadow-sm animate-pulse">
-                        <Truck className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-xs text-[#79539B]">
-                          In Transit &bull; En Route to Patron Sanctuary Hub
-                        </h4>
-                        <p className="text-[11px] text-[#29242D]/70 mt-0.5 font-medium">
-                          Package is traveling via express air courier. Currently processed at main sorting gateway.
-                        </p>
-                        <span className="text-[10px] text-[#79539B] font-mono mt-1 block font-semibold">
-                          Expected Delivery: {currentTrackingOrder.estimatedDelivery}
-                        </span>
-                      </div>
-                    </div>
+                            <p className="text-[11px] text-[#29242D]/70 mt-1 leading-relaxed">
+                              {milestone.description}
+                            </p>
 
-                    {/* Milestone 5: Out for Delivery */}
-                    <div className="relative opacity-60">
-                      <div className="absolute -left-[31px] sm:-left-[39px] top-0.5 w-6 h-6 rounded-full bg-[#EAE2F2] border border-[#D8CBE4] text-[#29242D]/40 flex items-center justify-center text-xs">
-                        <MapPin className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-xs text-[#29242D]">
-                          Out for Delivery
-                        </h4>
-                        <p className="text-[11px] text-[#29242D]/60 mt-0.5">
-                          Courier personnel will contact you upon final dispatch.
-                        </p>
-                      </div>
-                    </div>
+                            {/* Meta & Remarks */}
+                            <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[10px] text-[#29242D]/50 font-mono">
+                              {milestone.location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-[#C8A65E]" />
+                                  <span>{milestone.location}</span>
+                                </span>
+                              )}
+                              {milestone.completed_at && (
+                                <span>
+                                  • {new Date(milestone.completed_at).toLocaleDateString('en-IN', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              )}
+                              {milestone.milestone_key === 'vault_packaging' && currentTrackingOrder.courier && (
+                                <span className="text-[#79539B] font-semibold">
+                                  • Allocated Partner: {currentTrackingOrder.courier}
+                                </span>
+                              )}
+                              {milestone.milestone_key === 'in_transit' && currentTrackingOrder.awbNumber && (
+                                <span className="text-[#79539B] font-semibold">
+                                  • AWB: {currentTrackingOrder.awbNumber}
+                                </span>
+                              )}
+                            </div>
 
-                    {/* Milestone 6: Delivered */}
-                    <div className="relative opacity-60">
-                      <div className="absolute -left-[31px] sm:-left-[39px] top-0.5 w-6 h-6 rounded-full bg-[#EAE2F2] border border-[#D8CBE4] text-[#29242D]/40 flex items-center justify-center text-xs">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-xs text-[#29242D]">
-                          Delivered to Patron Sanctuary
-                        </h4>
-                        <p className="text-[11px] text-[#29242D]/60 mt-0.5">
-                          Remember to record a continuous 360-degree unboxing video upon opening.
-                        </p>
-                      </div>
-                    </div>
+                            {milestone.admin_remarks && (
+                              <div className="mt-2 p-2.5 rounded-xl bg-[#F8F6F2] border border-[#EAE2F2] text-[11px] text-[#29242D]/80 italic">
+                                <strong className="not-italic text-[#79539B] font-sans font-bold">Sanctuary Update: </strong>
+                                {milestone.admin_remarks}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 

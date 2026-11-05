@@ -8,6 +8,7 @@ const { supabase, syncCustomerToSupabase, syncOrderToSupabase } = require('../ut
 const { getSupabaseProductBySlugOrId } = require('../utils/supabaseProductService');
 const { DEFAULT_SHIPPING_FEE, FREE_SHIPPING_THRESHOLD, ORDER_STATUS } = require('../utils/constants');
 const { calculateServerDeliveryFee } = require('./shippingEngine');
+const { generateNextOrderNumber } = require('../utils/orderNumber');
 
 // Memory store for in-flight checkout sessions (keyed by razorpayOrderId)
 const activeCheckoutSessions = new Map();
@@ -84,25 +85,36 @@ async function createRazorpayOrder({ items, shippingAddress, buyerName, buyerEma
     });
   }
 
-  // 1. Fetch live delivery settings if configured in Supabase
+  // 1. Fetch live delivery & shipping settings if configured in Supabase
   let customSettings = null;
   if (supabase) {
     try {
-      const { data: settingsData } = await supabase
-        .from('delivery_settings')
+      const { data: shipData } = await supabase
+        .from('shipping_settings')
         .select('*')
         .maybeSingle();
-      if (settingsData) customSettings = settingsData;
-    } catch (e) {}
+      if (shipData) {
+        customSettings = shipData;
+      } else {
+        const { data: delivData } = await supabase
+          .from('delivery_settings')
+          .select('*')
+          .maybeSingle();
+        if (delivData) customSettings = delivData;
+      }
+    } catch (e) {
+      console.warn('Notice loading shipping settings from Supabase:', e.message);
+    }
   }
 
-  // 2. Calculate dynamic insured shipping fee based on verified delivery address pincode
+  // 2. Calculate dynamic zero-trust shipping fee based on verified delivery address pincode
   const targetPincode = shippingAddress.postalCode || shippingAddress.pincode || shippingAddress.zip || '';
   const shippingFee = calculateServerDeliveryFee(targetPincode, subtotal, customSettings);
   const total = subtotal + shippingFee;
   const amountInPaise = Math.round(total * 100);
 
-  const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+  // Generate atomic sequential Order Number in SC5-YYYY-XXXXXX format
+  const orderNumber = await generateNextOrderNumber(supabase);
 
   const razorpay = getRazorpayInstance();
   let razorpayOrderId;
@@ -239,11 +251,15 @@ async function verifyAndFulfillPayment({
 
   // 3. Retrieve verified session details or rebuild from validated items
   const session = activeCheckoutSessions.get(razorpay_order_id);
-  const confirmedOrderNumber = session?.orderNumber || orderId || `ORD-${Date.now().toString().slice(-8)}`;
+  let confirmedOrderNumber = session?.orderNumber || orderId;
+  if (!confirmedOrderNumber || !confirmedOrderNumber.startsWith('SC5-')) {
+    confirmedOrderNumber = await generateNextOrderNumber(supabase);
+  }
   const orderItems = session?.items || items || [];
   const calculatedSubtotal = session?.subtotal || orderItems.reduce((s, it) => s + (Number(it.price || it.unitPrice || 0) * Number(it.quantity || 1)), 0);
   const calculatedShippingFee = session?.shippingFee !== undefined ? session.shippingFee : (calculatedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE);
   const calculatedTotal = session?.total || calculatedSubtotal + calculatedShippingFee;
+  const nowIso = new Date().toISOString();
 
   const orderPayload = {
     order_number: confirmedOrderNumber,
@@ -255,13 +271,20 @@ async function verifyAndFulfillPayment({
     items: orderItems,
     subtotal: calculatedSubtotal,
     shipping_fee: calculatedShippingFee,
+    shipping_charge: calculatedShippingFee,
     total: calculatedTotal,
+    total_amount: calculatedTotal,
     currency: 'INR',
     razorpay_order_id,
     razorpay_payment_id,
-    status: 'paid',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    payment_method: 'razorpay',
+    payment_status: 'verified',
+    status: 'confirmed',
+    order_status: 'confirmed',
+    current_stage: 'order_confirmed',
+    confirmed_at: nowIso,
+    created_at: nowIso,
+    updated_at: nowIso,
   };
 
   // 4. Atomically Deduct Inventory Stock for Purchased Items
@@ -312,6 +335,72 @@ async function verifyAndFulfillPayment({
     }
   } else {
     createdOrder = orderPayload;
+  }
+
+  // 5b. Initialize the 6 Customer Order Tracking Milestones in order_tracking_events
+  if (supabase && (createdOrder?.id || orderPayload.order_number)) {
+    const targetOrderId = createdOrder?.id || orderPayload.order_number;
+    const initialMilestones = [
+      {
+        order_id: targetOrderId,
+        milestone_key: 'order_confirmed',
+        stage_number: 1,
+        title: 'Order Confirmed & Payment Verified',
+        description: 'Your order has been placed securely on Sumuk Crystalz5 Sanctum. Your order is confirmed, and our sanctuary team will prepare your crystal selection.',
+        location: 'Pune Sanctuary',
+        status: 'completed',
+        completed_at: nowIso,
+      },
+      {
+        order_id: targetOrderId,
+        milestone_key: 'vedic_cleansing',
+        stage_number: 2,
+        title: 'Vedic Sound Cleansing & 432Hz Attunement',
+        description: 'Your crystal selection is being personally inspected, vibrationally cleansed with traditional sound vibrations, and prepared by Soumyaa Naveen.',
+        location: 'Sanctuary Studio, Sus Gaon',
+        status: 'pending',
+      },
+      {
+        order_id: targetOrderId,
+        milestone_key: 'vault_packaging',
+        stage_number: 3,
+        title: 'Insured Vault Packaging & Dispatch',
+        description: 'Your specimen is carefully padded with protective packaging and sealed with its authentication label before dispatch.',
+        status: 'pending',
+      },
+      {
+        order_id: targetOrderId,
+        milestone_key: 'in_transit',
+        stage_number: 4,
+        title: 'In Transit — En Route to Patron Sanctuary Hub',
+        description: "Your package is on its way through the assigned delivery partner's courier network.",
+        status: 'pending',
+      },
+      {
+        order_id: targetOrderId,
+        milestone_key: 'out_for_delivery',
+        stage_number: 5,
+        title: 'Out for Delivery',
+        description: 'Your crystal selection is on its final journey to your doorstep. The delivery partner may contact you before arrival.',
+        status: 'pending',
+      },
+      {
+        order_id: targetOrderId,
+        milestone_key: 'delivered',
+        stage_number: 6,
+        title: 'Delivered to Patron Sanctuary',
+        description: 'Your Sumuk Crystalz5 selection has been delivered. We recommend recording a continuous 360-degree unboxing video when opening your package for documentation in case of transit damage.',
+        status: 'pending',
+      },
+    ];
+
+    try {
+      await supabase.from('order_tracking_events').upsert(initialMilestones, {
+        onConflict: 'order_id,milestone_key',
+      });
+    } catch (milestoneErr) {
+      console.warn('Notice initializing order_tracking_events:', milestoneErr.message);
+    }
   }
 
   // Sync customer history to Supabase

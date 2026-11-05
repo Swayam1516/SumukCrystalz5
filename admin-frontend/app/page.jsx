@@ -22,6 +22,9 @@ import {
   getSupabaseDeliverySettings,
   updateSupabaseDeliverySettings,
   DEFAULT_DELIVERY_SETTINGS,
+  getSupabaseShippingSettings,
+  updateSupabaseShippingSettings,
+  DEFAULT_SHIPPING_SETTINGS,
 } from '@/lib/supabase';
 import { computeDashboardMetrics } from '@/lib/analyticsEngine';
 
@@ -112,6 +115,9 @@ export default function AdminDashboardPage() {
   const [deletingProduct, setDeletingProduct] = useState(null);
   const [restockingProduct, setRestockingProduct] = useState(null);
   const [selectedOrderForStatus, setSelectedOrderForStatus] = useState(null);
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [orderCourierFilter, setOrderCourierFilter] = useState('all');
+  const [orderSearchTerm, setOrderSearchTerm] = useState('');
 
   // Delivery Settings State
   const [deliverySettings, setDeliverySettings] = useState(DEFAULT_DELIVERY_SETTINGS);
@@ -234,6 +240,46 @@ export default function AdminDashboardPage() {
   const metrics = useMemo(() => {
     return computeDashboardMetrics(orders, products, customers);
   }, [orders, products, customers]);
+
+  // Filtered Orders for Order Sanctuary (9 status tabs + search + courier filter)
+  const filteredOrders = useMemo(() => {
+    return orders.filter((ord) => {
+      // 1. Status Filter
+      const st = (ord.order_status || ord.status || 'confirmed').toLowerCase();
+      const currentStage = (ord.current_stage || '').toLowerCase();
+      if (orderStatusFilter !== 'all') {
+        if (orderStatusFilter === 'payment_verified' && !(st === 'confirmed' || st === 'paid' || ord.payment_status === 'verified')) return false;
+        if (orderStatusFilter === 'processing' && !(st === 'processing' || currentStage === 'vedic_cleansing')) return false;
+        if (orderStatusFilter === 'ready_for_dispatch' && !(st === 'ready_for_dispatch' || currentStage === 'vault_packaging')) return false;
+        if (orderStatusFilter === 'dispatched' && !(st === 'dispatched' || currentStage === 'vault_packaging' || ord.dispatched_at)) return false;
+        if (orderStatusFilter === 'in_transit' && !(st === 'in_transit' || currentStage === 'in_transit')) return false;
+        if (orderStatusFilter === 'out_for_delivery' && !(st === 'out_for_delivery' || currentStage === 'out_for_delivery')) return false;
+        if (orderStatusFilter === 'delivered' && !(st === 'delivered' || currentStage === 'delivered')) return false;
+        if (orderStatusFilter === 'cancelled' && !(st === 'cancelled' || st === 'refunded')) return false;
+      }
+
+      // 2. Courier Filter
+      if (orderCourierFilter !== 'all') {
+        const partner = (ord.delivery_partner_name || ord.carrier || '').toLowerCase();
+        if (!partner.includes(orderCourierFilter.toLowerCase())) return false;
+      }
+
+      // 3. Search Term
+      if (orderSearchTerm.trim()) {
+        const term = orderSearchTerm.trim().toLowerCase();
+        const num = (ord.order_number || ord.orderId || '').toLowerCase();
+        const name = (ord.buyer_name || ord.buyerName || '').toLowerCase();
+        const email = (ord.buyer_email || ord.buyerEmail || '').toLowerCase();
+        const phone = (ord.buyer_phone || '').toLowerCase();
+        const tracking = (ord.tracking_number || '').toLowerCase();
+        if (!num.includes(term) && !name.includes(term) && !email.includes(term) && !phone.includes(term) && !tracking.includes(term)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [orders, orderStatusFilter, orderCourierFilter, orderSearchTerm]);
 
   // Admin Login Handler
   const handleAdminLogin = async (e) => {
@@ -412,9 +458,14 @@ export default function AdminDashboardPage() {
     setSavingDeliverySettings(true);
     try {
       const res = await updateSupabaseDeliverySettings(deliverySettings);
+      await updateSupabaseShippingSettings({
+        shipping_enabled: deliverySettings.shipping_enabled !== undefined ? deliverySettings.shipping_enabled : true,
+        shipping_fee: Number(deliverySettings.shipping_fee !== undefined ? deliverySettings.shipping_fee : 80),
+        free_shipping_threshold: deliverySettings.free_shipping_threshold,
+      });
       if (res.success) {
         setDeliverySettings(res.settings);
-        addToast('✨ Delivery fees & shipping rules synchronized with Supabase!');
+        addToast('✨ Delivery charges & shipping rules synchronized with Supabase!');
       } else {
         throw new Error(res.error || 'Failed to save shipping settings');
       }
@@ -893,18 +944,123 @@ export default function AdminDashboardPage() {
                     Patron Orders Sanctuary
                   </h2>
                   <p className="text-xs text-stone-400">
-                    Live customer orders, payment verification, and fulfillment tracking.
+                    Live customer orders, atomic sequential Order Numbers (SC5-), courier assignment, and 6-stage lifecycle tracking.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => fetchLiveAdminData(token)}
-                  className="px-4 py-2 rounded-xl bg-stone-900 border border-stone-800 hover:border-[#D4AF37]/40 text-stone-300 hover:text-[#D4AF37] text-xs font-semibold flex items-center gap-2 transition-all self-start sm:self-auto"
+                  className="px-4 py-2 rounded-xl bg-stone-900 border border-stone-800 hover:border-[#D4AF37]/40 text-stone-300 hover:text-[#D4AF37] text-xs font-semibold flex items-center gap-2 transition-all self-start sm:self-auto cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Refresh Orders</span>
                 </button>
+              </div>
+
+              {/* 9 Order Status Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none text-xs font-semibold">
+                {[
+                  { id: 'all', label: 'All Orders', count: orders.length },
+                  {
+                    id: 'payment_verified',
+                    label: 'Payment Verified',
+                    count: orders.filter((o) => (o.status === 'confirmed' || o.status === 'paid' || o.payment_status === 'verified')).length,
+                  },
+                  {
+                    id: 'processing',
+                    label: 'Processing (Cleansing)',
+                    count: orders.filter((o) => (o.order_status === 'processing' || o.current_stage === 'vedic_cleansing')).length,
+                  },
+                  {
+                    id: 'ready_for_dispatch',
+                    label: 'Ready for Dispatch',
+                    count: orders.filter((o) => (o.order_status === 'ready_for_dispatch' || o.current_stage === 'vault_packaging')).length,
+                  },
+                  {
+                    id: 'dispatched',
+                    label: 'Dispatched',
+                    count: orders.filter((o) => (o.order_status === 'dispatched' || o.dispatched_at)).length,
+                  },
+                  {
+                    id: 'in_transit',
+                    label: 'In Transit',
+                    count: orders.filter((o) => (o.order_status === 'in_transit' || o.current_stage === 'in_transit')).length,
+                  },
+                  {
+                    id: 'out_for_delivery',
+                    label: 'Out for Delivery',
+                    count: orders.filter((o) => (o.order_status === 'out_for_delivery' || o.current_stage === 'out_for_delivery')).length,
+                  },
+                  {
+                    id: 'delivered',
+                    label: 'Delivered',
+                    count: orders.filter((o) => (o.order_status === 'delivered' || o.current_stage === 'delivered')).length,
+                  },
+                  {
+                    id: 'cancelled',
+                    label: 'Cancelled / Refunded',
+                    count: orders.filter((o) => (o.status === 'cancelled' || o.status === 'refunded')).length,
+                  },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setOrderStatusFilter(tab.id)}
+                    className={`px-3.5 py-2 rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                      orderStatusFilter === tab.id
+                        ? 'bg-[#D4AF37] text-black font-bold shadow-md shadow-[#D4AF37]/20'
+                        : 'bg-stone-900/80 hover:bg-stone-800 text-stone-400 hover:text-stone-200 border border-stone-800'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                        orderStatusFilter === tab.id ? 'bg-black/20 text-black' : 'bg-stone-800 text-stone-400'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Search & Courier Partner Filters Bar */}
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="relative flex-1 w-full">
+                  <Search className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={orderSearchTerm}
+                    onChange={(e) => setOrderSearchTerm(e.target.value)}
+                    placeholder="Search by Order Number (SC5-...), Patron Name, Email, Phone, or AWB..."
+                    className="w-full bg-stone-950/80 border border-stone-800 focus:border-[#D4AF37] rounded-xl pl-9 pr-4 py-2.5 text-xs text-stone-100 placeholder:text-stone-600"
+                  />
+                  {orderSearchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setOrderSearchTerm('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-white text-xs"
+                    >
+                      &times;
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <label className="text-xs text-stone-400 whitespace-nowrap">Carrier:</label>
+                  <select
+                    value={orderCourierFilter}
+                    onChange={(e) => setOrderCourierFilter(e.target.value)}
+                    className="bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 focus:border-[#D4AF37]"
+                  >
+                    <option value="all">All Delivery Partners</option>
+                    <option value="ekart">E-Kart Logistics</option>
+                    <option value="delhivery">Delivery Direct</option>
+                    <option value="blue dart">Blue Dart Express</option>
+                    <option value="other">Other / Custom</option>
+                  </select>
+                </div>
               </div>
 
               {/* Orders Table */}
@@ -913,85 +1069,166 @@ export default function AdminDashboardPage() {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-stone-950/95 border-b border-stone-800 text-stone-400 uppercase tracking-wider font-semibold">
-                        <th className="py-4 px-4">Order ID &amp; Date</th>
+                        <th className="py-4 px-4">Order Number &amp; Date</th>
                         <th className="py-4 px-4">Patron Details</th>
-                        <th className="py-4 px-4">Items Summary</th>
-                        <th className="py-4 px-4">Total Amount</th>
-                        <th className="py-4 px-4 text-center">Status</th>
+                        <th className="py-4 px-4">Items &amp; Variants</th>
+                        <th className="py-4 px-4">Financials</th>
+                        <th className="py-4 px-4">Delivery Partner</th>
+                        <th className="py-4 px-4 text-center">Lifecycle Stage</th>
                         <th className="py-4 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-800/60">
-                      {orders.length === 0 ? (
+                      {filteredOrders.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="py-16 text-center text-stone-500">
+                          <td colSpan={7} className="py-16 text-center text-stone-500">
                             <ShoppingBag className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                            No patron orders recorded in database yet.
+                            No orders found matching the selected filter criteria.
                           </td>
                         </tr>
                       ) : (
-                        orders.map((ord, idx) => {
-                          const status = (ord.status || 'pending').toLowerCase();
-                          const dateStr = ord.created_at || ord.createdAt ? new Date(ord.created_at || ord.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
-                          const items = Array.isArray(ord.items) ? ord.items : [];
-                          const total = Number(ord.total || ord.total_amount || ord.subtotal || 0);
+                        filteredOrders.map((ord, idx) => {
+                          const status = (ord.order_status || ord.status || 'confirmed').toLowerCase();
+                          const currentStage = ord.current_stage || 'order_confirmed';
+                          const dateStr = ord.created_at || ord.createdAt
+                            ? new Date(ord.created_at || ord.createdAt).toLocaleDateString('en-IN', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
+                            : 'Recent';
+                          const items = Array.isArray(ord.items)
+                            ? ord.items
+                            : Array.isArray(ord.order_items)
+                            ? ord.order_items
+                            : [];
+                          const subtotal = Number(ord.subtotal || ord.total_amount || 0);
+                          const shippingFee = Number(ord.shipping_fee ?? ord.shipping_charge ?? 0);
+                          const total = Number(ord.total || ord.total_amount || subtotal + shippingFee);
+                          const carrierName = ord.delivery_partner_name || ord.carrier || null;
+                          const trackingId = ord.tracking_number || ord.awb_code || null;
+                          const shippingAddr = ord.shipping_address || ord.shippingAddress || {};
 
                           return (
-                            <tr key={ord.id || ord.order_number || idx} className="hover:bg-stone-800/40 transition-colors">
+                            <tr
+                              key={ord.id || ord.order_number || idx}
+                              className="hover:bg-stone-800/40 transition-colors"
+                            >
+                              {/* Order Number & Date */}
                               <td className="py-3.5 px-4 font-mono">
-                                <div className="font-bold text-stone-100">
-                                  #{ord.order_number || ord.orderId || `ORD-${idx + 1}`}
+                                <div className="font-bold text-[#F3E5AB] flex items-center gap-1.5">
+                                  <span>{ord.order_number || ord.orderId || `SC5-2026-${String(idx + 1).padStart(6, '0')}`}</span>
                                 </div>
                                 <div className="text-[10px] text-stone-500 flex items-center gap-1 mt-0.5">
                                   <Clock className="w-3 h-3" /> {dateStr}
                                 </div>
+                                <div className="text-[10px] font-mono text-emerald-400 mt-0.5">
+                                  {ord.payment_method ? ord.payment_method.toUpperCase() : 'RAZORPAY'} &bull; {ord.payment_status || 'VERIFIED'}
+                                </div>
                               </td>
 
+                              {/* Patron Details */}
                               <td className="py-3.5 px-4">
                                 <div className="font-semibold text-stone-200">
                                   {ord.buyer_name || ord.buyerName || 'Valued Patron'}
                                 </div>
                                 <div className="text-[11px] text-stone-400">{ord.buyer_email || ord.buyerEmail}</div>
-                                {ord.buyer_phone && <div className="text-[10px] text-stone-500">{ord.buyer_phone}</div>}
+                                <div className="text-[10px] text-stone-500">
+                                  {ord.buyer_phone || shippingAddr.phone || 'Phone verified'}
+                                </div>
+                                {shippingAddr.city && (
+                                  <div className="text-[10px] text-[#D4AF37]/80">
+                                    {shippingAddr.city}, {shippingAddr.state}
+                                  </div>
+                                )}
                               </td>
 
+                              {/* Items Summary */}
                               <td className="py-3.5 px-4">
-                                <span className="text-stone-300">
-                                  {items.length > 0
-                                    ? `${items[0]?.name || items[0]?.product_name || 'Specimen'}${items.length > 1 ? ` +${items.length - 1} more` : ''}`
-                                    : '1 Crystal Specimen'}
-                                </span>
-                              </td>
-
-                              <td className="py-3.5 px-4">
-                                <div className="font-bold text-[#F3E5AB]">
-                                  ₹{total.toLocaleString('en-IN')}
+                                <div className="space-y-0.5 max-w-[200px]">
+                                  {items.length > 0 ? (
+                                    <>
+                                      <p className="font-serif text-stone-200 line-clamp-1">
+                                        {items[0]?.name || items[0]?.product_name || 'Sacred Specimen'}
+                                        {items[0]?.quantity > 1 ? ` (x${items[0].quantity})` : ''}
+                                      </p>
+                                      {items.length > 1 && (
+                                        <p className="text-[10px] text-stone-400">
+                                          +{items.length - 1} additional specimen(s)
+                                        </p>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="text-stone-500">1 Consecrated Specimen</span>
+                                  )}
                                 </div>
                               </td>
 
+                              {/* Financials */}
+                              <td className="py-3.5 px-4 font-mono">
+                                <div className="font-bold text-stone-100 text-sm">
+                                  ₹{total.toLocaleString('en-IN')}
+                                </div>
+                                <div className="text-[10px] text-stone-400">
+                                  Shipping:{' '}
+                                  <span className={shippingFee === 0 ? 'text-emerald-400 font-bold' : 'text-stone-300'}>
+                                    {shippingFee === 0 ? 'Free (₹0)' : `₹${shippingFee}`}
+                                  </span>
+                                </div>
+                              </td>
+
+                              {/* Delivery Partner */}
+                              <td className="py-3.5 px-4">
+                                {carrierName ? (
+                                  <div className="space-y-0.5">
+                                    <span className="font-semibold text-stone-200 flex items-center gap-1">
+                                      <Truck className="w-3.5 h-3.5 text-emerald-400" />
+                                      <span>{carrierName}</span>
+                                    </span>
+                                    {trackingId ? (
+                                      <span className="text-[10px] font-mono text-[#D4AF37] block">
+                                        AWB: {trackingId}
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] text-stone-500 font-mono block">
+                                        AWB Pending
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-md bg-stone-900 border border-stone-800 text-[10px] font-mono text-stone-500">
+                                    Unallocated
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Lifecycle Stage & Status */}
                               <td className="py-3.5 px-4 text-center">
                                 <span
                                   className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider ${
-                                    status === 'delivered'
+                                    status === 'delivered' || currentStage === 'delivered'
                                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                      : ['processing', 'paid', 'confirmed', 'packed'].includes(status)
-                                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                      : currentStage === 'in_transit' || status === 'in_transit'
+                                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 animate-pulse'
+                                      : ['processing', 'ready_for_dispatch', 'dispatched'].includes(status) || ['vedic_cleansing', 'vault_packaging'].includes(currentStage)
+                                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                                       : ['cancelled', 'refunded'].includes(status)
                                       ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                      : 'bg-stone-800 text-stone-300 border border-stone-700'
                                   }`}
                                 >
-                                  {ord.status || 'Pending'}
+                                  {currentStage.replace(/_/g, ' ')}
                                 </span>
                               </td>
 
+                              {/* Actions */}
                               <td className="py-3.5 px-4 text-right">
                                 <button
                                   type="button"
                                   onClick={() => setSelectedOrderForStatus(ord)}
-                                  className="px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-[#D4AF37] text-stone-300 hover:text-black font-semibold text-xs border border-stone-800 hover:border-[#D4AF37] transition-all cursor-pointer"
+                                  className="px-3.5 py-1.5 rounded-xl bg-stone-900 hover:bg-[#D4AF37] text-stone-300 hover:text-black font-semibold text-xs border border-stone-800 hover:border-[#D4AF37] transition-all cursor-pointer whitespace-nowrap"
                                 >
-                                  Update Status
+                                  Manage Lifecycle
                                 </button>
                               </td>
                             </tr>
@@ -1314,10 +1551,10 @@ export default function AdminDashboardPage() {
                   <div>
                     <h2 className="text-xl font-serif font-bold text-[#F3E5AB] flex items-center gap-2">
                       <Truck className="w-5 h-5 text-[#D4AF37]" />
-                      Radial Delivery Tiers &amp; Distance Engine
+                      Shipping &amp; Delivery Logistics Control
                     </h2>
                     <p className="text-xs text-stone-400">
-                      Configure radial distance thresholds originating from Pune for automatic delivery fee computation.
+                      Configure master delivery charges (ON/OFF), standard shipping fees, and radial distance thresholds originating from Pune.
                     </p>
                   </div>
 
@@ -1329,6 +1566,75 @@ export default function AdminDashboardPage() {
                   >
                     {savingDeliverySettings ? 'Saving...' : 'Save Shipping Rules'}
                   </button>
+                </div>
+
+                {/* Master Delivery Charges Toggle Card */}
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-stone-900 to-stone-950 border border-[#D4AF37]/50 shadow-xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-serif font-bold text-base text-[#F3E5AB]">
+                          Delivery Charges Master Switch
+                        </span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
+                          deliverySettings.shipping_enabled !== false ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                        }`}>
+                          {deliverySettings.shipping_enabled !== false ? 'CHARGES ACTIVE' : 'FREE SHIPPING ACTIVE'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-400">
+                        When enabled, customer checkouts will calculate and apply the standard delivery fee. When disabled, delivery is 100% free (₹0) across India for all patrons.
+                      </p>
+                    </div>
+
+                    {/* Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => setDeliverySettings((prev) => ({
+                        ...prev,
+                        shipping_enabled: prev.shipping_enabled === false ? true : false,
+                      }))}
+                      className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        deliverySettings.shipping_enabled !== false ? 'bg-[#D4AF37]' : 'bg-stone-800'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-black shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          deliverySettings.shipping_enabled !== false ? 'translate-x-8' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Standard Shipping Fee Input (Active when ON) */}
+                  {deliverySettings.shipping_enabled !== false ? (
+                    <div className="pt-3 border-t border-stone-800/80 flex flex-col sm:flex-row sm:items-center gap-4 text-xs">
+                      <div className="flex-1 space-y-1">
+                        <label className="text-stone-300 font-semibold">Standard Flat Delivery Fee (₹)</label>
+                        <p className="text-[11px] text-stone-500">
+                          Applied automatically to customer cart checkout when charges are enabled. Default: ₹80.
+                        </p>
+                      </div>
+                      <div className="w-full sm:w-48">
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#D4AF37] font-bold">₹</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step={5}
+                            value={deliverySettings.shipping_fee !== undefined ? deliverySettings.shipping_fee : 80}
+                            onChange={(e) => setDeliverySettings((prev) => ({ ...prev, shipping_fee: Number(e.target.value) }))}
+                            className="w-full bg-stone-950 border border-stone-800 focus:border-[#D4AF37] rounded-xl pl-8 pr-4 py-2 font-mono font-bold text-[#F3E5AB] text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span>Delivery charges are currently <strong>OFF</strong>. All patron checkouts receive <strong>COMPLIMENTARY FREE DELIVERY (₹0)</strong>.</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

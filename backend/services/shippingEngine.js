@@ -4,6 +4,8 @@
  */
 
 const DEFAULT_DELIVERY_SETTINGS = {
+  shipping_enabled: true,
+  shipping_fee: 80,
   origin_city: 'Pune',
   origin_state: 'Maharashtra',
   origin_lat: 18.5204,
@@ -14,7 +16,7 @@ const DEFAULT_DELIVERY_SETTINGS = {
   tier_2_fee: 100,
   interstate_fee: 150,
   free_shipping_threshold: 5000,
-  is_free_shipping_enabled: true,
+  is_free_shipping_enabled: false,
 };
 
 // Known coordinates reference points for major Indian postal zones
@@ -67,7 +69,29 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 function calculateServerDeliveryFee(pincode, subtotal = 0, customSettings = null) {
   const settings = { ...DEFAULT_DELIVERY_SETTINGS, ...(customSettings || {}) };
 
-  // Free shipping check
+  // Master Delivery Charges ON/OFF toggle check
+  const isEnabled = settings.shipping_enabled !== undefined 
+    ? Boolean(settings.shipping_enabled) 
+    : (settings.delivery_charges_enabled !== undefined ? Boolean(settings.delivery_charges_enabled) : true);
+
+  if (!isEnabled) {
+    return 0; // Free delivery for all patron checkouts when toggle is OFF
+  }
+
+  // If a standard global flat shipping fee is configured (e.g. ₹80)
+  if (settings.shipping_fee !== undefined && settings.shipping_fee !== null && Number(settings.shipping_fee) >= 0) {
+    const flatFee = Number(settings.shipping_fee);
+    // If free shipping threshold is configured and met
+    if (
+      Boolean(settings.is_free_shipping_enabled) &&
+      Number(subtotal) >= Number(settings.free_shipping_threshold || 5000)
+    ) {
+      return 0;
+    }
+    return flatFee;
+  }
+
+  // Free shipping threshold check
   if (
     Boolean(settings.is_free_shipping_enabled) &&
     Number(subtotal) >= Number(settings.free_shipping_threshold || 5000)

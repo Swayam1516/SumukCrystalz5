@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCartStore } from '../store/useCart';
 import { getSupabaseProducts } from '../lib/supabase';
-import { ENERGY_STONES_CATALOG } from '../data/energyStones';
 import { formatProductMultiTags } from '../lib/discoveryTaxonomy';
 import { crystalAudio } from '../utils/harmonicResonance';
 import {
@@ -24,7 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function LiveProductSlideshow({ className = '' }) {
-  const [products, setProducts] = useState(ENERGY_STONES_CATALOG);
+  const [products, setProducts] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
@@ -117,6 +116,10 @@ export default function LiveProductSlideshow({ className = '' }) {
     setTimeout(() => setQuickAddedId(null), 1800);
     openDrawer();
   };
+
+  if (!products || products.length === 0) {
+    return null;
+  }
 
   return (
     <div

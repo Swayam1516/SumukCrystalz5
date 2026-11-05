@@ -1176,6 +1176,462 @@ export async function updateSupabaseDeliverySettings(payload) {
 
 /**
  * ============================================================================
+ * SUMUK CRYSTALZ 5 — MASTER SHIPPING SETTINGS & ZERO-TRUST CALCULATION
+ * ============================================================================
+ */
+export const DEFAULT_SHIPPING_SETTINGS = {
+  id: 'global',
+  shipping_enabled: true,
+  shipping_fee: 80,
+  free_shipping_threshold: 50000,
+  is_free_shipping_enabled: false,
+  origin_city: 'Pune',
+  origin_state: 'Maharashtra',
+};
+
+export async function getSupabaseShippingSettings() {
+  try {
+    const { data, error } = await supabase
+      .from('shipping_settings')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('sumuk_shipping_settings', JSON.stringify(data));
+        } catch (_) {}
+      }
+      return { ...DEFAULT_SHIPPING_SETTINGS, ...data };
+    }
+  } catch (err) {
+    // Try fallback to delivery_settings if shipping_settings table not yet cached
+    try {
+      const { data: dData } = await supabase
+        .from('delivery_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      if (dData) {
+        return {
+          ...DEFAULT_SHIPPING_SETTINGS,
+          shipping_enabled: dData.shipping_enabled !== undefined ? dData.shipping_enabled : true,
+          shipping_fee: dData.shipping_fee !== undefined ? dData.shipping_fee : (dData.tier_1_fee || 80),
+        };
+      }
+    } catch (_) {}
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('sumuk_shipping_settings');
+      if (cached) return { ...DEFAULT_SHIPPING_SETTINGS, ...JSON.parse(cached) };
+    } catch (_) {}
+  }
+
+  return DEFAULT_SHIPPING_SETTINGS;
+}
+
+export async function updateSupabaseShippingSettings(payload) {
+  const isEnabled = payload.shipping_enabled !== undefined ? Boolean(payload.shipping_enabled) : true;
+  const fee = Number(payload.shipping_fee !== undefined ? payload.shipping_fee : 80);
+
+  const record = {
+    id: 'global',
+    shipping_enabled: isEnabled,
+    shipping_fee: fee,
+    free_shipping_threshold: Number(payload.free_shipping_threshold || 50000),
+    is_free_shipping_enabled: Boolean(payload.is_free_shipping_enabled),
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    // Upsert to shipping_settings table
+    const { data, error } = await supabase
+      .from('shipping_settings')
+      .upsert(record, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (error) {
+      console.warn('shipping_settings upsert notice, updating delivery_settings:', error.message);
+    }
+
+    // Also sync to delivery_settings for backward compatibility
+    await supabase.from('delivery_settings').upsert({
+      id: 'global',
+      shipping_enabled: isEnabled,
+      shipping_fee: fee,
+      tier_1_fee: fee,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' }).catch(() => {});
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sumuk_shipping_settings', JSON.stringify(data || record));
+      } catch (_) {}
+    }
+
+    return { success: true, settings: data || record, error: null };
+  } catch (err) {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sumuk_shipping_settings', JSON.stringify(record));
+      } catch (_) {}
+    }
+    return { success: true, settings: record, error: null };
+  }
+}
+
+/**
+ * ============================================================================
+ * DELIVERY PARTNERS MANAGEMENT (E-Kart, Delivery Direct, Blue Dart, Other)
+ * ============================================================================
+ */
+export const DEFAULT_DELIVERY_PARTNERS = [
+  {
+    id: 'ekart-logistics',
+    name: 'E-Kart Logistics',
+    courier_code: 'ekart',
+    tracking_url_template: 'https://ekartlogistics.com/shipmenttrack/{tracking_number}',
+    is_active: true,
+  },
+  {
+    id: 'delivery-direct',
+    name: 'Delivery Direct',
+    courier_code: 'delhivery',
+    tracking_url_template: 'https://www.delhivery.com/track/package/{tracking_number}',
+    is_active: true,
+  },
+  {
+    id: 'blue-dart-express',
+    name: 'Blue Dart Express',
+    courier_code: 'bluedart',
+    tracking_url_template: 'https://www.bluedart.com/tracking?trackNumber={tracking_number}',
+    is_active: true,
+  },
+  {
+    id: 'other-courier',
+    name: 'Other Courier',
+    courier_code: 'other',
+    tracking_url_template: '',
+    is_active: true,
+  },
+];
+
+export async function getSupabaseDeliveryPartners() {
+  try {
+    const { data, error } = await supabase
+      .from('delivery_partners')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('sumuk_delivery_partners', JSON.stringify(data));
+        } catch (_) {}
+      }
+      return data;
+    }
+  } catch (err) {
+    console.warn('Notice loading delivery partners from Supabase:', err.message);
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('sumuk_delivery_partners');
+      if (cached) return JSON.parse(cached);
+    } catch (_) {}
+  }
+
+  return DEFAULT_DELIVERY_PARTNERS;
+}
+
+export async function addSupabaseDeliveryPartner({ name, courier_code, tracking_url_template }) {
+  if (!name || !name.trim()) throw new Error('Delivery partner name is required.');
+
+  const partnerCode = (courier_code || name.toLowerCase().replace(/[^a-z0-9]/g, '-')).trim();
+  const record = {
+    name: name.trim(),
+    courier_code: partnerCode,
+    tracking_url_template: (tracking_url_template || '').trim(),
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('delivery_partners')
+      .insert([record])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const currentList = await getSupabaseDeliveryPartners();
+    const updated = [...currentList.filter(p => p.id !== data.id), data];
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sumuk_delivery_partners', JSON.stringify(updated));
+      } catch (_) {}
+    }
+    return { success: true, partner: data };
+  } catch (err) {
+    // Resilient local fallback
+    const fallbackPartner = {
+      id: `partner_${Date.now()}`,
+      ...record,
+    };
+    const currentList = await getSupabaseDeliveryPartners();
+    const updated = [...currentList, fallbackPartner];
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sumuk_delivery_partners', JSON.stringify(updated));
+      } catch (_) {}
+    }
+    return { success: true, partner: fallbackPartner };
+  }
+}
+
+/**
+ * ============================================================================
+ * 6-STAGE ORDER TRACKING LIFECYCLE & AUDIT LOGGING
+ * ============================================================================
+ */
+export const STAGE_CONFIGS = [
+  {
+    key: 'order_confirmed',
+    stageNumber: 1,
+    title: 'Order Confirmed & Payment Verified',
+    description: 'Your order has been placed securely on Sumuk Crystalz5 Sanctum. Your order is confirmed, and our sanctuary team will prepare your crystal selection.',
+    location: 'Pune Sanctuary',
+  },
+  {
+    key: 'vedic_cleansing',
+    stageNumber: 2,
+    title: 'Vedic Sound Cleansing & 432Hz Attunement',
+    description: 'Your crystal selection is being personally inspected, vibrationally cleansed with traditional sound vibrations, and prepared by Soumyaa Naveen.',
+    location: 'Sanctuary Studio, Sus Gaon',
+  },
+  {
+    key: 'vault_packaging',
+    stageNumber: 3,
+    title: 'Insured Vault Packaging & Dispatch',
+    description: 'Your specimen is carefully padded with protective packaging and sealed with its authentication label before dispatch.',
+    location: 'Pune Vault',
+  },
+  {
+    key: 'in_transit',
+    stageNumber: 4,
+    title: 'In Transit — En Route to Patron Sanctuary Hub',
+    description: "Your package is on its way through the assigned delivery partner's courier network.",
+    location: 'National Transit Network',
+  },
+  {
+    key: 'out_for_delivery',
+    stageNumber: 5,
+    title: 'Out for Delivery',
+    description: 'Your crystal selection is on its final journey to your doorstep. The delivery partner may contact you before arrival.',
+    location: 'Local Delivery Hub',
+  },
+  {
+    key: 'delivered',
+    stageNumber: 6,
+    title: 'Delivered to Patron Sanctuary',
+    description: 'Your Sumuk Crystalz5 selection has been delivered. We recommend recording a continuous 360-degree unboxing video when opening your package for documentation in case of transit damage.',
+    location: 'Patron Doorstep',
+  },
+];
+
+export async function getSupabaseOrderTracking(orderId) {
+  if (!orderId) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('order_tracking_events')
+      .select('*')
+      .eq('order_id', orderId)
+      .order('stage_number', { ascending: true });
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data;
+    }
+  } catch (err) {
+    console.warn('Notice querying order_tracking_events:', err.message);
+  }
+
+  // Generate standard 6 milestones matching the order's state
+  return STAGE_CONFIGS.map((cfg) => ({
+    order_id: orderId,
+    milestone_key: cfg.key,
+    stage_number: cfg.stageNumber,
+    title: cfg.title,
+    description: cfg.description,
+    location: cfg.location,
+    status: cfg.key === 'order_confirmed' ? 'completed' : 'pending',
+    completed_at: cfg.key === 'order_confirmed' ? new Date().toISOString() : null,
+    admin_remarks: '',
+  }));
+}
+
+export async function updateOrderTrackingMilestone(orderId, {
+  milestoneKey,
+  status,
+  remarks = '',
+  adminName = 'Founder Admin',
+  trackingNumber = '',
+  carrier = '',
+  estimatedDeliveryAt = null,
+  estimatedDeliveryText = '',
+}) {
+  if (!orderId || !milestoneKey) throw new Error('Order ID and milestone key required.');
+
+  const nowIso = new Date().toISOString();
+  const stageCfg = STAGE_CONFIGS.find(s => s.key === milestoneKey);
+
+  const eventPayload = {
+    order_id: orderId,
+    milestone_key: milestoneKey,
+    stage_number: stageCfg?.stageNumber || 1,
+    title: stageCfg?.title || milestoneKey,
+    description: stageCfg?.description || '',
+    location: stageCfg?.location || '',
+    status: status, // 'pending' | 'in_progress' | 'completed'
+    admin_remarks: remarks || '',
+    updated_at: nowIso,
+    ...(status === 'completed' ? { completed_at: nowIso } : {}),
+  };
+
+  try {
+    // 1. Upsert milestone in order_tracking_events
+    await supabase.from('order_tracking_events').upsert(eventPayload, {
+      onConflict: 'order_id,milestone_key',
+    });
+
+    // 2. Synchronize main orders table
+    const orderUpdates = {
+      current_stage: milestoneKey,
+      updated_at: nowIso,
+    };
+
+    if (milestoneKey === 'order_confirmed' && status === 'completed') {
+      orderUpdates.order_status = 'confirmed';
+      orderUpdates.confirmed_at = nowIso;
+    } else if (milestoneKey === 'vedic_cleansing') {
+      orderUpdates.order_status = status === 'completed' ? 'ready_for_dispatch' : 'processing';
+      if (status === 'completed') orderUpdates.cleansed_at = nowIso;
+    } else if (milestoneKey === 'vault_packaging') {
+      orderUpdates.order_status = status === 'completed' ? 'dispatched' : 'ready_for_dispatch';
+      if (status === 'completed') orderUpdates.packed_at = nowIso;
+    } else if (milestoneKey === 'in_transit') {
+      orderUpdates.order_status = 'in_transit';
+      if (status === 'completed' || status === 'in_progress') orderUpdates.dispatched_at = orderUpdates.dispatched_at || nowIso;
+    } else if (milestoneKey === 'out_for_delivery') {
+      orderUpdates.order_status = 'out_for_delivery';
+      if (status === 'completed' || status === 'in_progress') orderUpdates.out_for_delivery_at = nowIso;
+    } else if (milestoneKey === 'delivered' && status === 'completed') {
+      orderUpdates.order_status = 'delivered';
+      orderUpdates.delivered_at = nowIso;
+    }
+
+    if (trackingNumber) orderUpdates.tracking_number = trackingNumber;
+    if (carrier) orderUpdates.carrier = carrier;
+    if (estimatedDeliveryAt) orderUpdates.estimated_delivery_at = estimatedDeliveryAt;
+    if (estimatedDeliveryText) orderUpdates.estimated_delivery_text = estimatedDeliveryText;
+
+    await supabase.from('orders').update(orderUpdates).eq('id', orderId);
+
+    // 3. Record audit trail
+    await supabase.from('admin_audit_logs').insert([{
+      entity_type: 'order',
+      entity_id: orderId,
+      action: `update_milestone_${milestoneKey}`,
+      details: {
+        milestone: milestoneKey,
+        status,
+        remarks,
+        adminName,
+        timestamp: nowIso,
+      },
+      actor_name: adminName,
+      created_at: nowIso,
+    }]).catch(() => {});
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error updating milestone:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function assignOrderDeliveryPartner(orderId, {
+  deliveryPartnerId,
+  deliveryPartnerName,
+  carrier,
+  trackingNumber,
+  trackingUrl,
+  estimatedDeliveryAt,
+  estimatedDeliveryText,
+  adminRemarks = '',
+  adminName = 'Founder Admin',
+}) {
+  if (!orderId) throw new Error('Order ID is required');
+
+  const nowIso = new Date().toISOString();
+  const updatePayload = {
+    delivery_partner_id: deliveryPartnerId || null,
+    delivery_partner_name: deliveryPartnerName || carrier || 'Assigned Partner',
+    carrier: carrier || deliveryPartnerName || 'Assigned Partner',
+    tracking_number: trackingNumber || '',
+    tracking_url: trackingUrl || '',
+    estimated_delivery_at: estimatedDeliveryAt || null,
+    estimated_delivery_text: estimatedDeliveryText || '',
+    updated_at: nowIso,
+  };
+
+  try {
+    await supabase.from('orders').update(updatePayload).eq('id', orderId);
+
+    // Update Stage 3/4 with the allocated partner details
+    await supabase.from('order_tracking_events').upsert({
+      order_id: orderId,
+      milestone_key: 'vault_packaging',
+      stage_number: 3,
+      title: 'Insured Vault Packaging & Dispatch',
+      description: `Specimen packaged in armored vault and assigned to ${deliveryPartnerName || carrier || 'carrier'}. Tracking ID: ${trackingNumber || 'Pending'}.`,
+      admin_remarks: adminRemarks,
+      updated_at: nowIso,
+    }, { onConflict: 'order_id,milestone_key' }).catch(() => {});
+
+    // Record audit log
+    await supabase.from('admin_audit_logs').insert([{
+      entity_type: 'order',
+      entity_id: orderId,
+      action: 'assign_delivery_partner',
+      details: {
+        deliveryPartnerName,
+        trackingNumber,
+        trackingUrl,
+        estimatedDeliveryText,
+        adminRemarks,
+      },
+      actor_name: adminName,
+      created_at: nowIso,
+    }]).catch(() => {});
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error assigning delivery partner:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * ============================================================================
  * DYNAMIC STORE FILTERS SYSTEM (ADMIN ADD / REMOVE PROVISION)
  * ============================================================================
  */

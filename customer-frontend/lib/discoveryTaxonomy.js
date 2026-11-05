@@ -1,156 +1,286 @@
 /**
  * ============================================================================
- * SUMUK CRYSTALZ 5 — 6-PILLAR DISCOVERY TAXONOMY & STOREFRONT FILTERS
+ * SUMUK CRYSTALZ 5 — ADVANCED MULTI-DIMENSIONAL PRODUCT DISCOVERY TAXONOMY
  * ============================================================================
- * Defines the canonical multi-discovery structure for both Admin tagging
- * and Customer storefront navigation, filter drawers, tickers, and product cards.
+ * Complete 6-Pillar discovery framework for both Admin catalog management
+ * and Customer storefront navigation, multi-filter engine, and URL sync.
  */
 
 export const DISCOVERY_PILLARS = [
+  // ──────────────────────────────────────────────────────────────────────────
+  // 1. SHOP BY PURPOSE
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'purpose',
-    name: '1. Shop by Purpose',
+    name: 'Shop by Purpose',
     shortName: 'Purpose',
-    subtitle: 'What do you want support with?',
+    subtitle: 'What would you like to invite into your life?',
     icon: 'Sparkles',
     badgeColor: 'from-amber-500/20 to-amber-600/10 text-amber-300 border-amber-500/30',
-    type: 'purpose',
     options: [
-      { id: 'purpose:love-relationships', label: 'Love & Relationships', value: 'love-relationships', count: 26 },
-      { id: 'purpose:money-abundance', label: 'Money & Abundance', value: 'money-abundance', count: 34 },
-      { id: 'purpose:protection', label: 'Protection & Shielding', value: 'protection', count: 28 },
-      { id: 'purpose:peace-relaxation', label: 'Peace & Relaxation', value: 'peace-relaxation', count: 18 },
-      { id: 'purpose:focus-studies', label: 'Focus & Studies', value: 'focus-studies', count: 14 },
-      { id: 'purpose:confidence', label: 'Confidence', value: 'confidence', count: 16 },
-      { id: 'purpose:career-business', label: 'Career & Business', value: 'career-business', count: 22 },
-      { id: 'purpose:manifestation', label: 'Manifestation', value: 'manifestation', count: 20 },
-      { id: 'purpose:spiritual-growth', label: 'Spiritual Growth', value: 'spiritual-growth', count: 25 },
-      { id: 'purpose:healing-wellness', label: 'Healing & Wellness', value: 'healing-wellness', count: 30 },
+      { id: 'purpose:love-relationships', label: 'Love & Relationships', value: 'love-relationships' },
+      { id: 'purpose:money-abundance', label: 'Money & Abundance', value: 'money-abundance' },
+      { id: 'purpose:protection', label: 'Protection', value: 'protection' },
+      { id: 'purpose:peace-relaxation', label: 'Peace & Relaxation', value: 'peace-relaxation' },
+      { id: 'purpose:focus-studies', label: 'Focus & Studies', value: 'focus-studies' },
+      { id: 'purpose:confidence', label: 'Confidence', value: 'confidence' },
+      { id: 'purpose:career-business', label: 'Career & Business', value: 'career-business' },
+      { id: 'purpose:manifestation', label: 'Manifestation', value: 'manifestation' },
+      { id: 'purpose:spiritual-growth', label: 'Spiritual Growth', value: 'spiritual-growth' },
+      { id: 'purpose:healing-wellness', label: 'Healing & Wellness', value: 'healing-wellness' },
     ],
   },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 2. SHOP BY ENERGY SYSTEM
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'energy_system',
-    name: '2. Shop by Energy System',
+    name: 'Shop by Energy System',
     shortName: 'Energy System',
-    subtitle: '7 Chakras, Zodiac, Numbers, Planetary, Aura & Vastu',
+    subtitle: 'Discover crystals through your energy and spiritual preferences.',
     icon: 'Zap',
     badgeColor: 'from-purple-500/20 to-indigo-600/10 text-purple-300 border-purple-500/30',
-    type: 'energy',
-    options: [
-      { id: 'energy:7-chakras', label: '7 Chakras Alignment', value: '7-chakras', count: 42, subGroup: 'Chakras' },
-      { id: 'energy:chakra-root', label: 'Root Chakra (Muladhara)', value: 'chakra-root', count: 15, subGroup: 'Chakras' },
-      { id: 'energy:chakra-sacral', label: 'Sacral Chakra (Svadhishthana)', value: 'chakra-sacral', count: 12, subGroup: 'Chakras' },
-      { id: 'energy:chakra-solar-plexus', label: 'Solar Plexus (Manipura)', value: 'chakra-solar-plexus', count: 20, subGroup: 'Chakras' },
-      { id: 'energy:chakra-heart', label: 'Heart Chakra (Anahata)', value: 'chakra-heart', count: 24, subGroup: 'Chakras' },
-      { id: 'energy:chakra-throat', label: 'Throat Chakra (Vishuddha)', value: 'chakra-throat', count: 11, subGroup: 'Chakras' },
-      { id: 'energy:chakra-third-eye', label: 'Third Eye Chakra (Ajna)', value: 'chakra-third-eye', count: 19, subGroup: 'Chakras' },
-      { id: 'energy:chakra-crown', label: 'Crown Chakra (Sahasrara)', value: 'chakra-crown', count: 28, subGroup: 'Chakras' },
-      { id: 'energy:zodiac', label: 'Zodiac / Astrology', value: 'zodiac', count: 38, subGroup: 'Zodiac' },
-      { id: 'energy:numerology', label: 'Numerology / Numbers', value: 'numerology', count: 18, subGroup: 'Numerology' },
-      { id: 'energy:planetary', label: 'Planetary Energy', value: 'planetary', count: 16, subGroup: 'Planetary' },
-      { id: 'energy:aura-energy', label: 'Aura & Energy Shield', value: 'aura-energy', count: 22, subGroup: 'Aura' },
-      { id: 'energy:vastu', label: 'Vastu Remedy (Spiritual)', value: 'vastu', count: 26, subGroup: 'Vastu' },
+    subGroups: [
+      {
+        id: 'chakras',
+        title: '7 Chakras',
+        options: [
+          { id: 'energy:root-chakra', label: 'Root Chakra', value: 'root-chakra', subGroup: '7 Chakras' },
+          { id: 'energy:sacral-chakra', label: 'Sacral Chakra', value: 'sacral-chakra', subGroup: '7 Chakras' },
+          { id: 'energy:solar-plexus-chakra', label: 'Solar Plexus Chakra', value: 'solar-plexus-chakra', subGroup: '7 Chakras' },
+          { id: 'energy:heart-chakra', label: 'Heart Chakra', value: 'heart-chakra', subGroup: '7 Chakras' },
+          { id: 'energy:throat-chakra', label: 'Throat Chakra', value: 'throat-chakra', subGroup: '7 Chakras' },
+          { id: 'energy:third-eye-chakra', label: 'Third Eye Chakra', value: 'third-eye-chakra', subGroup: '7 Chakras' },
+          { id: 'energy:crown-chakra', label: 'Crown Chakra', value: 'crown-chakra', subGroup: '7 Chakras' },
+        ],
+      },
+      {
+        id: 'zodiac',
+        title: 'Zodiac',
+        options: [
+          { id: 'energy:zodiac-aries', label: 'Aries', value: 'zodiac-aries', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-taurus', label: 'Taurus', value: 'zodiac-taurus', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-gemini', label: 'Gemini', value: 'zodiac-gemini', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-cancer', label: 'Cancer', value: 'zodiac-cancer', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-leo', label: 'Leo', value: 'zodiac-leo', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-virgo', label: 'Virgo', value: 'zodiac-virgo', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-libra', label: 'Libra', value: 'zodiac-libra', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-scorpio', label: 'Scorpio', value: 'zodiac-scorpio', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-sagittarius', label: 'Sagittarius', value: 'zodiac-sagittarius', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-capricorn', label: 'Capricorn', value: 'zodiac-capricorn', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-aquarius', label: 'Aquarius', value: 'zodiac-aquarius', subGroup: 'Zodiac' },
+          { id: 'energy:zodiac-pisces', label: 'Pisces', value: 'zodiac-pisces', subGroup: 'Zodiac' },
+        ],
+      },
+      {
+        id: 'numerology',
+        title: 'Numerology / Numbers',
+        options: [
+          { id: 'energy:num-1', label: 'Life Path 1', value: 'num-1', subGroup: 'Numerology' },
+          { id: 'energy:num-2', label: 'Life Path 2', value: 'num-2', subGroup: 'Numerology' },
+          { id: 'energy:num-3', label: 'Life Path 3', value: 'num-3', subGroup: 'Numerology' },
+          { id: 'energy:num-4', label: 'Life Path 4', value: 'num-4', subGroup: 'Numerology' },
+          { id: 'energy:num-5', label: 'Life Path 5', value: 'num-5', subGroup: 'Numerology' },
+          { id: 'energy:num-6', label: 'Life Path 6', value: 'num-6', subGroup: 'Numerology' },
+          { id: 'energy:num-7', label: 'Life Path 7', value: 'num-7', subGroup: 'Numerology' },
+          { id: 'energy:num-8', label: 'Life Path 8', value: 'num-8', subGroup: 'Numerology' },
+          { id: 'energy:num-9', label: 'Life Path 9', value: 'num-9', subGroup: 'Numerology' },
+          { id: 'energy:num-11', label: 'Master Number 11', value: 'num-11', subGroup: 'Numerology' },
+          { id: 'energy:num-22', label: 'Master Number 22', value: 'num-22', subGroup: 'Numerology' },
+          { id: 'energy:num-33', label: 'Master Number 33', value: 'num-33', subGroup: 'Numerology' },
+        ],
+      },
+      {
+        id: 'planetary',
+        title: 'Planetary',
+        options: [
+          { id: 'energy:planet-sun', label: 'Sun', value: 'planet-sun', subGroup: 'Planetary' },
+          { id: 'energy:planet-moon', label: 'Moon', value: 'planet-moon', subGroup: 'Planetary' },
+          { id: 'energy:planet-mars', label: 'Mars', value: 'planet-mars', subGroup: 'Planetary' },
+          { id: 'energy:planet-mercury', label: 'Mercury', value: 'planet-mercury', subGroup: 'Planetary' },
+          { id: 'energy:planet-jupiter', label: 'Jupiter', value: 'planet-jupiter', subGroup: 'Planetary' },
+          { id: 'energy:planet-venus', label: 'Venus', value: 'planet-venus', subGroup: 'Planetary' },
+          { id: 'energy:planet-saturn', label: 'Saturn', value: 'planet-saturn', subGroup: 'Planetary' },
+          { id: 'energy:planet-rahu', label: 'Rahu', value: 'planet-rahu', subGroup: 'Planetary' },
+          { id: 'energy:planet-ketu', label: 'Ketu', value: 'planet-ketu', subGroup: 'Planetary' },
+        ],
+      },
+      {
+        id: 'aura_energy',
+        title: 'Aura & Energy',
+        options: [
+          { id: 'energy:aura-cleansing', label: 'Aura Cleansing', value: 'aura-cleansing', subGroup: 'Aura & Energy' },
+          { id: 'energy:energy-balance', label: 'Energy Balance', value: 'energy-balance', subGroup: 'Aura & Energy' },
+          { id: 'energy:positive-energy', label: 'Positive Energy', value: 'positive-energy', subGroup: 'Aura & Energy' },
+          { id: 'energy:grounding', label: 'Grounding', value: 'grounding', subGroup: 'Aura & Energy' },
+          { id: 'energy:spiritual-protection', label: 'Spiritual Protection', value: 'spiritual-protection', subGroup: 'Aura & Energy' },
+          { id: 'energy:meditation', label: 'Meditation', value: 'meditation', subGroup: 'Aura & Energy' },
+        ],
+      },
+      {
+        id: 'vastu',
+        title: 'Vastu',
+        options: [
+          { id: 'energy:vastu-north', label: 'North Direction', value: 'vastu-north', subGroup: 'Vastu' },
+          { id: 'energy:vastu-south', label: 'South Direction', value: 'vastu-south', subGroup: 'Vastu' },
+          { id: 'energy:vastu-east', label: 'East Direction', value: 'vastu-east', subGroup: 'Vastu' },
+          { id: 'energy:vastu-west', label: 'West Direction', value: 'vastu-west', subGroup: 'Vastu' },
+          { id: 'energy:vastu-north-east', label: 'North-East', value: 'vastu-north-east', subGroup: 'Vastu' },
+          { id: 'energy:vastu-north-west', label: 'North-West', value: 'vastu-north-west', subGroup: 'Vastu' },
+          { id: 'energy:vastu-south-east', label: 'South-East', value: 'vastu-south-east', subGroup: 'Vastu' },
+          { id: 'energy:vastu-south-west', label: 'South-West', value: 'vastu-south-west', subGroup: 'Vastu' },
+          { id: 'energy:vastu-brahmasthan', label: 'Centre / Brahmasthan', value: 'vastu-brahmasthan', subGroup: 'Vastu' },
+        ],
+      },
     ],
+    // Flat options list for easy iteration
+    get options() {
+      return this.subGroups.flatMap((sg) => sg.options);
+    },
   },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 3. SHOP BY CRYSTAL / SPECIMEN
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'crystal_specimen',
-    name: '3. Shop by Crystal / Specimen',
+    name: 'Shop by Crystal / Specimen',
     shortName: 'Crystal / Specimen',
-    subtitle: 'Raw stones, tumbles, towers, spheres and collector geodes',
+    subtitle: 'Find your crystal by physical form or mineral identity.',
     icon: 'Layers',
     badgeColor: 'from-amber-400/20 to-yellow-600/10 text-amber-200 border-amber-400/30',
-    type: 'specimen',
-    options: [
-      { id: 'specimen:raw-stones', label: 'Raw Stones', value: 'raw-stones', count: 19 },
-      { id: 'specimen:tumbles', label: 'Tumbles', value: 'tumbles', count: 27 },
-      { id: 'specimen:towers-points', label: 'Towers & Points', value: 'towers-points', count: 21 },
-      { id: 'specimen:pyramids', label: 'Pyramids', value: 'pyramids', count: 18 },
-      { id: 'specimen:spheres', label: 'Spheres', value: 'spheres', count: 15 },
-      { id: 'specimen:clusters-geodes', label: 'Clusters & Geodes', value: 'clusters-geodes', count: 14 },
-      { id: 'specimen:crystal-trees', label: 'Crystal Trees', value: 'crystal-trees', count: 12 },
-      { id: 'specimen:crystal-chips', label: 'Crystal Chips', value: 'crystal-chips', count: 10 },
-      { id: 'specimen:gemstone-specimens', label: 'Gemstone Specimens', value: 'gemstone-specimens', count: 32 },
-      { id: 'specimen:rare-collector', label: 'Rare / Collector Crystals', value: 'rare-collector', count: 8 },
+    subGroups: [
+      {
+        id: 'specimen_forms',
+        title: 'Specimen Forms',
+        options: [
+          { id: 'specimen:raw-stones', label: 'Raw Stones & Geodes', value: 'raw-stones', subGroup: 'Specimen Forms' },
+          { id: 'specimen:crystal-clusters', label: 'Crystal Clusters', value: 'crystal-clusters', subGroup: 'Specimen Forms' },
+          { id: 'specimen:towers-points', label: 'Crystal Towers & Points', value: 'towers-points', subGroup: 'Specimen Forms' },
+          { id: 'specimen:tumbled-stones', label: 'Tumbled Stones', value: 'tumbled-stones', subGroup: 'Specimen Forms' },
+          { id: 'specimen:spheres-orbs', label: 'Spheres & Orbs', value: 'spheres-orbs', subGroup: 'Specimen Forms' },
+          { id: 'specimen:pyramids', label: 'Pyramids', value: 'pyramids', subGroup: 'Specimen Forms' },
+          { id: 'specimen:crystal-wands', label: 'Crystal Wands', value: 'crystal-wands', subGroup: 'Specimen Forms' },
+          { id: 'specimen:worry-palm-stones', label: 'Worry Stones & Palm Stones', value: 'worry-palm-stones', subGroup: 'Specimen Forms' },
+          { id: 'specimen:healing-pencils', label: 'Healing Pencils', value: 'healing-pencils', subGroup: 'Specimen Forms' },
+          { id: 'specimen:carved-figurines', label: 'Carved & Sacred Figurines', value: 'carved-figurines', subGroup: 'Specimen Forms' },
+        ],
+      },
+      {
+        id: 'crystal_identities',
+        title: 'Crystal Identities',
+        options: [
+          { id: 'crystal:pyrite', label: 'Pyrite', value: 'pyrite', subGroup: 'Crystal Identities' },
+          { id: 'crystal:amethyst', label: 'Amethyst', value: 'amethyst', subGroup: 'Crystal Identities' },
+          { id: 'crystal:clear-quartz', label: 'Clear Quartz', value: 'clear-quartz', subGroup: 'Crystal Identities' },
+          { id: 'crystal:rose-quartz', label: 'Rose Quartz', value: 'rose-quartz', subGroup: 'Crystal Identities' },
+          { id: 'crystal:citrine', label: 'Citrine', value: 'citrine', subGroup: 'Crystal Identities' },
+          { id: 'crystal:black-tourmaline', label: 'Black Tourmaline', value: 'black-tourmaline', subGroup: 'Crystal Identities' },
+          { id: 'crystal:tigers-eye', label: "Tiger's Eye", value: 'tigers-eye', subGroup: 'Crystal Identities' },
+          { id: 'crystal:green-jade', label: 'Green Jade', value: 'green-jade', subGroup: 'Crystal Identities' },
+          { id: 'crystal:selenite', label: 'Selenite', value: 'selenite', subGroup: 'Crystal Identities' },
+          { id: 'crystal:carnelian', label: 'Carnelian', value: 'carnelian', subGroup: 'Crystal Identities' },
+          { id: 'crystal:labradorite', label: 'Labradorite', value: 'labradorite', subGroup: 'Crystal Identities' },
+          { id: 'crystal:fluorite', label: 'Fluorite', value: 'fluorite', subGroup: 'Crystal Identities' },
+          { id: 'crystal:obsidian', label: 'Obsidian', value: 'obsidian', subGroup: 'Crystal Identities' },
+          { id: 'crystal:moonstone', label: 'Moonstone', value: 'moonstone', subGroup: 'Crystal Identities' },
+          { id: 'crystal:lapis-lazuli', label: 'Lapis Lazuli', value: 'lapis-lazuli', subGroup: 'Crystal Identities' },
+          { id: 'crystal:red-jasper', label: 'Red Jasper', value: 'red-jasper', subGroup: 'Crystal Identities' },
+          { id: 'crystal:malachite', label: 'Malachite', value: 'malachite', subGroup: 'Crystal Identities' },
+          { id: 'crystal:sodalite', label: 'Sodalite', value: 'sodalite', subGroup: 'Crystal Identities' },
+        ],
+      },
     ],
+    get options() {
+      return this.subGroups.flatMap((sg) => sg.options);
+    },
   },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 4. SHOP BY JEWELLERY
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'jewellery',
-    name: '4. Shop by Jewellery',
+    name: 'Shop by Jewellery',
     shortName: 'Jewellery',
-    subtitle: 'Sacred wearable crystal bracelets, malas and pendants',
+    subtitle: 'Sacred crystal jewellery crafted for everyday wear.',
     icon: 'Crown',
     badgeColor: 'from-rose-500/20 to-pink-600/10 text-rose-300 border-rose-500/30',
-    type: 'jewellery',
     options: [
-      { id: 'jewellery:bracelets', label: 'Bracelets', value: 'bracelets', count: 48 },
-      { id: 'jewellery:malas', label: 'Malas', value: 'malas', count: 16 },
-      { id: 'jewellery:necklaces', label: 'Necklaces', value: 'necklaces', count: 14 },
-      { id: 'jewellery:pendants', label: 'Pendants', value: 'pendants', count: 24 },
-      { id: 'jewellery:rings', label: 'Rings', value: 'rings', count: 11 },
-      { id: 'jewellery:earrings', label: 'Earrings', value: 'earrings', count: 9 },
-      { id: 'jewellery:beads', label: 'Beads', value: 'beads', count: 15 },
-      { id: 'jewellery:custom-jewellery', label: 'Custom Jewellery', value: 'custom-jewellery', count: 7 },
+      { id: 'jewellery:bracelets', label: 'Bracelets', value: 'bracelets' },
+      { id: 'jewellery:malas', label: 'Malas', value: 'malas' },
+      { id: 'jewellery:necklaces', label: 'Necklaces', value: 'necklaces' },
+      { id: 'jewellery:pendants', label: 'Pendants', value: 'pendants' },
+      { id: 'jewellery:rings', label: 'Rings', value: 'rings' },
+      { id: 'jewellery:earrings', label: 'Earrings', value: 'earrings' },
+      { id: 'jewellery:beads', label: 'Beads', value: 'beads' },
+      { id: 'jewellery:custom-jewellery', label: 'Custom Jewellery', value: 'custom-jewellery' },
     ],
   },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 5. SHOP BY BEAD SIZE
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'bead_size',
-    name: '5. Shop by Bead Size',
+    name: 'Shop by Bead Size',
     shortName: 'Bead Size',
-    subtitle: '4mm, 6mm, 8mm, 10mm, 12mm+ and custom sizes',
+    subtitle: 'Choose the exact bead size for your wrist and energy practice.',
     icon: 'Tag',
     badgeColor: 'from-emerald-500/20 to-teal-600/10 text-emerald-300 border-emerald-500/30',
-    type: 'size',
     options: [
-      { id: 'bead:4mm', label: '4 mm', value: '4mm', count: 12 },
-      { id: 'bead:6mm', label: '6 mm', value: '6mm', count: 28 },
-      { id: 'bead:8mm', label: '8 mm', value: '8mm', count: 52 },
-      { id: 'bead:10mm', label: '10 mm', value: '10mm', count: 24 },
-      { id: 'bead:12mm-plus', label: '12 mm+', value: '12mm-plus', count: 14 },
-      { id: 'bead:custom-size', label: 'Custom Size', value: 'custom-size', count: 6 },
+      { id: 'bead:4mm', label: '4 mm', value: '4mm' },
+      { id: 'bead:6mm', label: '6 mm', value: '6mm' },
+      { id: 'bead:8mm', label: '8 mm', value: '8mm' },
+      { id: 'bead:10mm', label: '10 mm', value: '10mm' },
+      { id: 'bead:12mm-plus', label: '12 mm+', value: '12mm-plus' },
+      { id: 'bead:custom-size', label: 'Custom Size', value: 'custom-size' },
     ],
   },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 6. SHOP FOR HOME & SPACE
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'home_space',
-    name: '6. Shop for Home & Space',
+    name: 'Shop for Home & Space',
     shortName: 'Home & Space',
-    subtitle: 'Home Décor + Vastu Crystals together for aesthetic & energetic harmony',
-    icon: 'Sparkles',
+    subtitle: 'Bring balanced energy and beauty into your living spaces.',
+    icon: 'Home',
     badgeColor: 'from-amber-600/20 to-orange-600/10 text-amber-300 border-amber-600/30',
-    type: 'home',
     options: [
-      { id: 'home:vastu-crystals', label: 'Vastu Crystals', value: 'vastu-crystals', count: 26 },
-      { id: 'home:crystal-trees', label: 'Crystal Trees', value: 'crystal-trees', count: 14 },
-      { id: 'home:crystal-pyramids', label: 'Crystal Pyramids', value: 'crystal-pyramids', count: 18 },
-      { id: 'home:selenite-decor', label: 'Selenite Décor', value: 'selenite-decor', count: 16 },
-      { id: 'home:clusters-geodes', label: 'Crystal Geodes & Clusters', value: 'clusters-geodes', count: 15 },
-      { id: 'home:crystal-spheres', label: 'Crystal Spheres', value: 'crystal-spheres', count: 12 },
-      { id: 'home:crystal-idols', label: 'Crystal Idols', value: 'crystal-idols', count: 9 },
-      { id: 'home:evil-eye-hangings', label: 'Evil-Eye / Protection Hangings', value: 'evil-eye-hangings', count: 18 },
-      { id: 'home:desk-office', label: 'Desk & Office Décor', value: 'desk-office', count: 20 },
-      { id: 'home:meditation-decor', label: 'Meditation / Spiritual Décor', value: 'meditation-decor', count: 22 },
-      { id: 'home:gift-decor', label: 'Gift & Décor Pieces', value: 'gift-decor', count: 25 },
+      { id: 'home:vastu-crystals', label: 'Vastu Crystals', value: 'vastu-crystals' },
+      { id: 'home:crystal-trees', label: 'Crystal Trees', value: 'crystal-trees' },
+      { id: 'home:crystal-pyramids', label: 'Crystal Pyramids', value: 'crystal-pyramids' },
+      { id: 'home:water-fountains', label: 'Water Fountains & Water Crystal Accents', value: 'water-fountains' },
+      { id: 'home:sacred-geometry-plates', label: 'Sacred Geometry Plates & Grids', value: 'sacred-geometry-plates' },
+      { id: 'home:raw-geodes-office', label: 'Raw Geodes for Living Room & Office', value: 'raw-geodes-office' },
+      { id: 'home:feng-shui', label: 'Feng Shui Crystals', value: 'feng-shui' },
+      { id: 'home:desk-workspace', label: 'Desk & Workspace Crystals', value: 'desk-workspace' },
+      { id: 'home:bedroom-harmonizing', label: 'Bedroom Harmonizing Crystals', value: 'bedroom-harmonizing' },
+      { id: 'home:temple-altar', label: 'Temple & Altar Specimens', value: 'temple-altar' },
+      { id: 'home:statement-pieces', label: 'Large Statement Crystal Pieces', value: 'statement-pieces' },
     ],
   },
 ];
 
 /**
- * Top Navigation Megamenu Structure for Storefront Header
+ * Top Navigation Menu for Quick Jumps
  */
 export const TOP_NAV_SHOP_MENU = [
-  { label: 'Numerology', href: '/shop?filter=energy:numerology', description: 'Crystals by Life Path & Numbers' },
-  { label: 'Astrology', href: '/shop?filter=energy:zodiac', description: 'Zodiac & Planetary Crystals' },
-  { label: 'Crystal Trees', href: '/shop?filter=specimen:crystal-trees', description: 'Gemstone Bonsai & Trees of Life' },
-  { label: 'Luxury Jewelry', href: '/shop?pillar=jewellery&filter=jewellery:bracelets', description: 'Consecrated Bracelets & Malas' },
-  { label: 'Crystal Chips', href: '/shop?filter=specimen:crystal-chips', description: 'Natural Crushed Gemstones' },
-  { label: 'Pyramids', href: '/shop?filter=specimen:pyramids', description: 'Sacred Geometric Generators' },
-  { label: 'Towers & Points', href: '/shop?filter=specimen:towers-points', description: 'Standing Obelisks & Prisms' },
-  { label: '7 Chakras', href: '/shop?pillar=energy_system&filter=energy:7-chakras', description: '7 Sacred Energy Centers' },
-  { label: 'By Purpose', href: '/shop?pillar=purpose', description: 'Love, Wealth, Protection & Peace' },
-  { label: 'New Arrivals', href: '/shop?sort=new_arrival', description: 'Recently Consecrated Masterworks' },
+  { label: 'Bracelets', href: '/shop?jewellery=bracelets', description: 'Consecrated 8mm & 10mm Crystal Bracelets' },
+  { label: 'Consecrated Malas', href: '/shop?jewellery=malas', description: '108 Japa & Meditation Prayer Beads' },
+  { label: 'Money & Abundance', href: '/shop?purpose=money-abundance', description: 'Pyrite, Citrine & Green Aventurine' },
+  { label: '7 Chakras', href: '/shop?pillar=energy_system&filter=energy:root-chakra', description: 'Chakra Alignment & Kundalini' },
+  { label: 'Crystal Trees', href: '/shop?home_space=crystal-trees', description: 'Gemstone Bonsai & Trees of Life' },
+  { label: 'Towers & Points', href: '/shop?crystal_specimen=towers-points', description: 'Energy Generators & Direct Amplifiers' },
+  { label: 'Raw Crystals & Geodes', href: '/shop?crystal_specimen=raw-stones', description: 'Untouched Earth Minerals' },
+  { label: 'Vastu Space Décor', href: '/shop?home_space=vastu-crystals', description: 'Spatial Protection & Positive Flow' },
 ];
 
 /**
- * Lookup table for fast label resolution
+ * Fast lookup map for resolving human-readable labels
  */
 const LABEL_MAP = {};
 DISCOVERY_PILLARS.forEach((pillar) => {
@@ -160,36 +290,43 @@ DISCOVERY_PILLARS.forEach((pillar) => {
   });
 });
 
-// Additional aliases
+// Common aliases for labels
 LABEL_MAP['wealth'] = 'Money & Abundance';
 LABEL_MAP['love'] = 'Love & Relationships';
 LABEL_MAP['protection'] = 'Protection';
 LABEL_MAP['peace'] = 'Peace & Relaxation';
 LABEL_MAP['career'] = 'Career & Business';
 LABEL_MAP['spiritual'] = 'Spiritual Growth';
-LABEL_MAP['chakra-solar-plexus'] = 'Solar Plexus';
+LABEL_MAP['chakra-solar-plexus'] = 'Solar Plexus Chakra';
 LABEL_MAP['chakra-heart'] = 'Heart Chakra';
 LABEL_MAP['chakra-crown'] = 'Crown Chakra';
-LABEL_MAP['chakra-third-eye'] = 'Third Eye';
+LABEL_MAP['chakra-third-eye'] = 'Third Eye Chakra';
 LABEL_MAP['chakra-root'] = 'Root Chakra';
 LABEL_MAP['chakra-throat'] = 'Throat Chakra';
 LABEL_MAP['chakra-sacral'] = 'Sacral Chakra';
+LABEL_MAP['zodiac'] = 'Zodiac / Astrology';
+LABEL_MAP['numerology'] = 'Numerology';
+LABEL_MAP['planetary'] = 'Planetary';
+LABEL_MAP['raw-stones'] = 'Raw Stones & Geodes';
+LABEL_MAP['bracelets'] = 'Bracelets';
+LABEL_MAP['malas'] = 'Consecrated Malas';
+LABEL_MAP['8mm'] = '8 mm';
+LABEL_MAP['6mm'] = '6 mm';
+LABEL_MAP['10mm'] = '10 mm';
 
 /**
- * Get human-readable label from any filter tag ID or value
+ * Get human-readable label from any filter ID or slug
  */
 export function getFilterLabel(filterIdOrValue) {
   if (!filterIdOrValue) return '';
   if (LABEL_MAP[filterIdOrValue]) return LABEL_MAP[filterIdOrValue];
 
-  // Strip prefix if any (e.g. "purpose:money-abundance" -> "Money & Abundance")
   const stripped = filterIdOrValue.includes(':')
     ? filterIdOrValue.split(':')[1]
     : filterIdOrValue;
 
   if (LABEL_MAP[stripped]) return LABEL_MAP[stripped];
 
-  // Capitalize hyphenated strings as fallback
   return stripped
     .split('-')
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
@@ -197,98 +334,214 @@ export function getFilterLabel(filterIdOrValue) {
 }
 
 /**
- * Formats a clean list of multi-discovery tags for display underneath product cards.
- * Example return: ['Money & Abundance', 'Solar Plexus', 'Leo', '8mm', 'Bracelet']
+ * Determine which discovery pillar a filter ID belongs to
  */
-export function formatProductMultiTags(product, maxTags = 5) {
-  if (!product) return [];
-  const tags = [];
+export function getPillarForFilter(filterId) {
+  if (!filterId) return null;
+  if (filterId.startsWith('purpose:')) return 'purpose';
+  if (filterId.startsWith('energy:')) return 'energy_system';
+  if (filterId.startsWith('crystal:') || filterId.startsWith('specimen:')) return 'crystal_specimen';
+  if (filterId.startsWith('jewellery:')) return 'jewellery';
+  if (filterId.startsWith('bead:')) return 'bead_size';
+  if (filterId.startsWith('home:')) return 'home_space';
 
-  // 1. Check assigned dynamic filters first
-  const assigned = Array.isArray(product.assignedFilters)
-    ? product.assignedFilters
-    : (Array.isArray(product.assigned_filters) ? product.assigned_filters : (Array.isArray(product.tags) ? product.tags : []));
-
-  if (assigned.length > 0) {
-    assigned.forEach((f) => {
-      const lbl = getFilterLabel(f);
-      if (lbl && !tags.includes(lbl)) {
-        tags.push(lbl);
-      }
-    });
+  // Fallback scan options
+  for (const pillar of DISCOVERY_PILLARS) {
+    if (pillar.options.some((o) => o.id === filterId || o.value === filterId)) {
+      return pillar.id;
+    }
   }
-
-  // 2. Purpose / Intention
-  if (product.purpose && product.purpose !== 'all') {
-    const pLbl = getFilterLabel(product.purpose) || product.purposeLabel;
-    if (pLbl && !tags.includes(pLbl)) tags.push(pLbl);
-  }
-
-  // 3. Chakra
-  if (product.chakra) {
-    const chk = Array.isArray(product.chakra) ? product.chakra[0] : String(product.chakra).split('&')[0]?.trim();
-    if (chk && !tags.includes(chk)) tags.push(chk);
-  }
-
-  // 4. Zodiac
-  if (product.zodiac) {
-    const zod = product.zodiac.split(',')[0]?.trim();
-    if (zod && !tags.includes(zod)) tags.push(zod);
-  }
-
-  // 5. Bead Size
-  if (product.beadSize || product.bead_size) {
-    const bs = (product.beadSize || product.bead_size).split(' ')[0];
-    if (bs && !tags.includes(bs)) tags.push(bs);
-  }
-
-  // 6. Jewellery / Specimen Category
-  if (product.category) {
-    const cat = product.category.replace('Energy Bands', 'Bracelet').replace('Sacred Malas', 'Mala');
-    if (cat && !tags.includes(cat)) tags.push(cat);
-  }
-
-  // 7. Crystal Type
-  if (product.crystalType || product.crystal_type) {
-    const ct = product.crystalType || product.crystal_type;
-    if (ct && !tags.includes(ct)) tags.push(ct);
-  }
-
-  // Return up to maxTags deduplicated
-  return tags.slice(0, maxTags);
+  return null;
 }
 
 /**
- * Checks if a product matches selected discovery filters
+ * Formats a clean list of multi-discovery tags for display underneath product cards.
  */
-export function productMatchesFilters(product, activeFilters = []) {
-  if (!activeFilters || activeFilters.length === 0) return true;
-  if (!product) return false;
+export function formatProductMultiTags(product, maxTags = 4) {
+  if (!product) return [];
 
-  const assigned = Array.isArray(product.assignedFilters)
-    ? product.assignedFilters
-    : (Array.isArray(product.assigned_filters) ? product.assigned_filters : (Array.isArray(product.tags) ? product.tags : []));
+  const rawTags = Array.isArray(product.assigned_filters)
+    ? product.assigned_filters
+    : (Array.isArray(product.assignedFilters) ? product.assignedFilters : (Array.isArray(product.tags) ? product.tags : []));
 
-  const textToSearch = [
-    product.name || '',
-    product.title || '',
-    product.description || '',
-    product.shortDescription || product.short_description || '',
-    product.category || '',
-    product.collection || '',
-    product.crystalType || product.crystal_type || '',
-    product.beadType || '',
-    product.beadSize || product.bead_size || '',
-    product.zodiac || '',
-    Array.isArray(product.chakra) ? product.chakra.join(' ') : (product.chakra || ''),
-    product.purpose || '',
-    product.purposeLabel || '',
-    ...assigned,
-  ].join(' ').toLowerCase();
+  const tags = [...rawTags];
 
-  return activeFilters.some((f) => {
-    const fLow = f.toLowerCase();
-    const stripped = fLow.includes(':') ? fLow.split(':')[1] : fLow;
-    return textToSearch.includes(fLow) || textToSearch.includes(stripped.replace(/-/g, ' '));
+  // Infer primary tags if missing
+  const cat = (product.category || '').toLowerCase();
+  if (cat.includes('bracelet') && !tags.includes('jewellery:bracelets')) tags.push('jewellery:bracelets');
+  if (cat.includes('mala') && !tags.includes('jewellery:malas')) tags.push('jewellery:malas');
+  if (product.crystal_type) {
+    const cKey = `crystal:${product.crystal_type.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    if (!tags.includes(cKey)) tags.push(cKey);
+  }
+
+  // Format into visual pills
+  return tags.slice(0, maxTags).map((tagId) => {
+    const pillarId = getPillarForFilter(tagId);
+    let colorClass = 'bg-stone-800 text-stone-200 border-stone-700';
+
+    if (pillarId === 'purpose') colorClass = 'bg-amber-500/10 text-amber-700 border-amber-300';
+    else if (pillarId === 'energy_system') colorClass = 'bg-purple-500/10 text-purple-700 border-purple-300';
+    else if (pillarId === 'crystal_specimen') colorClass = 'bg-yellow-500/10 text-yellow-800 border-yellow-300';
+    else if (pillarId === 'jewellery') colorClass = 'bg-rose-500/10 text-rose-700 border-rose-300';
+    else if (pillarId === 'bead_size') colorClass = 'bg-emerald-500/10 text-emerald-700 border-emerald-300';
+    else if (pillarId === 'home_space') colorClass = 'bg-orange-500/10 text-orange-700 border-orange-300';
+
+    return {
+      id: tagId,
+      label: getFilterLabel(tagId),
+      pillarId,
+      colorClass,
+    };
   });
+}
+
+/**
+ * ============================================================================
+ * CORE MULTI-DIMENSIONAL FILTER MATCHING ENGINE
+ * ============================================================================
+ * Logic Requirements from Master Prompt:
+ * 1. Multiple selections within the SAME group: OR logic.
+ * 2. Selections across DIFFERENT groups: AND logic.
+ * 3. Variant-level Bead Size checking: If a bead size is selected (e.g. 8 mm),
+ *    the product matches if assigned_filters has 'bead:8mm' OR any variant has
+ *    bead_size matching '8mm'/'8 mm'.
+ * 4. Fallback inference from product metadata (category, crystal_type, chakra, zodiac).
+ */
+export function productMatchesDiscoveryFilters(product, selectedFilterIds = []) {
+  if (!product) return false;
+  if (!selectedFilterIds || selectedFilterIds.length === 0) return true;
+
+  // Group selected filter IDs by pillar dimension
+  const dimensionGroups = {};
+  selectedFilterIds.forEach((filterId) => {
+    const pillar = getPillarForFilter(filterId) || 'other';
+    if (!dimensionGroups[pillar]) dimensionGroups[pillar] = [];
+    dimensionGroups[pillar].push(filterId);
+  });
+
+  const assigned = Array.isArray(product.assigned_filters)
+    ? product.assigned_filters
+    : (Array.isArray(product.assignedFilters) ? product.assignedFilters : (Array.isArray(product.tags) ? product.tags : []));
+
+  const assignedSet = new Set(assigned.map((f) => f.toLowerCase()));
+
+  // Extract searchable attributes
+  const pName = (product.name || '').toLowerCase();
+  const pCategory = (product.category || '').toLowerCase();
+  const pCrystal = (product.crystal_type || product.crystal || '').toLowerCase();
+  const pChakra = (product.chakra || '').toLowerCase();
+  const pZodiac = (product.zodiac || '').toLowerCase();
+  const pDesc = (product.description || '').toLowerCase();
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+
+  // Helper: test if product matches a single filter ID
+  const matchesSingleFilter = (filterId) => {
+    const fid = filterId.toLowerCase();
+    if (assignedSet.has(fid)) return true;
+
+    // Check stripped value (e.g., 'money-abundance')
+    const stripped = fid.includes(':') ? fid.split(':')[1] : fid;
+    if (assignedSet.has(stripped)) return true;
+
+    // 1. Purpose matching
+    if (fid.startsWith('purpose:')) {
+      const purposeName = stripped.replace(/-/g, ' ');
+      return pName.includes(purposeName) || pDesc.includes(purposeName) || assignedSet.has(purposeName);
+    }
+
+    // 2. Energy System matching
+    if (fid.startsWith('energy:')) {
+      // Chakras
+      if (stripped.includes('root') && (pChakra.includes('root') || pChakra.includes('muladhara'))) return true;
+      if (stripped.includes('sacral') && (pChakra.includes('sacral') || pChakra.includes('svadhishthana'))) return true;
+      if (stripped.includes('solar-plexus') && (pChakra.includes('solar plexus') || pChakra.includes('manipura'))) return true;
+      if (stripped.includes('heart') && (pChakra.includes('heart') || pChakra.includes('anahata'))) return true;
+      if (stripped.includes('throat') && (pChakra.includes('throat') || pChakra.includes('vishuddha'))) return true;
+      if (stripped.includes('third-eye') && (pChakra.includes('third eye') || pChakra.includes('ajna'))) return true;
+      if (stripped.includes('crown') && (pChakra.includes('crown') || pChakra.includes('sahasrara'))) return true;
+      // Zodiac
+      if (stripped.startsWith('zodiac-')) {
+        const sign = stripped.replace('zodiac-', '');
+        return pZodiac.includes(sign) || pDesc.includes(sign) || pName.includes(sign);
+      }
+      // Planetary, Numerology, Aura, Vastu
+      const energyTerm = stripped.replace(/-/g, ' ');
+      return pDesc.includes(energyTerm) || pName.includes(energyTerm);
+    }
+
+    // 3. Crystal / Specimen matching
+    if (fid.startsWith('crystal:')) {
+      const crystalName = stripped.replace(/-/g, ' ');
+      return pCrystal.includes(crystalName) || pName.includes(crystalName) || pDesc.includes(crystalName);
+    }
+    if (fid.startsWith('specimen:')) {
+      if (stripped === 'raw-stones' && (pCategory.includes('raw') || pCategory.includes('geode') || pName.includes('raw'))) return true;
+      if (stripped === 'towers-points' && (pCategory.includes('tower') || pName.includes('tower') || pName.includes('point'))) return true;
+      if (stripped === 'tumbled-stones' && (pCategory.includes('tumble') || pName.includes('tumble'))) return true;
+      if (stripped === 'pyramids' && (pCategory.includes('pyramid') || pName.includes('pyramid'))) return true;
+      if (stripped === 'spheres-orbs' && (pCategory.includes('sphere') || pName.includes('sphere'))) return true;
+      if (stripped === 'crystal-clusters' && (pCategory.includes('cluster') || pName.includes('cluster'))) return true;
+      const formTerm = stripped.replace(/-/g, ' ');
+      return pCategory.includes(formTerm) || pName.includes(formTerm);
+    }
+
+    // 4. Jewellery matching
+    if (fid.startsWith('jewellery:')) {
+      if (stripped === 'bracelets' && (pCategory.includes('bracelet') || pCategory.includes('band') || pName.includes('bracelet'))) return true;
+      if (stripped === 'malas' && (pCategory.includes('mala') || pName.includes('mala'))) return true;
+      if (stripped === 'necklaces' && (pCategory.includes('necklace') || pName.includes('necklace'))) return true;
+      if (stripped === 'pendants' && (pCategory.includes('pendant') || pName.includes('pendant'))) return true;
+      if (stripped === 'rings' && (pCategory.includes('ring') || pName.includes('ring'))) return true;
+      if (stripped === 'earrings' && (pCategory.includes('earring') || pName.includes('earring'))) return true;
+      if (stripped === 'beads' && (pCategory.includes('bead') || pName.includes('bead'))) return true;
+      return pCategory.includes(stripped) || pName.includes(stripped);
+    }
+
+    // 5. Bead Size matching (strict variant-level verification)
+    if (fid.startsWith('bead:')) {
+      const targetSize = stripped.toLowerCase(); // '4mm', '6mm', '8mm', '10mm', '12mm-plus'
+      const hasVariantSize = variants.some((v) => {
+        const bs = (v.bead_size || v.beadSize || v.name || '').toLowerCase();
+        if (targetSize === '4mm' && bs.includes('4mm')) return true;
+        if (targetSize === '6mm' && bs.includes('6mm')) return true;
+        if (targetSize === '8mm' && (bs.includes('8mm') || bs.includes('8 mm'))) return true;
+        if (targetSize === '10mm' && (bs.includes('10mm') || bs.includes('10 mm'))) return true;
+        if (targetSize === '12mm-plus' && (bs.includes('12mm') || bs.includes('14mm') || bs.includes('16mm'))) return true;
+        if (targetSize === 'custom-size' && bs.includes('custom')) return true;
+        return false;
+      });
+      if (hasVariantSize) return true;
+
+      // Check product name/beadSize attribute
+      const pBeadSize = (product.beadSize || product.bead_size || '').toLowerCase();
+      if (targetSize === '8mm' && (pBeadSize.includes('8mm') || pName.includes('8mm'))) return true;
+      if (targetSize === '6mm' && (pBeadSize.includes('6mm') || pName.includes('6mm'))) return true;
+      if (targetSize === '10mm' && (pBeadSize.includes('10mm') || pName.includes('10mm'))) return true;
+      if (targetSize === '4mm' && (pBeadSize.includes('4mm') || pName.includes('4mm'))) return true;
+      return false;
+    }
+
+    // 6. Home & Space matching
+    if (fid.startsWith('home:')) {
+      if (stripped === 'crystal-trees' && (pCategory.includes('tree') || pName.includes('tree'))) return true;
+      if (stripped === 'vastu-crystals' && (pCategory.includes('vastu') || pDesc.includes('vastu') || pName.includes('vastu'))) return true;
+      if (stripped === 'crystal-pyramids' && (pCategory.includes('pyramid') || pName.includes('pyramid'))) return true;
+      const homeTerm = stripped.replace(/-/g, ' ');
+      return pCategory.includes(homeTerm) || pDesc.includes(homeTerm) || pName.includes(homeTerm);
+    }
+
+    return false;
+  };
+
+  // AND across all dimensions: each active dimension must have at least one matching filter (OR within dimension)
+  for (const pillar of Object.keys(dimensionGroups)) {
+    const filtersInDimension = dimensionGroups[pillar];
+    const anyMatchedInDimension = filtersInDimension.some((filterId) => matchesSingleFilter(filterId));
+    if (!anyMatchedInDimension) {
+      return false;
+    }
+  }
+
+  return true;
 }

@@ -39,11 +39,30 @@ async function getAllOrders(req, res, next) {
  */
 async function updateOrderStatus(req, res, next) {
   try {
-    const { status, trackingNumber, carrier } = req.body;
+    const {
+      status,
+      trackingNumber,
+      carrier,
+      deliveryPartnerId,
+      deliveryPartnerName,
+      trackingUrl,
+      estimatedDeliveryAt,
+      estimatedDeliveryText,
+      currentStage,
+      adminRemarks,
+    } = req.body;
+
     const order = await orderService.updateOrderStatus(req.params.id, {
       status,
       trackingNumber,
       carrier,
+      deliveryPartnerId,
+      deliveryPartnerName,
+      trackingUrl,
+      estimatedDeliveryAt,
+      estimatedDeliveryText,
+      currentStage,
+      adminRemarks,
     });
 
     res.json({

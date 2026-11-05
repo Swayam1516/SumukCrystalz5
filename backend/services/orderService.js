@@ -98,19 +98,41 @@ async function cancelOrder(orderId, requestingUser) {
 /**
  * Admin: Updates order status and dispatches status notifications
  */
-async function updateOrderStatus(orderId, { status, trackingNumber, carrier }) {
+async function updateOrderStatus(orderId, {
+  status,
+  trackingNumber,
+  carrier,
+  deliveryPartnerId,
+  deliveryPartnerName,
+  trackingUrl,
+  estimatedDeliveryAt,
+  estimatedDeliveryText,
+  currentStage,
+  adminRemarks,
+}) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+  const nowIso = new Date().toISOString();
   const updateData = {
-    updated_at: new Date().toISOString(),
+    updated_at: nowIso,
   };
 
-  if (status) updateData.status = status;
+  if (status) {
+    updateData.status = status;
+    updateData.order_status = status;
+  }
+  if (currentStage) updateData.current_stage = currentStage;
   if (trackingNumber) updateData.tracking_number = trackingNumber;
   if (carrier) updateData.carrier = carrier;
+  if (deliveryPartnerName) updateData.delivery_partner_name = deliveryPartnerName;
+  if (deliveryPartnerId) updateData.delivery_partner_id = deliveryPartnerId;
+  if (trackingUrl) updateData.tracking_url = trackingUrl;
+  if (estimatedDeliveryAt) updateData.estimated_delivery_at = estimatedDeliveryAt;
+  if (estimatedDeliveryText) updateData.estimated_delivery_text = estimatedDeliveryText;
 
-  if (status === ORDER_STATUS.PACKED || status === 'packed') updateData.packed_at = new Date().toISOString();
-  if (status === ORDER_STATUS.SHIPPED || status === 'shipped') updateData.shipped_at = new Date().toISOString();
-  if (status === ORDER_STATUS.DELIVERED || status === 'delivered') updateData.delivered_at = new Date().toISOString();
+  if (status === ORDER_STATUS.PACKED || status === 'packed' || currentStage === 'vault_packaging') updateData.packed_at = nowIso;
+  if (status === ORDER_STATUS.SHIPPED || status === 'shipped' || currentStage === 'in_transit') updateData.dispatched_at = nowIso;
+  if (currentStage === 'out_for_delivery') updateData.out_for_delivery_at = nowIso;
+  if (status === ORDER_STATUS.DELIVERED || status === 'delivered' || currentStage === 'delivered') updateData.delivered_at = nowIso;
 
   let query = supabase.from('orders').update(updateData);
   if (isUuid) {
@@ -123,6 +145,20 @@ async function updateOrderStatus(orderId, { status, trackingNumber, carrier }) {
 
   if (error || !order) {
     throw new AppError(`Order not found or update failed: ${error?.message}`, 404);
+  }
+
+  // Update order_tracking_events if currentStage or status is changed
+  if (currentStage) {
+    try {
+      await supabase.from('order_tracking_events').upsert({
+        order_id: order.id,
+        milestone_key: currentStage,
+        status: status === 'delivered' ? 'completed' : 'in_progress',
+        admin_remarks: adminRemarks || '',
+        updated_at: nowIso,
+        ...(status === 'delivered' ? { completed_at: nowIso } : {}),
+      }, { onConflict: 'order_id,milestone_key' });
+    } catch (_) {}
   }
 
   // Trigger status-specific emails & WhatsApp

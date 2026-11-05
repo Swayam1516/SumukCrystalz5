@@ -30,14 +30,7 @@ const FLAGSHIP_PRODUCT_IDS = [
 ];
 
 export default function CoverFlow3DSlideshow({ className = '' }) {
-  // Initial fallback to catalog's 6 flagship products
-  const initialFlagships = ENERGY_STONES_CATALOG.filter((p) =>
-    FLAGSHIP_PRODUCT_IDS.includes(p.id) || FLAGSHIP_PRODUCT_IDS.includes(p.slug)
-  ).slice(0, 6);
-
-  const [products, setProducts] = useState(
-    initialFlagships.length === 6 ? initialFlagships : ENERGY_STONES_CATALOG.slice(0, 6)
-  );
+  const [products, setProducts] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
@@ -64,40 +57,13 @@ export default function CoverFlow3DSlideshow({ className = '' }) {
   const mouseStartX = useRef(0);
   const hasMoved = useRef(false);
 
-  // 1. Fetch live products from Supabase and filter for the 6 flagship items
+  // 1. Fetch live products strictly uploaded by admin from Supabase
   useEffect(() => {
     let isMounted = true;
     getSupabaseProducts(true)
       .then((items) => {
         if (!isMounted || !items || items.length === 0) return;
-        // Find the 6 flagship items from Supabase
-        const matched = [];
-        for (const targetId of FLAGSHIP_PRODUCT_IDS) {
-          const found = items.find((p) => {
-            const pId = (p.id || '').toLowerCase();
-            const pSlug = (p.slug || '').toLowerCase();
-            const pName = (p.name || '').toLowerCase();
-            return (
-              pId.includes(targetId) ||
-              pSlug.includes(targetId) ||
-              pName.includes(targetId.replace(/-/g, ' '))
-            );
-          });
-          if (found) matched.push(found);
-        }
-
-        if (matched.length >= 4) {
-          setProducts(matched.slice(0, 6));
-        } else {
-          // If fewer than 4 matched in DB, complement with catalog
-          const combined = [...matched];
-          for (const catProd of initialFlagships) {
-            if (!combined.some((c) => c.slug === catProd.slug || c.id === catProd.id)) {
-              combined.push(catProd);
-            }
-          }
-          setProducts(combined.slice(0, 6));
-        }
+        setProducts(items.slice(0, 8));
       })
       .catch(() => {});
 

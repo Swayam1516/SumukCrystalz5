@@ -12,6 +12,9 @@
 
 export const DEFAULT_DELIVERY_SETTINGS = {
   id: 'global',
+  shipping_enabled: true,
+  shipping_fee: 80,
+  currency: 'INR',
   origin_city: 'Pune',
   origin_state: 'Maharashtra',
   origin_lat: 18.5204,
@@ -22,7 +25,7 @@ export const DEFAULT_DELIVERY_SETTINGS = {
   tier_2_fee: 100,
   interstate_fee: 150,
   free_shipping_threshold: 5000,
-  is_free_shipping_enabled: true,
+  is_free_shipping_enabled: false,
 };
 
 // Known coordinate reference points for major Indian postal zones & Maharashtra hubs
@@ -202,6 +205,44 @@ export async function calculateDeliveryFee(
   customSettings = DEFAULT_DELIVERY_SETTINGS
 ) {
   const settings = { ...DEFAULT_DELIVERY_SETTINGS, ...customSettings };
+
+  // Master Shipping Switch: When delivery charges are OFF, free shipping everywhere
+  if (settings.shipping_enabled === false || settings.shipping_enabled === 'false' || settings.delivery_charges_enabled === false) {
+    return {
+      valid: true,
+      pincode: pincode || '',
+      city: 'Sanctuary Destination',
+      state: 'India',
+      distanceKm: 0,
+      isInterstate: false,
+      tierName: 'Free Delivery Sanctuary Promo',
+      estimatedDays: '3-5 Working Days',
+      baseFee: 0,
+      fee: 0,
+      isFree: true,
+      freeThreshold: 0,
+    };
+  }
+
+  // When delivery charges are ON with configured shipping fee
+  if (settings.shipping_fee !== undefined && settings.shipping_fee !== null) {
+    const configuredFee = Number(settings.shipping_fee);
+    return {
+      valid: true,
+      pincode: pincode || '',
+      city: 'Sanctuary Destination',
+      state: 'India',
+      distanceKm: 0,
+      isInterstate: false,
+      tierName: 'Insured Sanctuary Courier Delivery',
+      estimatedDays: '3-5 Working Days',
+      baseFee: configuredFee,
+      fee: configuredFee,
+      isFree: configuredFee === 0,
+      freeThreshold: Number(settings.free_shipping_threshold || 5000),
+    };
+  }
+
   const originLat = Number(settings.origin_lat || 18.5204);
   const originLng = Number(settings.origin_lng || 73.8567);
   const originState = (settings.origin_state || 'Maharashtra').toLowerCase();

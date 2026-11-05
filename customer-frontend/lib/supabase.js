@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { generateNextOrderNumber } from './orderNumber';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cmsiounkoqpwjccczebk.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ylcqcDVWnCBJ9EhGPeEMKQ_P7-nnoVP';
@@ -144,8 +145,82 @@ export function normalizeProduct(raw) {
     product_variants: variantsList,
     product_images: imagesList.map((url, idx) => ({ image_url: url, display_order: idx + 1 })),
     stockCount: variantsList.length > 0 ? variantsList.reduce((sum, v) => sum + (v.stock || 0), 0) : 50,
-    assigned_filters: raw.assigned_filters || raw.assignedFilters || raw.tags || [],
-    assignedFilters: raw.assigned_filters || raw.assignedFilters || raw.tags || [],
+    assigned_filters: (() => {
+      let list = [];
+      if (Array.isArray(raw.assigned_filters)) list = raw.assigned_filters;
+      else if (typeof raw.assigned_filters === 'string') {
+        try { list = JSON.parse(raw.assigned_filters); } catch (_) { list = [raw.assigned_filters]; }
+      } else if (Array.isArray(raw.assignedFilters)) list = raw.assignedFilters;
+      else if (Array.isArray(raw.tags)) list = raw.tags;
+
+      const inferred = [...list];
+      const catLower = (raw.category || '').toLowerCase();
+      if (catLower.includes('bracelet') || catLower.includes('bands')) {
+        if (!inferred.includes('jewellery:bracelets')) inferred.push('jewellery:bracelets');
+      }
+      if (catLower.includes('mala')) {
+        if (!inferred.includes('jewellery:malas')) inferred.push('jewellery:malas');
+      }
+      if (catLower.includes('tree')) {
+        if (!inferred.includes('home:crystal-trees')) inferred.push('home:crystal-trees');
+        if (!inferred.includes('specimen:crystal-trees')) inferred.push('specimen:crystal-trees');
+      }
+      if (catLower.includes('raw') || catLower.includes('geode')) {
+        if (!inferred.includes('specimen:raw-stones')) inferred.push('specimen:raw-stones');
+        if (!inferred.includes('specimen:clusters-geodes')) inferred.push('specimen:clusters-geodes');
+      }
+      if (raw.crystal_type) {
+        const cKey = `crystal:${raw.crystal_type.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+        if (!inferred.includes(cKey)) inferred.push(cKey);
+      }
+      variantsList.forEach((v) => {
+        const bs = (v.bead_size || v.beadSize || '').toLowerCase();
+        if (bs.includes('4mm') && !inferred.includes('bead:4mm')) inferred.push('bead:4mm');
+        if (bs.includes('6mm') && !inferred.includes('bead:6mm')) inferred.push('bead:6mm');
+        if (bs.includes('8mm') && !inferred.includes('bead:8mm')) inferred.push('bead:8mm');
+        if (bs.includes('10mm') && !inferred.includes('bead:10mm')) inferred.push('bead:10mm');
+        if ((bs.includes('12mm') || bs.includes('14mm')) && !inferred.includes('bead:12mm-plus')) inferred.push('bead:12mm-plus');
+      });
+      return inferred;
+    })(),
+    assignedFilters: (() => {
+      let list = [];
+      if (Array.isArray(raw.assigned_filters)) list = raw.assigned_filters;
+      else if (typeof raw.assigned_filters === 'string') {
+        try { list = JSON.parse(raw.assigned_filters); } catch (_) { list = [raw.assigned_filters]; }
+      } else if (Array.isArray(raw.assignedFilters)) list = raw.assignedFilters;
+      else if (Array.isArray(raw.tags)) list = raw.tags;
+
+      const inferred = [...list];
+      const catLower = (raw.category || '').toLowerCase();
+      if (catLower.includes('bracelet') || catLower.includes('bands')) {
+        if (!inferred.includes('jewellery:bracelets')) inferred.push('jewellery:bracelets');
+      }
+      if (catLower.includes('mala')) {
+        if (!inferred.includes('jewellery:malas')) inferred.push('jewellery:malas');
+      }
+      if (catLower.includes('tree')) {
+        if (!inferred.includes('home:crystal-trees')) inferred.push('home:crystal-trees');
+        if (!inferred.includes('specimen:crystal-trees')) inferred.push('specimen:crystal-trees');
+      }
+      if (catLower.includes('raw') || catLower.includes('geode')) {
+        if (!inferred.includes('specimen:raw-stones')) inferred.push('specimen:raw-stones');
+        if (!inferred.includes('specimen:clusters-geodes')) inferred.push('specimen:clusters-geodes');
+      }
+      if (raw.crystal_type) {
+        const cKey = `crystal:${raw.crystal_type.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+        if (!inferred.includes(cKey)) inferred.push(cKey);
+      }
+      variantsList.forEach((v) => {
+        const bs = (v.bead_size || v.beadSize || '').toLowerCase();
+        if (bs.includes('4mm') && !inferred.includes('bead:4mm')) inferred.push('bead:4mm');
+        if (bs.includes('6mm') && !inferred.includes('bead:6mm')) inferred.push('bead:6mm');
+        if (bs.includes('8mm') && !inferred.includes('bead:8mm')) inferred.push('bead:8mm');
+        if (bs.includes('10mm') && !inferred.includes('bead:10mm')) inferred.push('bead:10mm');
+        if ((bs.includes('12mm') || bs.includes('14mm')) && !inferred.includes('bead:12mm-plus')) inferred.push('bead:12mm-plus');
+      });
+      return inferred;
+    })(),
     tags: raw.assigned_filters || raw.assignedFilters || raw.tags || [],
   };
 }
@@ -315,108 +390,8 @@ import { ENERGY_STONES_CATALOG } from '../data/energyStones';
  * Normalizes an Energy Stone catalog record to full product format
  */
 export function getFallbackEnergyStones() {
-  return ENERGY_STONES_CATALOG.map((raw) => {
-    const filters = [];
-    if (raw.purpose === 'wealth') {
-      filters.push('purpose:money-abundance', 'purpose:career-business', 'energy:chakra-solar-plexus');
-    } else if (raw.purpose === 'love') {
-      filters.push('purpose:love-relationships', 'purpose:healing-wellness', 'energy:chakra-heart');
-    } else if (raw.purpose === 'protection') {
-      filters.push('purpose:protection', 'energy:aura-energy', 'energy:chakra-root');
-    } else if (raw.purpose === 'peace') {
-      filters.push('purpose:peace-relaxation', 'purpose:spiritual-growth', 'energy:chakra-crown');
-    } else if (raw.purpose === 'career') {
-      filters.push('purpose:focus-studies', 'purpose:career-business', 'energy:chakra-third-eye');
-    }
-
-    if (raw.id.includes('mala') || raw.beadType === 'Rudraksha') {
-      filters.push('jewellery:malas');
-    } else if (raw.id.includes('plate') || raw.id.includes('cluster') || raw.id.includes('geode')) {
-      filters.push('specimen:clusters-geodes', 'home_space:altar-pooja');
-    } else {
-      filters.push('jewellery:bracelets');
-    }
-
-    if (raw.beadSize) {
-      if (raw.beadSize.includes('8mm')) filters.push('bead_size:8mm');
-      if (raw.beadSize.includes('6mm')) filters.push('bead_size:6mm');
-      if (raw.beadSize.includes('10mm')) filters.push('bead_size:10mm');
-    }
-
-    const imagesList = Array.isArray(raw.images) && raw.images.length > 0
-      ? raw.images
-      : ['/images/products/pyrite.jpg'];
-
-    const sellingPrice = Number(raw.price || 699);
-    const originalPrice = Number(raw.originalPrice || Math.round(sellingPrice * 1.5));
-    const discountPercent = Number(raw.discountPercent || Math.round(((originalPrice - sellingPrice) / originalPrice) * 100));
-
-    return {
-      ...raw,
-      id: raw.id,
-      slug: raw.slug || raw.id,
-      name: raw.name,
-      title: raw.name,
-      subtitle: raw.subtitle || raw.shortDescription,
-      shortDescription: raw.shortDescription || raw.subtitle,
-      short_description: raw.shortDescription || raw.subtitle,
-      description: raw.description,
-      category: raw.category || (raw.id.includes('plate') || raw.id.includes('cluster') ? 'Collector Geodes' : 'Energy Bands'),
-      collection: raw.collection || 'Masterworks Collection',
-      crystalType: raw.beadType || 'Pyrite',
-      crystal_type: raw.beadType || 'Pyrite',
-      chakra: Array.isArray(raw.chakra) ? raw.chakra.join(', ') : (raw.chakra || 'Crown & Solar Plexus'),
-      price: sellingPrice,
-      sellingPrice,
-      selling_price: sellingPrice,
-      originalPrice,
-      original_price: originalPrice,
-      discountPercent,
-      discount_percentage: discountPercent,
-      badge: raw.badge || 'BESTSELLER',
-      badgeColor: raw.badgeColor || 'bg-amber-600 text-white',
-      rating: raw.rating || 5.0,
-      reviewsCount: raw.reviewsCount || 120,
-      active: true,
-      isActive: true,
-      inStock: true,
-      heroImage: imagesList[0],
-      hero_image: imagesList[0],
-      image: imagesList[0],
-      images: imagesList,
-      variants: [
-        {
-          id: `${raw.id}-var-8mm`,
-          name: raw.beadSize ? `${raw.beadSize} Regular` : '8mm Regular Standard',
-          variant_name: raw.beadSize ? `${raw.beadSize} Regular` : '8mm Regular Standard',
-          beadSize: raw.beadSize || '8mm',
-          braceletSize: 'Standard (6.5" - 7.5")',
-          price: sellingPrice,
-          selling_price: sellingPrice,
-          originalPrice: originalPrice,
-          original_price: originalPrice,
-          stock: raw.stockCount || 25,
-          available: true,
-        },
-        {
-          id: `${raw.id}-var-10mm`,
-          name: '10mm Bold Masterwork',
-          variant_name: '10mm Bold Masterwork',
-          beadSize: '10mm',
-          braceletSize: 'Medium-Large (7.5" - 8.5")',
-          price: sellingPrice + 200,
-          selling_price: sellingPrice + 200,
-          originalPrice: originalPrice + 300,
-          original_price: originalPrice + 300,
-          stock: 15,
-          available: true,
-        },
-      ],
-      assigned_filters: filters,
-      assignedFilters: filters,
-      tags: filters,
-    };
-  });
+  // Strictly return empty array. No mock products allowed on customer frontend!
+  return [];
 }
 
 /**
@@ -435,7 +410,7 @@ export async function getSupabaseProducts(onlyActive = false) {
       }
 
       const { data, error } = await query;
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map(normalizeProduct);
       }
     }
@@ -443,8 +418,9 @@ export async function getSupabaseProducts(onlyActive = false) {
     markSupabaseOffline();
   }
 
-  // Canonical fallback ensuring perfect 1-to-1 sync across Slideshow, Shop & Assistant
-  return getFallbackEnergyStones();
+  // Strictly return empty array if no products found in Supabase or on offline.
+  // Never show hardcoded fallback products!
+  return [];
 }
 
 /**
@@ -476,15 +452,7 @@ export async function getSupabaseProductBySlug(slugOrId) {
     markSupabaseOffline();
   }
 
-  // Fallback search in master catalog
-  const fallbackList = getFallbackEnergyStones();
-  const matched = fallbackList.find(
-    (p) =>
-      p.slug === slugOrId ||
-      p.id === slugOrId ||
-      p.slug.toLowerCase() === String(slugOrId).toLowerCase()
-  );
-  return matched || null;
+  return null;
 }
 
 /**
@@ -559,10 +527,14 @@ export async function saveCustomerToSupabase(customer) {
  */
 export async function saveOrderToSupabase(order) {
   try {
-    const orderNumber = order.orderId || order._id || order.orderNumber || `ORD-${Date.now()}`;
+    let orderNumber = order.orderId || order._id || order.orderNumber;
+    if (!orderNumber || !orderNumber.startsWith('SC5-')) {
+      orderNumber = await generateNextOrderNumber(supabase);
+    }
     const buyerEmail = order.buyerEmail?.toLowerCase().trim() || '';
     const buyerName = order.buyerName || order.shippingAddress?.fullName || 'Collector';
     const totalAmount = Number(order.total || order.total_amount || 0);
+    const nowIso = new Date().toISOString();
 
     const payload = {
       order_number: orderNumber,
@@ -574,14 +546,20 @@ export async function saveOrderToSupabase(order) {
       items: order.items || [],
       subtotal: Number(order.subtotal || 0),
       shipping_fee: Number(order.shippingFee || 0),
+      shipping_charge: Number(order.shippingFee || 0),
       total: totalAmount,
       total_amount: totalAmount,
       currency: order.currency || 'INR',
       razorpay_order_id: order.razorpayOrderId || '',
       razorpay_payment_id: order.razorpayPaymentId || '',
-      status: order.status || 'paid',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      payment_method: order.payment_method || 'razorpay',
+      payment_status: order.payment_status || 'verified',
+      status: order.status || 'confirmed',
+      order_status: order.order_status || 'confirmed',
+      current_stage: 'order_confirmed',
+      confirmed_at: nowIso,
+      created_at: nowIso,
+      updated_at: nowIso,
     };
 
     // 1. Insert into Supabase 'orders' table
@@ -592,6 +570,69 @@ export async function saveOrderToSupabase(order) {
       .single();
 
     const createdOrderId = orderResult?.id || payload.order_number;
+
+    // 1b. Initialize 6-Stage Tracking Events in order_tracking_events
+    try {
+      const initialMilestones = [
+        {
+          order_id: createdOrderId,
+          milestone_key: 'order_confirmed',
+          stage_number: 1,
+          title: 'Order Confirmed & Payment Verified',
+          description: 'Your order has been placed securely on Sumuk Crystalz5 Sanctum. Your order is confirmed, and our sanctuary team will prepare your crystal selection.',
+          location: 'Pune Sanctuary',
+          status: 'completed',
+          completed_at: nowIso,
+        },
+        {
+          order_id: createdOrderId,
+          milestone_key: 'vedic_cleansing',
+          stage_number: 2,
+          title: 'Vedic Sound Cleansing & 432Hz Attunement',
+          description: 'Your crystal selection is being personally inspected, vibrationally cleansed with traditional sound vibrations, and prepared by Soumyaa Naveen.',
+          location: 'Sanctuary Studio, Sus Gaon',
+          status: 'pending',
+        },
+        {
+          order_id: createdOrderId,
+          milestone_key: 'vault_packaging',
+          stage_number: 3,
+          title: 'Insured Vault Packaging & Dispatch',
+          description: 'Your specimen is carefully padded with protective packaging and sealed with its authentication label before dispatch.',
+          status: 'pending',
+        },
+        {
+          order_id: createdOrderId,
+          milestone_key: 'in_transit',
+          stage_number: 4,
+          title: 'In Transit — En Route to Patron Sanctuary Hub',
+          description: "Your package is on its way through the assigned delivery partner's courier network.",
+          status: 'pending',
+        },
+        {
+          order_id: createdOrderId,
+          milestone_key: 'out_for_delivery',
+          stage_number: 5,
+          title: 'Out for Delivery',
+          description: 'Your crystal selection is on its final journey to your doorstep. The delivery partner may contact you before arrival.',
+          status: 'pending',
+        },
+        {
+          order_id: createdOrderId,
+          milestone_key: 'delivered',
+          stage_number: 6,
+          title: 'Delivered to Patron Sanctuary',
+          description: 'Your Sumuk Crystalz5 selection has been delivered. We recommend recording a continuous 360-degree unboxing video when opening your package for documentation in case of transit damage.',
+          status: 'pending',
+        },
+      ];
+
+      await supabase.from('order_tracking_events').upsert(initialMilestones, {
+        onConflict: 'order_id,milestone_key',
+      });
+    } catch (milestoneErr) {
+      console.warn('Notice saving order_tracking_events:', milestoneErr.message);
+    }
 
     // 2. Insert line items into 'order_items' table if items array exists
     if (order.items && Array.isArray(order.items) && order.items.length > 0 && orderResult?.id) {
@@ -1434,5 +1475,186 @@ export async function saveSupabaseStoreFilters(filters) {
  */
 export async function resetDefaultStoreFilters() {
   return saveSupabaseStoreFilters(DEFAULT_STORE_FILTERS);
+}
+
+/**
+ * ============================================================================
+ * SUMUK CRYSTALZ 5 — LIVE ORDER TRACKING (6 STAGES) & REALTIME SUBSCRIPTION
+ * ============================================================================
+ */
+export const STAGE_CONFIGS = [
+  {
+    key: 'order_confirmed',
+    stageNumber: 1,
+    title: 'Order Confirmed & Payment Verified',
+    description: 'Your order has been placed securely on Sumuk Crystalz5 Sanctum. Your order is confirmed, and our sanctuary team will prepare your crystal selection.',
+    location: 'Pune Sanctuary',
+  },
+  {
+    key: 'vedic_cleansing',
+    stageNumber: 2,
+    title: 'Vedic Sound Cleansing & 432Hz Attunement',
+    description: 'Your crystal selection is being personally inspected, vibrationally cleansed with traditional sound vibrations, and prepared by Soumyaa Naveen.',
+    location: 'Sanctuary Studio, Sus Gaon',
+  },
+  {
+    key: 'vault_packaging',
+    stageNumber: 3,
+    title: 'Insured Vault Packaging & Dispatch',
+    description: 'Your specimen is carefully padded with protective packaging and sealed with its authentication label before dispatch.',
+    location: 'Pune Vault',
+  },
+  {
+    key: 'in_transit',
+    stageNumber: 4,
+    title: 'In Transit — En Route to Patron Sanctuary Hub',
+    description: "Your package is on its way through the assigned delivery partner's courier network.",
+    location: 'National Transit Network',
+  },
+  {
+    key: 'out_for_delivery',
+    stageNumber: 5,
+    title: 'Out for Delivery',
+    description: 'Your crystal selection is on its final journey to your doorstep. The delivery partner may contact you before arrival.',
+    location: 'Local Delivery Hub',
+  },
+  {
+    key: 'delivered',
+    stageNumber: 6,
+    title: 'Delivered to Patron Sanctuary',
+    description: 'Your Sumuk Crystalz5 selection has been delivered. We recommend recording a continuous 360-degree unboxing video when opening your package for documentation in case of transit damage.',
+    location: 'Patron Doorstep',
+  },
+];
+
+export async function getSupabaseOrderTracking(orderId) {
+  if (!orderId) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('order_tracking_events')
+      .select('*')
+      .eq('order_id', orderId)
+      .order('stage_number', { ascending: true });
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data;
+    }
+  } catch (err) {
+    console.warn('Notice querying order_tracking_events:', err.message);
+  }
+
+  // Resilient fallback based on STAGE_CONFIGS
+  return STAGE_CONFIGS.map((cfg) => ({
+    order_id: orderId,
+    milestone_key: cfg.key,
+    stage_number: cfg.stageNumber,
+    title: cfg.title,
+    description: cfg.description,
+    location: cfg.location,
+    status: cfg.key === 'order_confirmed' ? 'completed' : 'pending',
+    completed_at: cfg.key === 'order_confirmed' ? new Date().toISOString() : null,
+    admin_remarks: '',
+  }));
+}
+
+/**
+ * Subscribes to Supabase Realtime changes for live tracking updates
+ */
+export function subscribeToOrderTracking(orderId, onUpdate) {
+  if (!supabase || !orderId || typeof window === 'undefined') {
+    return () => {};
+  }
+
+  try {
+    const channel = supabase
+      .channel(`order-tracking-${orderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'order_tracking_events',
+          filter: `order_id=eq.${orderId}`,
+        },
+        (payload) => {
+          if (onUpdate) onUpdate(payload);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderId}`,
+        },
+        (payload) => {
+          if (onUpdate) onUpdate(payload);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (err) {
+    console.warn('Realtime subscription notice:', err.message);
+    return () => {};
+  }
+}
+
+export const DEFAULT_SHIPPING_SETTINGS = {
+  id: 'global',
+  shipping_enabled: true,
+  shipping_fee: 80,
+  free_shipping_threshold: 50000,
+  is_free_shipping_enabled: false,
+  origin_city: 'Pune',
+  origin_state: 'Maharashtra',
+};
+
+export async function getSupabaseShippingSettings() {
+  try {
+    const { data, error } = await supabase
+      .from('shipping_settings')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('sumuk_shipping_settings', JSON.stringify(data));
+        } catch (_) {}
+      }
+      return { ...DEFAULT_SHIPPING_SETTINGS, ...data };
+    }
+  } catch (err) {
+    try {
+      const { data: dData } = await supabase
+        .from('delivery_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      if (dData) {
+        return {
+          ...DEFAULT_SHIPPING_SETTINGS,
+          shipping_enabled: dData.shipping_enabled !== undefined ? dData.shipping_enabled : true,
+          shipping_fee: dData.shipping_fee !== undefined ? dData.shipping_fee : (dData.tier_1_fee || 80),
+        };
+      }
+    } catch (_) {}
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('sumuk_shipping_settings');
+      if (cached) return { ...DEFAULT_SHIPPING_SETTINGS, ...JSON.parse(cached) };
+    } catch (_) {}
+  }
+
+  return DEFAULT_SHIPPING_SETTINGS;
 }
 

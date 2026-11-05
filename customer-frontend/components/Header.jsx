@@ -99,15 +99,29 @@ export default function Header() {
     return null;
   }
 
+  const isHomepage = pathname === '/';
+
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-[#F8F6F2]/90 backdrop-blur-md border-b border-[#EAE2F2] shadow-[0_2px_12px_rgba(41,36,45,0.03)] transition-all">
+      <header
+        className={`sticky top-0 z-50 w-full backdrop-blur-md transition-all ${
+          isHomepage
+            ? 'bg-black/95 border-b border-white/10 text-white shadow-xl'
+            : 'bg-[#F8F6F2]/90 border-b border-[#EAE2F2] text-[#29242D] shadow-[0_2px_12px_rgba(41,36,45,0.03)]'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 h-18 sm:h-20 flex items-center justify-between relative">
           {/* LEFT: Faceted Gold Wireframe Crystal Logo + Brand Name */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group flex-shrink-0 whitespace-nowrap">
               <FacetedCrystalLogo className="w-7 h-7 sm:w-8 sm:h-8" />
-              <span className="font-serif text-sm sm:text-base md:text-lg font-bold tracking-[0.16em] text-[#29242D] group-hover:text-[#79539B] transition-colors uppercase whitespace-nowrap">
+              <span
+                className={`font-serif text-sm sm:text-base md:text-lg font-bold tracking-[0.16em] uppercase whitespace-nowrap transition-colors ${
+                  isHomepage
+                    ? 'text-white group-hover:text-[#D4AF37]'
+                    : 'text-[#29242D] group-hover:text-[#79539B]'
+                }`}
+              >
                 SUMUK CRYSTALZ 5
               </span>
             </Link>
@@ -124,33 +138,43 @@ export default function Header() {
                 type="button"
                 onClick={() => setShopDropdownOpen(!shopDropdownOpen)}
                 className={`text-xs lg:text-[13px] font-sans font-semibold uppercase tracking-[0.14em] py-2.5 px-2 flex items-center gap-1.5 transition-all duration-200 cursor-pointer ${
-                  shopDropdownOpen ? 'text-[#79539B]' : 'text-[#29242D]/80 hover:text-[#79539B]'
+                  shopDropdownOpen
+                    ? 'text-[#D4AF37]'
+                    : isHomepage
+                    ? 'text-white hover:text-[#D4AF37]'
+                    : 'text-[#29242D]/80 hover:text-[#79539B]'
                 }`}
                 aria-expanded={shopDropdownOpen}
                 aria-label="Toggle Shop Category Mega Menu"
               >
                 <span>SHOP</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180 text-[#79539B]' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180 text-[#D4AF37]' : ''}`} />
               </button>
             </div>
 
             <Link
               href="/services"
-              className="text-[#29242D]/80 hover:text-[#79539B] font-medium transition-all duration-200"
+              className={`font-medium transition-all duration-200 ${
+                isHomepage ? 'text-white hover:text-[#D4AF37]' : 'text-[#29242D]/80 hover:text-[#79539B]'
+              }`}
             >
               SERVICES
             </Link>
 
             <Link
               href="/about"
-              className="text-[#29242D]/80 hover:text-[#79539B] font-medium transition-all duration-200"
+              className={`font-medium transition-all duration-200 ${
+                isHomepage ? 'text-white hover:text-[#D4AF37]' : 'text-[#29242D]/80 hover:text-[#79539B]'
+              }`}
             >
               FOUNDER STORY
             </Link>
 
             <Link
               href="/account"
-              className="text-[#29242D]/80 hover:text-[#79539B] font-medium transition-all duration-200"
+              className={`font-medium transition-all duration-200 ${
+                isHomepage ? 'text-white hover:text-[#D4AF37]' : 'text-[#29242D]/80 hover:text-[#79539B]'
+              }`}
             >
               MY ACCOUNT &amp; ORDERS
             </Link>
@@ -161,14 +185,18 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="px-4 py-1.5 rounded-full bg-white border border-[#EAE2F2] hover:border-[#D8CBE4] text-[#29242D] transition-all flex items-center gap-2 font-semibold shadow-xs cursor-pointer"
+                  className={`px-4 py-1.5 rounded-full border transition-all flex items-center gap-2 font-semibold shadow-xs cursor-pointer ${
+                    isHomepage
+                      ? 'bg-black/60 border-white/20 text-white hover:border-[#D4AF37]'
+                      : 'bg-white border-[#EAE2F2] hover:border-[#D8CBE4] text-[#29242D]'
+                  }`}
                   aria-expanded={userDropdownOpen}
                   title="Patron Profile & Orders"
                 >
                   {isCurrentAdmin ? (
                     <Crown className="w-3.5 h-3.5 text-[#C8A65E]" />
                   ) : (
-                    <User className="w-3.5 h-3.5 text-[#79539B]" />
+                    <User className={`w-3.5 h-3.5 ${isHomepage ? 'text-[#D4AF37]' : 'text-[#79539B]'}`} />
                   )}
                   <span className="max-w-[110px] truncate">{currentUser.name?.split(' ')[0] || 'Patron'}</span>
                   <ChevronDown className={`w-3 h-3 text-stone-400 transition-transform duration-200 ${userDropdownOpen ? 'rotate-180' : ''}`} />
@@ -251,45 +279,63 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => openAuthModal('login')}
-                  className="px-3.5 sm:px-4 py-1.5 rounded-full border border-[#EAE2F2] bg-white hover:bg-[#F8F6F2] text-[#29242D] text-xs font-sans font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                  className={`px-3.5 sm:px-4 py-1.5 rounded-full border text-xs font-sans font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
+                    isHomepage
+                      ? 'border-white/20 bg-white/10 hover:bg-white/20 text-white'
+                      : 'border-[#EAE2F2] bg-white hover:bg-[#F8F6F2] text-[#29242D]'
+                  }`}
                 >
-                  <User className="w-3.5 h-3.5 text-[#79539B]" />
+                  <User className={`w-3.5 h-3.5 ${isHomepage ? 'text-white' : 'text-[#79539B]'}`} />
                   <span>Sign In</span>
                 </button>
 
-                {/* Sign Up Solid Purple Pill */}
+                {/* Sign Up Pill Button */}
                 <button
                   type="button"
                   onClick={() => openAuthModal('register')}
-                  className="px-3.5 sm:px-4 py-1.5 rounded-full bg-[#79539B] hover:bg-[#684587] text-white text-xs font-sans font-semibold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                  className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-sans font-semibold flex items-center gap-1.5 shadow-xs transition cursor-pointer ${
+                    isHomepage
+                      ? 'bg-white hover:bg-stone-100 text-stone-950 font-bold'
+                      : 'bg-[#79539B] hover:bg-[#684587] text-white'
+                  }`}
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#C8A65E]" />
+                  <Sparkles className={`w-3.5 h-3.5 ${isHomepage ? 'text-[#C8A65E]' : 'text-[#C8A65E]'}`} />
                   <span>Sign Up</span>
                 </button>
               </div>
             )}
 
-            {/* Cart Button with Lavender Counter */}
+            {/* Cart Button with Counter */}
             <button
               type="button"
               onClick={openDrawer}
-              className="relative p-2 text-[#29242D] hover:text-[#79539B] transition cursor-pointer"
+              className={`relative p-2 transition cursor-pointer ${
+                isHomepage ? 'text-white hover:text-[#D4AF37]' : 'text-[#29242D] hover:text-[#79539B]'
+              }`}
               aria-label="View Shopping Cart"
             >
               <ShoppingCart className="w-5 h-5 stroke-[1.8]" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#EAE2F2] border border-[#D8CBE4] text-[10px] font-sans font-bold text-[#79539B] flex items-center justify-center shadow-xs">
+              <span
+                className={`absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[10px] font-sans font-bold flex items-center justify-center shadow-xs ${
+                  isHomepage
+                    ? 'bg-white text-stone-950 border border-white'
+                    : 'bg-[#EAE2F2] border border-[#D8CBE4] text-[#79539B]'
+                }`}
+              >
                 {cartCount}
               </span>
             </button>
 
             {/* Vertical Divider */}
-            <div className="h-6 w-px bg-[#EAE2F2] mx-1 hidden sm:block" />
+            <div className={`h-6 w-px mx-1 hidden sm:block ${isHomepage ? 'bg-white/20' : 'bg-[#EAE2F2]'}`} />
 
             {/* Menu toggle */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 sm:p-2 text-[#29242D] hover:text-[#79539B] transition-colors cursor-pointer flex items-center justify-center"
+              className={`p-1.5 sm:p-2 transition-colors cursor-pointer flex items-center justify-center ${
+                isHomepage ? 'text-white hover:text-[#D4AF37]' : 'text-[#29242D] hover:text-[#79539B]'
+              }`}
               aria-label="Toggle Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 stroke-[1.8]" />}
