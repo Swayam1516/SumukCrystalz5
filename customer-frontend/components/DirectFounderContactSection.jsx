@@ -118,7 +118,7 @@ export default function DirectFounderContactSection() {
                 </div>
               </div>
 
-              <p className="text-sm text-[#29242D]/80 font-sans leading-relaxed">
+              <p className="text-sm sm:text-[15px] text-[#1E1924] font-medium font-sans leading-relaxed">
                 Every natural mineral, bracelet, and geode at Sumuk Crystalz 5 is personally inspected for natural authenticity, cleansed with traditional sound vibrations, and packaged with care. Whether you are seeking a specific vibration or bespoke guidance, our sanctuary is here to assist.
               </p>
 

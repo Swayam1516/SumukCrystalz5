@@ -340,7 +340,7 @@ export default function OrderSuccessPage() {
               <div className="p-3.5 rounded-xl bg-amber-500/[0.06] border border-amber-500/20 text-[11px] text-neutral-300 flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                 <span>
-                  Vault packaging includes tamper-evident seal and 100% loss/damage transit insurance.
+                  Secure insured packaging includes tamper-evident seal and 100% loss/damage transit insurance.
                 </span>
               </div>
             </div>

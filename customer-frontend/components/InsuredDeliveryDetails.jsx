@@ -335,7 +335,7 @@ export default function InsuredDeliveryDetails({
             <div className="absolute inset-0 z-0">
               <Image
                 src="/images/safe_delivery_vault.jpg"
-                alt="Safe Delivery Vault with Amethyst Crystals"
+                alt="Safe Delivery Insured Packaging with Amethyst Crystals"
                 fill
                 className="object-cover object-center transform group-hover:scale-105 transition-transform duration-1000"
                 priority

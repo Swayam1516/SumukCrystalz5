@@ -474,7 +474,7 @@ export const CANONICAL_SERVICES_DEFAULT = [
       'Choose your package (New Selection ₹750, Existing Analysis ₹750, or Analysis with Remedies ₹999).',
       'Make pre-payment and share the vehicle & owner details via WhatsApp.',
       'Our team evaluates the vibrational resonance and delivers comprehensive guidance.',
-      'If crystal remedies (crystal hanger, vehicle protection stone) are recommended, they can be curated and dispatched from our vault.'
+      'If crystal remedies (crystal hanger, vehicle protection stone) are recommended, they can be curated and dispatched from our collection.'
     ],
     detailsRequired: [
       'Vehicle number (existing number or optional shortlisted choices)',

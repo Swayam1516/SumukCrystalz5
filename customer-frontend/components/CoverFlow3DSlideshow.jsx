@@ -246,7 +246,7 @@ export default function CoverFlow3DSlideshow({ className = '' }) {
           <span>Interactive 3D Cover Flow</span>
         </div>
         <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold text-stone-900 tracking-tight">
-          Featured Sanctuary Masterworks
+          Crystal Sanctuary Masterworks
         </h2>
         <p className="text-xs sm:text-sm text-stone-600 font-sans max-w-lg mx-auto">
           Drag, swipe, or click through our consecrated gemstone specimens attuned with authentic Vedic energy.
@@ -448,7 +448,7 @@ export default function CoverFlow3DSlideshow({ className = '' }) {
                           {quickAddedId === prodId ? (
                             <>
                               <Check className="w-3.5 h-3.5" />
-                              <span>Added to Vault!</span>
+                              <span>Added to Your Cart!</span>
                             </>
                           ) : (
                             <>
@@ -528,7 +528,7 @@ export default function CoverFlow3DSlideshow({ className = '' }) {
                           type="button"
                           onClick={(e) => handleQuickAdd(product, e)}
                           className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-stone-950 font-bold font-mono text-[11px] uppercase tracking-wider flex items-center gap-1 transition shadow-sm cursor-pointer active:scale-95"
-                          title="Add to Vault"
+                          title="Add to Your Cart"
                         >
                           {quickAddedId === prodId ? (
                             <>

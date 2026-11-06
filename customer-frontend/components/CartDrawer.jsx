@@ -156,7 +156,7 @@ export default function CartDrawer() {
                 <div>
                   <p className="font-serif text-[#29242D] font-bold text-lg">Your collection is empty</p>
                   <p className="text-xs text-[#29242D]/70 mt-1 max-w-xs leading-relaxed">
-                    Explore our consecrated vault of museum-grade crystals, cathedral geodes, and talismanic energy bands.
+                    Explore our consecrated collection of museum-grade crystals, cathedral geodes, and talismanic energy bands.
                   </p>
                 </div>
                 <Link

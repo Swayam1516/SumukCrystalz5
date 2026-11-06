@@ -141,7 +141,7 @@ export default function LiveProductSlideshow({ className = '' }) {
           </h2>
 
           <p className="text-xs sm:text-sm text-neutral-400 max-w-xl font-sans-ui">
-            Handcrafted natural gemstones, Vedic energy bands, and rare collector geodes sliding live from our consecrated sanctuary vault.
+            Handcrafted natural gemstones, Vedic energy bands, and rare collector geodes sliding live from our consecrated sanctuary collection.
           </p>
         </div>
 
@@ -249,7 +249,7 @@ export default function LiveProductSlideshow({ className = '' }) {
                       {quickAddedId === prodId ? (
                         <>
                           <Check className="w-3.5 h-3.5 text-black" />
-                          <span>Added to Vault!</span>
+                          <span>Added to Your Cart!</span>
                         </>
                       ) : (
                         <>

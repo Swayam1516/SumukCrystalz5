@@ -68,7 +68,7 @@ export const DEFAULT_FAQS = [
     category: 'Ordering',
     question: 'Do I need an account to place an order?',
     answer:
-      'No! You can checkout quickly as a guest. However, creating a free Sumuk Sanctuary account allows you to track your orders in real time, view gemological certificates, save your shipping address, and review your consecrated vault history.',
+      'No! You can checkout quickly as a guest. However, creating a free Sumuk Sanctuary account allows you to track your orders in real time, view gemological certificates, save your shipping address, and review your consecrated collection history.',
     isActive: true,
   },
   {
@@ -706,7 +706,7 @@ export async function processCustomerMessage({
       const topCount = searchRes.products.length;
       let introMsg = `Here are our curated consecrated specimens matching your request:`;
       if (matchedKeyword) {
-        introMsg = `Found ${topCount} authentic ${matchedKeyword.toUpperCase()} consecrated pieces in our sanctuary vault:`;
+        introMsg = `Found ${topCount} authentic ${matchedKeyword.toUpperCase()} consecrated pieces in our sanctuary collection:`;
       } else if (searchPurpose) {
         introMsg = `Here are our highest-rated specimens calibrated for ${searchPurpose.toUpperCase()} & energetic alignment:`;
       } else if (searchMaxPrice < 999999) {
@@ -739,7 +739,7 @@ export async function processCustomerMessage({
   // 9. HOW TO ORDER / WEBSITE NAVIGATION
   if (lower.includes('how to order') || lower.includes('how to buy') || lower.includes('add to cart') || lower.includes('checkout')) {
     return {
-      reply: `**How to Acquire Your Consecrated Crystal:**\n\n1. **Browse Catalog**: Visit our **[Sanctuary Shop](/shop)** or ask me for specific crystals.\n2. **Select Specimen**: Choose your preferred bead size (e.g. 6mm, 8mm, or 10mm).\n3. **Add to Vault**: Click **Add to Cart** or **Quick Add** with sacred consecration audio.\n4. **Secure Checkout**: Enter your shipping address and complete bank-grade encrypted payment via Razorpay UPI/Cards/NetBanking.\n5. **Blessing & Dispatch**: Your specimen is individually cleansed and shipped in armored velvet packaging.`,
+      reply: `**How to Acquire Your Consecrated Crystal:**\n\n1. **Browse Catalog**: Visit our **[Sanctuary Shop](/shop)** or ask me for specific crystals.\n2. **Select Specimen**: Choose your preferred bead size (e.g. 6mm, 8mm, or 10mm).\n3. **Add to Cart**: Click **Add to Your Cart** or **Quick Add** with sacred consecration audio.\n4. **Secure Checkout**: Enter your shipping address and complete bank-grade encrypted payment via Razorpay UPI/Cards/NetBanking.\n5. **Blessing & Dispatch**: Your specimen is individually cleansed and shipped in armored velvet packaging.`,
       products: [],
       quickReplies: ['Open Sanctuary Shop', 'Shipping Info', 'Payment Options'],
     };

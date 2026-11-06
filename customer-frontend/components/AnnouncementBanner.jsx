@@ -53,9 +53,10 @@ export default function AnnouncementBanner() {
   if (pathname === '/shop') return null;
   if (!mounted || dismissed) return null;
 
-  const displayMessage = announcement?.is_active && announcement?.message?.trim()
+  const rawMessage = announcement?.is_active && announcement?.message?.trim()
     ? announcement.message
-    : 'Holy Navaratri Blessing: Complimentary Vedic 432Hz Sound Attunement on All Crystal Vault Orders with Code SUMUK108';
+    : 'Holy Navaratri Blessing: Complimentary Vedic 432Hz Sound Attunement on All Your Cart Orders with Code SUMUK108';
+  const displayMessage = rawMessage.replace(/crystal vault/gi, 'Your Cart').replace(/vault/gi, 'Your Cart');
 
   const handleOpenBlessing = () => {
     if (typeof window !== 'undefined') {

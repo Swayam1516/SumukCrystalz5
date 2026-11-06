@@ -140,7 +140,7 @@ export default function ProductDetailPage() {
         </div>
         <div className="space-y-2 max-w-md">
           <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#1F1A15]">
-            Specimen Not Located in Vault
+            Specimen Not Located in Store
           </h2>
           <p className="text-xs sm:text-sm font-sans-ui text-[#6B6357] leading-relaxed">
             The requested crystal specimen may have been acquired or relocated in our sacred treasury.
@@ -465,7 +465,7 @@ export default function ProductDetailPage() {
                   </button>
                 </div>
 
-                {/* 3D Add to Vault Button */}
+                {/* 3D Add to Cart Button */}
                 <button
                   type="button"
                   onClick={handleAddToCart}
@@ -474,12 +474,12 @@ export default function ProductDetailPage() {
                   {addedNotice ? (
                     <>
                       <Check className="w-4 h-4 text-white" />
-                      <span>Added to Vault!</span>
+                      <span>Added to Your Cart!</span>
                     </>
                   ) : (
                     <>
                       <ShoppingBag className="w-4 h-4" />
-                      <span>ADD TO VAULT &bull; ₹{totalPrice}</span>
+                      <span>ADD TO YOUR CART &bull; ₹{totalPrice}</span>
                     </>
                   )}
                 </button>
@@ -556,7 +556,7 @@ export default function ProductDetailPage() {
                         </span>
                       </div>
                       <span className="text-[10.5px] font-mono px-2 py-0.5 rounded bg-emerald-200/70 font-bold text-emerald-800">
-                        ~{pincodeResult.distanceKm || 0} km from Pune Vault
+                        ~{pincodeResult.distanceKm || 0} km from Pune Sanctuary
                       </span>
                     </div>
 

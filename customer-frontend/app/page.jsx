@@ -3,8 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import Cinematic3DCrystalHero from '../components/Cinematic3DCrystalHero';
-import Services3DCoverFlow from '../components/Services3DCoverFlow';
 import CoverFlow3DSlideshow from '../components/CoverFlow3DSlideshow';
+import Services3DCoverFlow from '../components/Services3DCoverFlow';
+import TestimonialSlideshow from '../components/TestimonialSlideshow';
 import LuxuryCategorySliders from '../components/LuxuryCategorySliders';
 
 import {
@@ -18,13 +19,21 @@ export default function HomePage() {
       
       {/* ══════════════════════════════════════════════════════════
           1. FIXED 4K DIVINE GANESHA SANCTUARY HERO BANNER
-          Static, zero-slideshow, fully interactive options & assistant trigger
+          Static, clean 4K artwork with fully interactive actions
          ══════════════════════════════════════════════════════════ */}
       <Cinematic3DCrystalHero />
 
       {/* ══════════════════════════════════════════════════════════
-          2. FLAGSHIP SERVICES 3D COVER FLOW SLIDESHOW
-          Brought directly from the Services page to the main page
+          2. CRYSTAL SANCTUARY MASTERWORKS (CRYSTALS SLIDESHOW)
+          Comes FIRST: Perspective 3D Cover-Flow Carousel (Pyrite, Amethyst, etc.)
+         ══════════════════════════════════════════════════════════ */}
+      <section className="relative z-20 my-8 sm:my-14">
+        <CoverFlow3DSlideshow />
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
+          3. FLAGSHIP SERVICES 3D COVER FLOW SLIDESHOW
+          Comes SECOND (below crystals slideshow): Modalities & Consultations
          ══════════════════════════════════════════════════════════ */}
       <section className="relative z-20 my-10 sm:my-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 pb-6 border-b border-[#EAE2F2]">
@@ -54,15 +63,13 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════
-          3. INTERACTIVE 3D FEATURED COLLECTION
-          Perspective Cover-Flow Carousel (Tiger's Eye, Amethyst, Pyrite, etc.)
+          4. PATRON TESTIMONY SLIDESHOW
+          Comes THIRD (below services slideshow): Echoes of Transformation
          ══════════════════════════════════════════════════════════ */}
-      <section className="relative z-20 my-8 sm:my-14">
-        <CoverFlow3DSlideshow />
-      </section>
+      <TestimonialSlideshow />
 
       {/* ══════════════════════════════════════════════════════════
-          4. LUXURY CATEGORY SHOWCASE & TOUCH-FRIENDLY SLIDERS
+          5. LUXURY CATEGORY SHOWCASE & TOUCH-FRIENDLY SLIDERS
          ══════════════════════════════════════════════════════════ */}
       <LuxuryCategorySliders />
 

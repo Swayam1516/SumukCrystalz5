@@ -16,7 +16,6 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import ServicesBySoumya from '../../components/ServicesBySoumya';
-import DualTierFilterTicker from '../../components/DualTierFilterTicker';
 import Services3DCoverFlow from '../../components/Services3DCoverFlow';
 
 export default function ServicesPage() {
@@ -87,13 +86,6 @@ export default function ServicesPage() {
             Step into profound balance with personalized healing sessions, intuitive readings, and bespoke mineral curations guided by Usui Reiki Master &amp; Metaphysical Practitioner <strong className="text-[#1F1A15] font-semibold">Soumyaa Naveen</strong>.
           </p>
 
-        </div>
-
-        {/* Dual-Tier Horizontal Ticker Register (Intentions & Modalities) */}
-        <div className="mt-10 -mx-4 sm:-mx-6 lg:-mx-8">
-          <DualTierFilterTicker
-            isMarquee={false}
-          />
         </div>
       </section>
 
@@ -185,7 +177,7 @@ export default function ServicesPage() {
               Ready to Align Your Energy &amp; Sanctuary?
             </h2>
             <p className="text-xs sm:text-sm text-luxe-300 leading-relaxed">
-              Connect directly with Soumyaa Naveen on Instagram or WhatsApp to book your private session or explore our high-vibration crystal vault.
+              Connect directly with Soumyaa Naveen on Instagram or WhatsApp to book your private session or explore our high-vibration crystal collection.
             </p>
           </div>
 

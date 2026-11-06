@@ -343,20 +343,16 @@ export default function Header() {
           </div>
         </div>
 
-        {/* SHOP MEGA MENU MODAL / FLYOUT */}
+        {/* SHOP MEGA MENU FULL OVERLAY (NEVER CUT OR HALF) */}
         {shopDropdownOpen && (
-          <>
-            {/* Backdrop Scrim */}
+          <div className="fixed inset-0 top-18 sm:top-20 z-50 bg-[#16121D]/60 backdrop-blur-sm overflow-y-auto overscroll-contain animate-fade-in flex justify-center items-start p-3 sm:p-5 lg:p-7">
+            {/* Click outside to close backdrop */}
             <div
-              className="fixed inset-0 top-18 sm:top-20 bg-[#29242D]/30 backdrop-blur-xs z-40 transition-opacity cursor-pointer"
+              className="fixed inset-0 -z-10"
               onClick={() => setShopDropdownOpen(false)}
             />
-
-            {/* Mega Menu Floating Container */}
-            <div className="absolute top-full left-0 right-0 pt-3 px-3 sm:px-6 lg:px-8 z-50 pointer-events-auto max-h-[85vh] overflow-y-auto no-scrollbar">
-              <ShopMegaMenu onClose={() => setShopDropdownOpen(false)} />
-            </div>
-          </>
+            <ShopMegaMenu onClose={() => setShopDropdownOpen(false)} />
+          </div>
         )}
 
         {/* Navigation Slide Drawer */}

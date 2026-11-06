@@ -754,8 +754,8 @@ export default function AICustomerChatbot() {
                                       type="button"
                                       onClick={(e) => handleQuickAdd(prod, e)}
                                       className="p-2 rounded-lg bg-[#EDE1FF] hover:bg-[#7026B5] text-[#7026B5] hover:text-white transition flex-shrink-0 active:scale-95 shadow-sm cursor-pointer"
-                                      title="Add to Vault"
-                                      aria-label="Add to Vault"
+                                      title="Add to Your Cart"
+                                      aria-label="Add to Your Cart"
                                     >
                                       {quickAddedId === prodId ? (
                                         <Check className="w-3.5 h-3.5 text-emerald-600" />

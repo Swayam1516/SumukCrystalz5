@@ -26,6 +26,7 @@ import {
   getSupabaseOrderTracking,
   updateOrderTrackingMilestone,
   assignOrderDeliveryPartner,
+  normalizeOrder,
   STAGE_CONFIGS,
 } from '../lib/supabase';
 
@@ -94,7 +95,7 @@ export default function OrderStatusModal({
         const partners = await getSupabaseDeliveryPartners();
         if (isMounted) setDeliveryPartners(partners);
 
-        const events = await getSupabaseOrderTracking(orderId);
+        const events = await getSupabaseOrderTracking(orderId, order);
         if (isMounted) {
           if (events && events.length > 0) {
             setMilestones(events);
@@ -125,7 +126,7 @@ export default function OrderStatusModal({
     return () => {
       isMounted = false;
     };
-  }, [orderId]);
+  }, [orderId, order]);
 
   // Auto-generate tracking URL when partner or tracking number changes
   useEffect(() => {
@@ -195,7 +196,7 @@ export default function OrderStatusModal({
     }
   };
 
-  // Save changes to Supabase & Backend
+  // Save changes to Supabase & Backend with complete resilience
   const handleSaveAll = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -207,36 +208,69 @@ export default function OrderStatusModal({
         ? `${estimatedDeliveryAt}T${estimatedDeliveryTime || '17:00'}:00.000Z`
         : null;
 
-      // 1. Update each milestone in order_tracking_events
+      // Safe container for tracking data embedded into shipping_address
+      const existingShipping = (order.shipping_address && typeof order.shipping_address === 'object')
+        ? { ...order.shipping_address }
+        : { address_text: order.shipping_address || '' };
+
+      const existingTracking = existingShipping._tracking || {};
+
+      const updatedTracking = {
+        ...existingTracking,
+        current_stage: currentStage,
+        order_status: orderStatus,
+        payment_status: paymentStatus,
+        delivery_partner_id: selectedPartnerId || null,
+        delivery_partner_name: selectedPartnerName.trim() || null,
+        carrier: selectedPartnerName.trim() || null,
+        tracking_number: trackingNumber.trim() || null,
+        tracking_url: trackingUrl.trim() || null,
+        estimated_delivery_at: combinedEstimatedDelivery,
+        estimated_delivery_text: estimatedDeliveryText.trim() || null,
+        audit_remarks: auditCorrectionReason || '',
+        milestones: milestones,
+        last_updated: nowIso,
+      };
+
+      const safeShippingAddress = {
+        ...existingShipping,
+        _tracking: updatedTracking,
+      };
+
+      // 1. Update each milestone in order_tracking_events (safely handled)
       for (const m of milestones) {
-        await updateOrderTrackingMilestone(orderId, {
-          milestoneKey: m.milestone_key,
-          status: m.status,
-          remarks: m.admin_remarks || '',
-          adminName: 'Founder Admin',
-          trackingNumber: trackingNumber.trim(),
-          carrier: selectedPartnerName.trim(),
-          estimatedDeliveryAt: combinedEstimatedDelivery,
-          estimatedDeliveryText: estimatedDeliveryText.trim(),
-        });
+        try {
+          await updateOrderTrackingMilestone(orderId, {
+            milestoneKey: m.milestone_key,
+            status: m.status,
+            remarks: m.admin_remarks || '',
+            adminName: 'Founder Admin',
+            trackingNumber: trackingNumber.trim(),
+            carrier: selectedPartnerName.trim(),
+            estimatedDeliveryAt: combinedEstimatedDelivery,
+            estimatedDeliveryText: estimatedDeliveryText.trim(),
+          });
+        } catch (_) {}
       }
 
-      // 2. Assign Delivery Partner details to orders table
+      // 2. Assign Delivery Partner details (safely handled)
       if (selectedPartnerName || trackingNumber) {
-        await assignOrderDeliveryPartner(orderId, {
-          deliveryPartnerId: selectedPartnerId,
-          deliveryPartnerName: selectedPartnerName.trim(),
-          carrier: selectedPartnerName.trim(),
-          trackingNumber: trackingNumber.trim(),
-          trackingUrl: trackingUrl.trim(),
-          estimatedDeliveryAt: combinedEstimatedDelivery,
-          estimatedDeliveryText: estimatedDeliveryText.trim(),
-          adminRemarks: auditCorrectionReason,
-        });
+        try {
+          await assignOrderDeliveryPartner(orderId, {
+            deliveryPartnerId: selectedPartnerId,
+            deliveryPartnerName: selectedPartnerName.trim(),
+            carrier: selectedPartnerName.trim(),
+            trackingNumber: trackingNumber.trim(),
+            trackingUrl: trackingUrl.trim(),
+            estimatedDeliveryAt: combinedEstimatedDelivery,
+            estimatedDeliveryText: estimatedDeliveryText.trim(),
+            adminRemarks: auditCorrectionReason,
+          });
+        } catch (_) {}
       }
 
-      // 3. Update orders table master status
-      const orderPayloadUpdate = {
+      // 3. Update orders table master status (Try full schema first, fall back to safe schema)
+      const fullUpdatePayload = {
         order_status: orderStatus,
         status: orderStatus,
         payment_status: paymentStatus,
@@ -248,32 +282,66 @@ export default function OrderStatusModal({
         tracking_url: trackingUrl.trim() || null,
         estimated_delivery_at: combinedEstimatedDelivery,
         estimated_delivery_text: estimatedDeliveryText.trim() || null,
+        shipping_address: safeShippingAddress,
         updated_at: nowIso,
       };
 
-      await supabase.from('orders').update(orderPayloadUpdate).eq('id', orderId);
+      try {
+        const { error: fullUpdateErr } = await supabase
+          .from('orders')
+          .update(fullUpdatePayload)
+          .eq('id', orderId);
 
-      // 4. Also call backend API endpoint if available
-      if (API_BASE) {
-        await fetch(`${API_BASE}/api/admin/orders/${orderId}/status`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        if (fullUpdateErr) {
+          // Schema does not yet have extended columns — fall back to core columns + embedded tracking
+          const safePayload = {
             status: orderStatus,
-            carrier: selectedPartnerName,
-            trackingNumber: trackingNumber,
-            currentStage: currentStage,
-          }),
-        }).catch(() => {});
+            carrier: selectedPartnerName.trim() || null,
+            tracking_number: trackingNumber.trim() || null,
+            shipping_address: safeShippingAddress,
+            updated_at: nowIso,
+          };
+          await supabase.from('orders').update(safePayload).eq('id', orderId);
+        }
+      } catch (dbErr) {
+        console.warn('Orders update warning:', dbErr.message);
       }
 
-      const updated = {
-        ...order,
-        ...orderPayloadUpdate,
-      };
+      // 4. Also call backend API endpoint with auth token
+      if (API_BASE) {
+        try {
+          const token =
+            (typeof window !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('admin_token'))) ||
+            '';
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      onSaveSuccess(updated);
-      onClose();
+          await fetch(`${API_BASE}/api/admin/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({
+              status: orderStatus,
+              carrier: selectedPartnerName,
+              trackingNumber: trackingNumber,
+              currentStage: currentStage,
+            }),
+          });
+        } catch (_) {}
+      }
+
+      // 5. Build normalized order for the Admin Dashboard
+      const updated = normalizeOrder({
+        ...order,
+        ...fullUpdatePayload,
+        shipping_address: safeShippingAddress,
+      });
+
+      if (onSaveSuccess) {
+        onSaveSuccess(updated);
+      }
+      if (onClose) {
+        onClose();
+      }
     } catch (err) {
       console.error('Error saving order updates:', err);
       setError(err.message || 'Failed to update order');

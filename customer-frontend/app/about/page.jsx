@@ -149,18 +149,18 @@ export default function AboutPage() {
                 &ldquo;Every crystal tells an ancient story—mined from the Earth, chosen with intention.&rdquo;
               </h2>
 
-              <div className="space-y-4 text-sm sm:text-base text-stone-300 leading-relaxed font-light">
+              <div className="space-y-4 text-base sm:text-[17px] text-stone-100 leading-relaxed font-normal">
                 <p>
-                  <strong className="text-white font-medium">Welcome to Sumuk Crystalz 5.</strong> I’m <strong className="text-[#E5C378] font-semibold">Soumyaa Naveen</strong>, an Usui Reiki Master, Aura Analyst, Numerologist, and intuitive practitioner dedicated to natural crystals and conscious energetic alignment.
+                  <strong className="text-white font-semibold">Welcome to Sumuk Crystalz 5.</strong> I’m <strong className="text-[#F3E5AB] font-bold">Soumyaa Naveen</strong>, an Usui Reiki Master, Aura Analyst, Numerologist, and intuitive practitioner dedicated to natural crystals and conscious energetic alignment.
                 </p>
 
                 <p>
-                  Every crystal tells an ancient story—from the tranquil, intuitive depths of raw <strong className="text-amethyst-300 font-medium">Amethyst</strong> to the bold, protective warmth of <strong className="text-amber-300 font-medium">Tiger’s Eye</strong> and the gentle, heart-centered compassion of <strong className="text-rose-300 font-medium">Rose Quartz</strong>. What started as a personal passion for authentic minerals evolved into <strong className="text-gold-300 font-medium">@sumukcrystalz5</strong>, a sanctuary connecting collectors and seekers to genuine high-vibrational earth treasures and holistic healing modalities.
+                  Every crystal tells an ancient story—from the tranquil, intuitive depths of raw <strong className="text-[#D8B4FE] font-semibold">Amethyst</strong> to the bold, protective warmth of <strong className="text-[#FCD34D] font-semibold">Tiger’s Eye</strong> and the gentle, heart-centered compassion of <strong className="text-[#FBCFE8] font-semibold">Rose Quartz</strong>. What started as a personal passion for authentic minerals evolved into <strong className="text-[#FDE68A] font-bold">@sumukcrystalz5</strong>, a sanctuary connecting collectors and seekers to genuine high-vibrational earth treasures and holistic healing modalities.
                 </p>
 
-                <p className="p-4 rounded-xl bg-white/[0.03] border border-gold-500/20 text-luxe-100 font-normal italic">
+                <div className="p-5 rounded-2xl bg-[#1A1224]/90 border border-[#D4AF37]/40 shadow-inner text-white font-normal italic leading-relaxed">
                   &ldquo;At Sumuk Crystalz 5, every piece is hand-selected with intention and sacredly consecrated. Beyond curating crystals, I offer private sessions in Reiki, Aura Scanning, Tarot, Numerology, Psychic Surgery, and Bespoke Crystal Creations to help you realign your energetic sovereign flow.&rdquo;
-                </p>
+                </div>
               </div>
 
               <div className="pt-4 flex flex-wrap gap-4 items-center">
@@ -176,7 +176,7 @@ export default function AboutPage() {
                   className="option-pill-3d px-6 py-3.5 rounded-full bg-white/5 border border-white/10 text-white text-xs font-mono font-semibold uppercase tracking-[0.16em] transition flex items-center gap-2 hover:bg-white/10 hover:border-amber-400/50"
                 >
                   <Gem className="w-4 h-4 text-gold-400" />
-                  <span>EXPLORE SOUMYAA&apos;S VAULT</span>
+                  <span>EXPLORE SOUMYAA&apos;S COLLECTION</span>
                 </Link>
               </div>
             </div>
@@ -314,8 +314,8 @@ export default function AboutPage() {
             <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-white tracking-tight">
               Visit Our Sacred Space in Sus Gaon, Pune
             </h2>
-            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed font-sans-ui font-light">
-              Experience the physical vault of museum-grade crystals, attend private in-person Reiki and sound attunement sessions, or consult directly with Soumyaa Naveen in Sus Gaon, Pune, Maharashtra.
+            <p className="text-xs sm:text-sm text-stone-200 leading-relaxed font-sans-ui">
+              Experience the physical sanctuary collection of museum-grade crystals, attend private in-person Reiki and sound attunement sessions, or consult directly with Soumyaa Naveen in Sus Gaon, Pune, Maharashtra.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-shrink-0">

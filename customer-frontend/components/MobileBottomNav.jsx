@@ -9,7 +9,7 @@ import {
   ShoppingBag,
   Flower2,
   BookOpen,
-  Vault,
+  ShoppingCart,
 } from 'lucide-react';
 
 export default function MobileBottomNav() {
@@ -78,15 +78,15 @@ export default function MobileBottomNav() {
           );
         })}
 
-        {/* Vault / Cart Button */}
+        {/* Cart Button */}
         <button
           type="button"
           onClick={openDrawer}
           className="flex flex-col items-center justify-center py-1 transition-all text-[#6B6357] hover:text-[#1F1A15] cursor-pointer"
-          aria-label="Open Vault Cart"
+          aria-label="Open Your Cart"
         >
           <div className="relative p-1 rounded-xl text-stone-500">
-            <Vault className="w-5 h-5" strokeWidth={1.8} />
+            <ShoppingCart className="w-5 h-5" strokeWidth={1.8} />
             {cartCount > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-mono font-extrabold text-[9px] flex items-center justify-center shadow-md">
                 {cartCount}
@@ -94,7 +94,7 @@ export default function MobileBottomNav() {
             )}
           </div>
           <span className="text-[10px] tracking-tight mt-0.5 font-sans-ui font-medium text-stone-600">
-            Vault
+            Your Cart
           </span>
         </button>
       </div>

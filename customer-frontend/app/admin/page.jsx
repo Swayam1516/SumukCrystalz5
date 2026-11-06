@@ -138,7 +138,7 @@ export default function AdminPage() {
     consecrationEnabled: true,
     consecrationFee: 100,
     announcementActive: true,
-    announcementText: '✨ Holy Navaratri Blessing: Complimentary Vedic 432Hz Sound Attunement on All Crystal Vault Orders with Code SUMUK108',
+    announcementText: '✨ Holy Navaratri Blessing: Complimentary Vedic 432Hz Sound Attunement on All Crystal Orders with Code SUMUK108',
     promoCode: 'SUMUK108',
     freeShippingThreshold: 5000,
     shippingFee: 150,
@@ -750,7 +750,7 @@ export default function AdminPage() {
               <Crown className="w-8 h-8" />
             </div>
             <h1 className="text-2xl font-serif font-bold text-white tracking-wide">
-              Founder Sanctuary Vault
+              Founder Sanctuary Sanctum
             </h1>
             <p className="text-xs text-zinc-400">
               Sumuk Crystalz 5 &bull; Master Administrator & Storefront Control
@@ -844,7 +844,7 @@ export default function AdminPage() {
                 &larr; Return to Storefront
               </Link>
               <Link href="/account" className="hover:text-amber-300 transition">
-                Customer Vault &rarr;
+                Customer Store &rarr;
               </Link>
             </div>
           </div>
@@ -919,7 +919,7 @@ export default function AdminPage() {
                 href="/account"
                 className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition"
               >
-                Customer Vault
+                Customer Store
               </Link>
               <button
                 onClick={handleAdminLogout}
@@ -1353,7 +1353,7 @@ export default function AdminPage() {
                               ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/50'
                               : 'bg-rose-950/90 text-rose-300 border border-rose-500/50'
                           }`}>
-                            {isAvailable ? '● Available in Vault' : '✕ Currently Not Available'}
+                            {isAvailable ? '● Available in Store' : '✕ Currently Not Available'}
                           </span>
                         </div>
 
@@ -1391,7 +1391,7 @@ export default function AdminPage() {
 
                           {/* Stock Stepper */}
                           <div className="text-right">
-                            <span className="text-zinc-500 text-[10px] uppercase block">Vault Stock:</span>
+                            <span className="text-zinc-500 text-[10px] uppercase block">Stock Count:</span>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <button
                                 onClick={() => handleAdjustStock(product.id || product._id, -1)}
@@ -1473,7 +1473,7 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-mono font-bold text-zinc-200">Live Store Operations</h4>
-                    <p className="text-[11px] text-zinc-500">Allow customers to browse and place vault orders.</p>
+                    <p className="text-[11px] text-zinc-500">Allow customers to browse and place cart orders.</p>
                   </div>
                   <button
                     onClick={() => handleSaveFeatureSettings({ ...siteFeatures, storeOnline: !siteFeatures.storeOnline })}
@@ -1809,7 +1809,7 @@ export default function AdminPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-mono uppercase text-zinc-400 mb-1">Vault Stock Count</label>
+                  <label className="block text-[10px] font-mono uppercase text-zinc-400 mb-1">Inventory Stock Count</label>
                   <input
                     type="number"
                     required
@@ -1902,7 +1902,7 @@ export default function AdminPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-mono uppercase text-zinc-400 mb-1">Vault Stock</label>
+                  <label className="block text-[10px] font-mono uppercase text-zinc-400 mb-1">Available Stock</label>
                   <input
                     type="number"
                     required

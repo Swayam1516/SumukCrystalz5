@@ -391,7 +391,7 @@ function AccountPageContent() {
     setTimeout(() => {
       setSavingProfile(false);
       setIsEditingProfile(false);
-      setProfileToast('Personal details updated and saved in sanctuary vault.');
+      setProfileToast('Personal details updated and saved.');
       setTimeout(() => setProfileToast(''), 3000);
     }, 600);
   };
@@ -787,7 +787,7 @@ function AccountPageContent() {
                     href="/shop"
                     className="px-4 py-2 rounded-full bg-[#EAE2F2] hover:bg-[#79539B] hover:text-white text-[#79539B] text-xs font-semibold transition-colors shadow-xs"
                   >
-                    Explore Attuned Vault
+                    Explore Attuned Collection
                   </Link>
                   <button
                     type="button"
@@ -799,7 +799,7 @@ function AccountPageContent() {
                 </div>
               </div>
 
-              {/* Box 2: Quick Vault Actions */}
+              {/* Box 2: Quick Collection Actions */}
               <div className="p-6 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EAE2F2] shadow-sm space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-[#EAE2F2] text-[#79539B]">

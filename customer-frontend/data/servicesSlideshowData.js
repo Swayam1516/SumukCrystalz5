@@ -255,7 +255,7 @@ export const DEFAULT_SERVICES_SLIDESHOW = [
     price: 699,
     shortDescription: 'Explore crystal creations prepared with Reiki-inspired intention and mindful craftsmanship.',
     description: 'Explore crystal creations prepared with Reiki-inspired intention and mindful craftsmanship. Each piece is cleansed with sacred smoke and attuned with 528Hz Solfeggio sound bowls.',
-    broadDescription: 'Every specimen from the Sumuk Crystalz vault undergoes a multi-stage sacred preparation protocol: rigorous mineralogical authenticity screening, sacred sage/guggal smoke cleansing, 432Hz/528Hz Solfeggio singing bowl acoustic attunement, and Usui Reiki consecration.',
+    broadDescription: 'Every specimen from the Sumuk Crystalz collection undergoes a multi-stage sacred preparation protocol: rigorous mineralogical authenticity screening, sacred sage/guggal smoke cleansing, 432Hz/528Hz Solfeggio singing bowl acoustic attunement, and Usui Reiki consecration.',
     pricingTiers: [
       {
         name: 'Consecrated Natural Bead Bracelets',

@@ -141,7 +141,57 @@ async function updateOrderStatus(orderId, {
     query = query.or(`order_number.eq.${orderId},razorpay_order_id.eq.${orderId}`);
   }
 
-  const { data: order, error } = await query.select().single();
+  let { data: order, error } = await query.select().single();
+
+  // If column does not exist in schema cache, fall back to safe core columns + embedded _tracking
+  if (error && (error.code === 'PGRST204' || error.message?.includes('column'))) {
+    // Fetch current order to get shipping_address
+    let fetchQuery = supabase.from('orders').select('*');
+    if (isUuid) {
+      fetchQuery = fetchQuery.eq('id', orderId);
+    } else {
+      fetchQuery = fetchQuery.or(`order_number.eq.${orderId},razorpay_order_id.eq.${orderId}`);
+    }
+    const { data: currentOrder } = await fetchQuery.single();
+
+    const existingShipping = (currentOrder?.shipping_address && typeof currentOrder.shipping_address === 'object')
+      ? currentOrder.shipping_address
+      : { address_text: currentOrder?.shipping_address || '' };
+
+    const safeShipping = {
+      ...existingShipping,
+      _tracking: {
+        ...(existingShipping._tracking || {}),
+        current_stage: currentStage || currentOrder?.status,
+        order_status: status || currentOrder?.status,
+        carrier: carrier || deliveryPartnerName,
+        delivery_partner_name: deliveryPartnerName || carrier,
+        tracking_number: trackingNumber,
+        tracking_url: trackingUrl,
+        estimated_delivery_at: estimatedDeliveryAt,
+        estimated_delivery_text: estimatedDeliveryText,
+        last_updated: nowIso,
+      },
+    };
+
+    const safeUpdateData = {
+      updated_at: nowIso,
+      ...(status ? { status } : {}),
+      ...(carrier || deliveryPartnerName ? { carrier: carrier || deliveryPartnerName } : {}),
+      ...(trackingNumber ? { tracking_number: trackingNumber } : {}),
+      shipping_address: safeShipping,
+    };
+
+    let fallbackQuery = supabase.from('orders').update(safeUpdateData);
+    if (isUuid) {
+      fallbackQuery = fallbackQuery.eq('id', orderId);
+    } else {
+      fallbackQuery = fallbackQuery.or(`order_number.eq.${orderId},razorpay_order_id.eq.${orderId}`);
+    }
+    const fallbackRes = await fallbackQuery.select().single();
+    order = fallbackRes.data;
+    error = fallbackRes.error;
+  }
 
   if (error || !order) {
     throw new AppError(`Order not found or update failed: ${error?.message}`, 404);

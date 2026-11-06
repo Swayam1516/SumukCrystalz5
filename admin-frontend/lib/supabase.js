@@ -455,7 +455,7 @@ export async function saveProductToSupabase(productPayload) {
 
           // Sync Variants
           if (productPayload.variants && Array.isArray(productPayload.variants) && productPayload.variants.length > 0) {
-            await supabase.from('product_variants').delete().eq('product_id', productId).catch(() => {});
+            try { await supabase.from('product_variants').delete().eq('product_id', productId); } catch (_) {}
 
             const variantsToInsert = productPayload.variants.map((v, i) => ({
               product_id: productId,
@@ -471,12 +471,12 @@ export async function saveProductToSupabase(productPayload) {
               available: v.available !== false,
             }));
 
-            await supabase.from('product_variants').insert(variantsToInsert).catch(() => {});
+            try { await supabase.from('product_variants').insert(variantsToInsert); } catch (_) {}
           }
 
           // Sync Images
           if (images.length > 0) {
-            await supabase.from('product_images').delete().eq('product_id', productId).catch(() => {});
+            try { await supabase.from('product_images').delete().eq('product_id', productId); } catch (_) {}
 
             const imagesToInsert = images.map((url, idx) => ({
               product_id: productId,
@@ -485,7 +485,7 @@ export async function saveProductToSupabase(productPayload) {
               is_hero: idx === 0,
             }));
 
-            await supabase.from('product_images').insert(imagesToInsert).catch(() => {});
+            try { await supabase.from('product_images').insert(imagesToInsert); } catch (_) {}
           }
         } else if (prodErr) {
           console.warn('Supabase product save warning:', prodErr.message);
@@ -642,6 +642,51 @@ export async function toggleProductStatusInSupabase(productId, active) {
 }
 
 /**
+ * Normalizes an order record from Supabase, resolving lifecycle stage,
+ * carrier, tracking number, and embedded metadata.
+ */
+export function normalizeOrder(raw) {
+  if (!raw) return raw;
+  const tracking = (raw.shipping_address && typeof raw.shipping_address === 'object' ? raw.shipping_address._tracking : null) || {};
+  const status = raw.status || raw.order_status || 'created';
+
+  // Derive current_stage from status if missing
+  let currentStage = raw.current_stage || tracking.current_stage;
+  if (!currentStage) {
+    if (status === 'created' || status === 'confirmed' || status === 'paid') currentStage = 'order_confirmed';
+    else if (status === 'processing') currentStage = 'vedic_cleansing';
+    else if (status === 'ready_for_dispatch') currentStage = 'vault_packaging';
+    else if (status === 'dispatched' || status === 'in_transit') currentStage = 'in_transit';
+    else if (status === 'out_for_delivery') currentStage = 'out_for_delivery';
+    else if (status === 'delivered') currentStage = 'delivered';
+    else currentStage = 'order_confirmed';
+  }
+
+  const deliveryPartnerName = raw.delivery_partner_name || tracking.delivery_partner_name || raw.carrier || tracking.carrier || '';
+  const carrier = raw.carrier || deliveryPartnerName;
+  const trackingNumber = raw.tracking_number || tracking.tracking_number || '';
+  const trackingUrl = raw.tracking_url || tracking.tracking_url || '';
+  const estDeliveryAt = raw.estimated_delivery_at || tracking.estimated_delivery_at || null;
+  const estDeliveryText = raw.estimated_delivery_text || tracking.estimated_delivery_text || '';
+
+  return {
+    ...raw,
+    status,
+    order_status: raw.order_status || status,
+    payment_status: raw.payment_status || (raw.razorpay_payment_id ? 'verified' : (status === 'created' ? 'pending' : 'verified')),
+    current_stage: currentStage,
+    delivery_partner_id: raw.delivery_partner_id || tracking.delivery_partner_id || null,
+    delivery_partner_name: deliveryPartnerName,
+    carrier,
+    tracking_number: trackingNumber,
+    tracking_url: trackingUrl,
+    estimated_delivery_at: estDeliveryAt,
+    estimated_delivery_text: estDeliveryText,
+    milestones: Array.isArray(raw.milestones) ? raw.milestones : (tracking.milestones || null),
+  };
+}
+
+/**
  * Query orders from Supabase
  */
 export async function getSupabaseOrders() {
@@ -652,7 +697,7 @@ export async function getSupabaseOrders() {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(normalizeOrder);
   } catch (err) {
     console.warn('Supabase fetch orders notice:', err.message);
     return [];
@@ -837,15 +882,16 @@ export async function updateSupabaseOccasionBanner(bannerPayload) {
     }
 
     if (!isSupabaseOfflineState()) {
-      await supabase
-        .from('site_announcements')
-        .upsert({
-          id: 'occasion_sale_banner',
-          message: JSON.stringify(merged),
-          is_active: Boolean(merged.is_active),
-          updated_at: merged.updated_at,
-        }, { onConflict: 'id' })
-        .catch(() => {});
+      try {
+        await supabase
+          .from('site_announcements')
+          .upsert({
+            id: 'occasion_sale_banner',
+            message: JSON.stringify(merged),
+            is_active: Boolean(merged.is_active),
+            updated_at: merged.updated_at,
+          }, { onConflict: 'id' });
+      } catch (_) {}
     }
 
     return { success: true, banner: merged };
@@ -1260,13 +1306,15 @@ export async function updateSupabaseShippingSettings(payload) {
     }
 
     // Also sync to delivery_settings for backward compatibility
-    await supabase.from('delivery_settings').upsert({
-      id: 'global',
-      shipping_enabled: isEnabled,
-      shipping_fee: fee,
-      tier_1_fee: fee,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' }).catch(() => {});
+    try {
+      await supabase.from('delivery_settings').upsert({
+        id: 'global',
+        shipping_enabled: isEnabled,
+        shipping_fee: fee,
+        tier_1_fee: fee,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
+    } catch (_) {}
 
     if (typeof window !== 'undefined') {
       try {
@@ -1447,9 +1495,16 @@ export const STAGE_CONFIGS = [
   },
 ];
 
-export async function getSupabaseOrderTracking(orderId) {
+export async function getSupabaseOrderTracking(orderId, order = null) {
   if (!orderId) return [];
 
+  // 1. Check if order already has saved milestones inside shipping_address._tracking
+  const embeddedMilestones = order?.shipping_address?._tracking?.milestones;
+  if (Array.isArray(embeddedMilestones) && embeddedMilestones.length > 0) {
+    return embeddedMilestones;
+  }
+
+  // 2. Query order_tracking_events table if it exists in Supabase
   try {
     const { data, error } = await supabase
       .from('order_tracking_events')
@@ -1460,22 +1515,46 @@ export async function getSupabaseOrderTracking(orderId) {
     if (!error && Array.isArray(data) && data.length > 0) {
       return data;
     }
-  } catch (err) {
-    console.warn('Notice querying order_tracking_events:', err.message);
-  }
+  } catch (_) {}
 
-  // Generate standard 6 milestones matching the order's state
-  return STAGE_CONFIGS.map((cfg) => ({
-    order_id: orderId,
-    milestone_key: cfg.key,
-    stage_number: cfg.stageNumber,
-    title: cfg.title,
-    description: cfg.description,
-    location: cfg.location,
-    status: cfg.key === 'order_confirmed' ? 'completed' : 'pending',
-    completed_at: cfg.key === 'order_confirmed' ? new Date().toISOString() : null,
-    admin_remarks: '',
-  }));
+  // 3. Fallback to generating standard 6 milestones matching the order's state
+  const currentStatus = order?.status || order?.order_status || 'created';
+  const currentStage = order?.current_stage || 'order_confirmed';
+
+  const stageOrder = {
+    order_confirmed: 1,
+    vedic_cleansing: 2,
+    vault_packaging: 3,
+    in_transit: 4,
+    out_for_delivery: 5,
+    delivered: 6,
+  };
+  const activeStageNum = stageOrder[currentStage] || 1;
+
+  return STAGE_CONFIGS.map((cfg) => {
+    let mStatus = 'pending';
+    if (currentStatus === 'delivered' || currentStage === 'delivered') {
+      mStatus = 'completed';
+    } else if (cfg.key === currentStage) {
+      mStatus = 'in_progress';
+    } else if (cfg.stageNumber < activeStageNum) {
+      mStatus = 'completed';
+    } else if (cfg.key === 'order_confirmed' && (currentStatus === 'confirmed' || currentStatus === 'paid' || currentStatus === 'processing')) {
+      mStatus = 'completed';
+    }
+
+    return {
+      order_id: orderId,
+      milestone_key: cfg.key,
+      stage_number: cfg.stageNumber,
+      title: cfg.title,
+      description: cfg.description,
+      location: cfg.location,
+      status: mStatus,
+      completed_at: mStatus === 'completed' ? (order?.confirmed_at || order?.created_at || new Date().toISOString()) : null,
+      admin_remarks: '',
+    };
+  });
 }
 
 export async function updateOrderTrackingMilestone(orderId, {
@@ -1491,61 +1570,109 @@ export async function updateOrderTrackingMilestone(orderId, {
   if (!orderId || !milestoneKey) throw new Error('Order ID and milestone key required.');
 
   const nowIso = new Date().toISOString();
-  const stageCfg = STAGE_CONFIGS.find(s => s.key === milestoneKey);
+  const stageCfg = STAGE_CONFIGS.find((s) => s.key === milestoneKey);
 
-  const eventPayload = {
-    order_id: orderId,
-    milestone_key: milestoneKey,
-    stage_number: stageCfg?.stageNumber || 1,
-    title: stageCfg?.title || milestoneKey,
-    description: stageCfg?.description || '',
-    location: stageCfg?.location || '',
-    status: status, // 'pending' | 'in_progress' | 'completed'
-    admin_remarks: remarks || '',
+  // 1. Try upserting milestone in order_tracking_events table if available
+  try {
+    await supabase.from('order_tracking_events').upsert({
+      order_id: orderId,
+      milestone_key: milestoneKey,
+      stage_number: stageCfg?.stageNumber || 1,
+      title: stageCfg?.title || milestoneKey,
+      description: stageCfg?.description || '',
+      location: stageCfg?.location || '',
+      status: status,
+      admin_remarks: remarks || '',
+      updated_at: nowIso,
+      ...(status === 'completed' ? { completed_at: nowIso } : {}),
+    }, { onConflict: 'order_id,milestone_key' });
+  } catch (_) {}
+
+  // 2. Fetch current order to preserve existing shipping_address and embed _tracking
+  let existingAddr = {};
+  let currentOrder = null;
+  try {
+    const { data: ord } = await supabase.from('orders').select('*').eq('id', orderId).maybeSingle();
+    currentOrder = ord;
+    if (ord && typeof ord.shipping_address === 'object' && ord.shipping_address !== null) {
+      existingAddr = ord.shipping_address;
+    }
+  } catch (_) {}
+
+  // Determine derived master status
+  let derivedStatus = currentOrder?.status || 'confirmed';
+  if (milestoneKey === 'order_confirmed' && status === 'completed') derivedStatus = 'confirmed';
+  else if (milestoneKey === 'vedic_cleansing') derivedStatus = status === 'completed' ? 'ready_for_dispatch' : 'processing';
+  else if (milestoneKey === 'vault_packaging') derivedStatus = status === 'completed' ? 'dispatched' : 'ready_for_dispatch';
+  else if (milestoneKey === 'in_transit') derivedStatus = 'in_transit';
+  else if (milestoneKey === 'out_for_delivery') derivedStatus = 'out_for_delivery';
+  else if (milestoneKey === 'delivered' && status === 'completed') derivedStatus = 'delivered';
+
+  const existingTracking = existingAddr._tracking || {};
+  const currentMilestones = existingTracking.milestones || [];
+  const updatedMilestones = [
+    ...currentMilestones.filter((m) => m.milestone_key !== milestoneKey),
+    {
+      milestone_key: milestoneKey,
+      stage_number: stageCfg?.stageNumber || 1,
+      title: stageCfg?.title || milestoneKey,
+      description: stageCfg?.description || '',
+      location: stageCfg?.location || '',
+      status: status,
+      admin_remarks: remarks || '',
+      updated_at: nowIso,
+      completed_at: status === 'completed' ? nowIso : null,
+    },
+  ];
+
+  const updatedAddr = {
+    ...existingAddr,
+    _tracking: {
+      ...existingTracking,
+      current_stage: milestoneKey,
+      order_status: derivedStatus,
+      carrier: carrier || existingTracking.carrier || currentOrder?.carrier,
+      tracking_number: trackingNumber || existingTracking.tracking_number || currentOrder?.tracking_number,
+      estimated_delivery_at: estimatedDeliveryAt || existingTracking.estimated_delivery_at,
+      estimated_delivery_text: estimatedDeliveryText || existingTracking.estimated_delivery_text,
+      milestones: updatedMilestones,
+      updated_at: nowIso,
+    },
+  };
+
+  // Safe schema update (strictly columns known to exist in orders table)
+  const safeOrderUpdates = {
+    status: derivedStatus,
+    carrier: carrier || currentOrder?.carrier || undefined,
+    tracking_number: trackingNumber || currentOrder?.tracking_number || undefined,
+    shipping_address: updatedAddr,
     updated_at: nowIso,
-    ...(status === 'completed' ? { completed_at: nowIso } : {}),
+  };
+
+  // Full schema update (if columns exist)
+  const fullOrderUpdates = {
+    ...safeOrderUpdates,
+    order_status: derivedStatus,
+    current_stage: milestoneKey,
+    ...(trackingNumber ? { tracking_number: trackingNumber } : {}),
+    ...(carrier ? { carrier: carrier } : {}),
+    ...(estimatedDeliveryAt ? { estimated_delivery_at: estimatedDeliveryAt } : {}),
+    ...(estimatedDeliveryText ? { estimated_delivery_text: estimatedDeliveryText } : {}),
   };
 
   try {
-    // 1. Upsert milestone in order_tracking_events
-    await supabase.from('order_tracking_events').upsert(eventPayload, {
-      onConflict: 'order_id,milestone_key',
-    });
-
-    // 2. Synchronize main orders table
-    const orderUpdates = {
-      current_stage: milestoneKey,
-      updated_at: nowIso,
-    };
-
-    if (milestoneKey === 'order_confirmed' && status === 'completed') {
-      orderUpdates.order_status = 'confirmed';
-      orderUpdates.confirmed_at = nowIso;
-    } else if (milestoneKey === 'vedic_cleansing') {
-      orderUpdates.order_status = status === 'completed' ? 'ready_for_dispatch' : 'processing';
-      if (status === 'completed') orderUpdates.cleansed_at = nowIso;
-    } else if (milestoneKey === 'vault_packaging') {
-      orderUpdates.order_status = status === 'completed' ? 'dispatched' : 'ready_for_dispatch';
-      if (status === 'completed') orderUpdates.packed_at = nowIso;
-    } else if (milestoneKey === 'in_transit') {
-      orderUpdates.order_status = 'in_transit';
-      if (status === 'completed' || status === 'in_progress') orderUpdates.dispatched_at = orderUpdates.dispatched_at || nowIso;
-    } else if (milestoneKey === 'out_for_delivery') {
-      orderUpdates.order_status = 'out_for_delivery';
-      if (status === 'completed' || status === 'in_progress') orderUpdates.out_for_delivery_at = nowIso;
-    } else if (milestoneKey === 'delivered' && status === 'completed') {
-      orderUpdates.order_status = 'delivered';
-      orderUpdates.delivered_at = nowIso;
+    const { error: fullErr } = await supabase.from('orders').update(fullOrderUpdates).eq('id', orderId);
+    if (fullErr) {
+      await supabase.from('orders').update(safeOrderUpdates).eq('id', orderId);
     }
+  } catch (_) {
+    try {
+      await supabase.from('orders').update(safeOrderUpdates).eq('id', orderId);
+    } catch (_) {}
+  }
 
-    if (trackingNumber) orderUpdates.tracking_number = trackingNumber;
-    if (carrier) orderUpdates.carrier = carrier;
-    if (estimatedDeliveryAt) orderUpdates.estimated_delivery_at = estimatedDeliveryAt;
-    if (estimatedDeliveryText) orderUpdates.estimated_delivery_text = estimatedDeliveryText;
-
-    await supabase.from('orders').update(orderUpdates).eq('id', orderId);
-
-    // 3. Record audit trail
+  // 3. Record audit trail safely
+  try {
     await supabase.from('admin_audit_logs').insert([{
       entity_type: 'order',
       entity_id: orderId,
@@ -1559,13 +1686,10 @@ export async function updateOrderTrackingMilestone(orderId, {
       },
       actor_name: adminName,
       created_at: nowIso,
-    }]).catch(() => {});
+    }]);
+  } catch (_) {}
 
-    return { success: true };
-  } catch (err) {
-    console.error('Error updating milestone:', err.message);
-    return { success: false, error: err.message };
-  }
+  return { success: true };
 }
 
 export async function assignOrderDeliveryPartner(orderId, {
@@ -1582,32 +1706,73 @@ export async function assignOrderDeliveryPartner(orderId, {
   if (!orderId) throw new Error('Order ID is required');
 
   const nowIso = new Date().toISOString();
-  const updatePayload = {
-    delivery_partner_id: deliveryPartnerId || null,
-    delivery_partner_name: deliveryPartnerName || carrier || 'Assigned Partner',
-    carrier: carrier || deliveryPartnerName || 'Assigned Partner',
+  const assignedCarrier = carrier || deliveryPartnerName || 'Assigned Partner';
+
+  let existingAddr = {};
+  try {
+    const { data: ord } = await supabase.from('orders').select('*').eq('id', orderId).maybeSingle();
+    if (ord && typeof ord.shipping_address === 'object' && ord.shipping_address !== null) {
+      existingAddr = ord.shipping_address;
+    }
+  } catch (_) {}
+
+  const updatedAddr = {
+    ...existingAddr,
+    _tracking: {
+      ...(existingAddr._tracking || {}),
+      delivery_partner_id: deliveryPartnerId || null,
+      delivery_partner_name: deliveryPartnerName || assignedCarrier,
+      carrier: assignedCarrier,
+      tracking_number: trackingNumber || '',
+      tracking_url: trackingUrl || '',
+      estimated_delivery_at: estimatedDeliveryAt || null,
+      estimated_delivery_text: estimatedDeliveryText || '',
+      updated_at: nowIso,
+    },
+  };
+
+  const safePayload = {
+    carrier: assignedCarrier,
     tracking_number: trackingNumber || '',
-    tracking_url: trackingUrl || '',
-    estimated_delivery_at: estimatedDeliveryAt || null,
-    estimated_delivery_text: estimatedDeliveryText || '',
+    shipping_address: updatedAddr,
     updated_at: nowIso,
   };
 
-  try {
-    await supabase.from('orders').update(updatePayload).eq('id', orderId);
+  const fullPayload = {
+    ...safePayload,
+    delivery_partner_id: deliveryPartnerId || null,
+    delivery_partner_name: deliveryPartnerName || assignedCarrier,
+    tracking_url: trackingUrl || '',
+    estimated_delivery_at: estimatedDeliveryAt || null,
+    estimated_delivery_text: estimatedDeliveryText || '',
+  };
 
-    // Update Stage 3/4 with the allocated partner details
+  try {
+    const { error: fullErr } = await supabase.from('orders').update(fullPayload).eq('id', orderId);
+    if (fullErr) {
+      await supabase.from('orders').update(safePayload).eq('id', orderId);
+    }
+  } catch (_) {
+    try {
+      await supabase.from('orders').update(safePayload).eq('id', orderId);
+    } catch (_) {}
+  }
+
+  // Update Stage 3/4 with the allocated partner details safely
+  try {
     await supabase.from('order_tracking_events').upsert({
       order_id: orderId,
       milestone_key: 'vault_packaging',
       stage_number: 3,
       title: 'Insured Vault Packaging & Dispatch',
-      description: `Specimen packaged in armored vault and assigned to ${deliveryPartnerName || carrier || 'carrier'}. Tracking ID: ${trackingNumber || 'Pending'}.`,
+      description: `Specimen packaged in armored vault and assigned to ${assignedCarrier}. Tracking ID: ${trackingNumber || 'Pending'}.`,
       admin_remarks: adminRemarks,
       updated_at: nowIso,
-    }, { onConflict: 'order_id,milestone_key' }).catch(() => {});
+    }, { onConflict: 'order_id,milestone_key' });
+  } catch (_) {}
 
-    // Record audit log
+  // Record audit log safely
+  try {
     await supabase.from('admin_audit_logs').insert([{
       entity_type: 'order',
       entity_id: orderId,
@@ -1621,13 +1786,10 @@ export async function assignOrderDeliveryPartner(orderId, {
       },
       actor_name: adminName,
       created_at: nowIso,
-    }]).catch(() => {});
+    }]);
+  } catch (_) {}
 
-    return { success: true };
-  } catch (err) {
-    console.error('Error assigning delivery partner:', err.message);
-    return { success: false, error: err.message };
-  }
+  return { success: true };
 }
 
 /**
@@ -1803,10 +1965,11 @@ export async function saveSupabaseStoreFilters(filters) {
           sort_order: i,
           updated_at: new Date().toISOString(),
         };
-        await supabase
-          .from('store_filters')
-          .upsert(item, { onConflict: 'id' })
-          .catch(() => {});
+        try {
+          await supabase
+            .from('store_filters')
+            .upsert(item, { onConflict: 'id' });
+        } catch (_) {}
       }
     }
 

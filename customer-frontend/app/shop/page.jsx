@@ -14,6 +14,7 @@ import {
   getPillarForFilter,
   formatProductMultiTags,
   productMatchesDiscoveryFilters,
+  productMatchesPillar,
 } from '../../lib/discoveryTaxonomy';
 import {
   Search,
@@ -112,13 +113,13 @@ function PremiumQualityShield({ id = 'crest' }) {
 
 // Desktop Category Story Avatars with authentic category photography
 const DESKTOP_CATEGORY_AVATARS = [
-  { id: 'for_you', label: 'All Vault', image: '/images/categories/category-stones.jpg', filterId: null },
+  { id: 'for_you', label: 'All Products', image: '/images/categories/category-stones.jpg', filterId: null },
   { id: 'bracelets', label: 'Bracelets', image: '/images/categories/category-bracelets.jpg', filterId: 'jewellery:bracelets' },
   { id: 'malas', label: 'Malas', image: '/images/categories/category-malas.jpg', filterId: 'jewellery:malas' },
   { id: 'raw_crystals', label: 'Raw Crystals', image: '/images/categories/category-stones.jpg', filterId: 'specimen:raw-stones' },
   { id: 'home_decor', label: 'Gemstone Trees', image: '/images/categories/category-trees.jpg', filterId: 'home:crystal-trees' },
-  { id: 'energy_bands', label: '7 Chakras', image: '/images/categories/category-chakras-clean.jpg', filterId: 'energy:root-chakra' },
-  { id: 'combos', label: 'Towers & Points', image: '/images/categories/category-towers-clean.jpg', filterId: 'specimen:towers-points' },
+  { id: 'energy_bands', label: '7 Chakras', image: '/images/products/amethyst.jpg', filterId: 'energy:root-chakra' },
+  { id: 'combos', label: 'Towers & Points', image: '/images/products/clear-quartz.jpg', filterId: 'specimen:towers-points' },
   { id: 'more', label: 'All Filters', isMoreButton: true },
 ];
 
@@ -145,6 +146,7 @@ function StorefrontContent() {
 
   // Filter States
   const [selectedDiscoveryFilters, setSelectedDiscoveryFilters] = useState([]);
+  const [activePillar, setActivePillar] = useState(null);
   const [activeCategory, setActiveCategory] = useState('for_you');
   const [searchQuery, setSearchQuery] = useState('');
   const [minPrice, setMinPrice] = useState(0);
@@ -247,11 +249,13 @@ function StorefrontContent() {
     const q = searchParams.get('q') || searchParams.get('search');
     if (q) setSearchQuery(q);
 
-    // Pillar navigation: ?pillar=purpose -> expand that pillar in drawer
-    const pillarParam = searchParams.get('pillar');
+    // Pillar navigation: ?pillar=jewellery (Filter products directly on page)
+    const pillarParam = searchParams.get('pillar') || searchParams.get('dimension');
     if (pillarParam) {
+      setActivePillar(pillarParam);
       setExpandedPillars((prev) => ({ ...prev, [pillarParam]: true }));
-      setFiltersDrawerOpen(true);
+    } else {
+      setActivePillar(null);
     }
 
     // Category avatar
@@ -260,6 +264,8 @@ function StorefrontContent() {
 
     if (filtersFromUrl.length > 0) {
       setSelectedDiscoveryFilters(filtersFromUrl);
+    } else {
+      setSelectedDiscoveryFilters([]);
     }
   }, [searchParams]);
 
@@ -297,6 +303,7 @@ function StorefrontContent() {
   // Clear all filters
   const clearAllFilters = () => {
     setSelectedDiscoveryFilters([]);
+    setActivePillar(null);
     setActiveCategory('for_you');
     setSearchQuery('');
     setMinPrice(0);
@@ -349,6 +356,11 @@ function StorefrontContent() {
       list = list.filter((p) => productMatchesDiscoveryFilters(p, selectedDiscoveryFilters));
     }
 
+    // 1b. Pillar-level filtering (when arrived with ?pillar=jewellery or similar)
+    if (activePillar && activePillar !== 'all') {
+      list = list.filter((p) => productMatchesPillar(p, activePillar));
+    }
+
     // 2. Search query filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -378,16 +390,25 @@ function StorefrontContent() {
     }
 
     return list;
-  }, [catalog, selectedDiscoveryFilters, searchQuery, minPrice, maxPrice, sortBy]);
+  }, [catalog, selectedDiscoveryFilters, activePillar, searchQuery, minPrice, maxPrice, sortBy]);
 
   const activeCategoryTitle = useMemo(() => {
     if (selectedDiscoveryFilters.length > 0) {
+      const labels = selectedDiscoveryFilters.map(getFilterLabel).filter(Boolean);
+      if (labels.length === 1) {
+        return `${labels[0]} (${filteredProducts.length} ${filteredProducts.length === 1 ? 'specimen' : 'specimens'})`;
+      }
       return `Filtered Specimens (${filteredProducts.length})`;
+    }
+    if (activePillar) {
+      const found = DISCOVERY_PILLARS.find((p) => p.id === activePillar);
+      const pillarName = found ? found.name : activePillar;
+      return `${pillarName} (${filteredProducts.length} ${filteredProducts.length === 1 ? 'specimen' : 'specimens'})`;
     }
     if (activeCategory === 'for_you' || !activeCategory) return 'All Sanctuary Specimens';
     const found = DESKTOP_CATEGORY_AVATARS.find((c) => c.id === activeCategory);
     return found ? found.label : 'All Sanctuary Specimens';
-  }, [selectedDiscoveryFilters, filteredProducts.length, activeCategory]);
+  }, [selectedDiscoveryFilters, activePillar, filteredProducts.length, activeCategory]);
 
   const cartTotalItems = getTotalCount();
   const displayCartCount = cartTotalItems > 0 ? cartTotalItems : 0;
@@ -642,13 +663,31 @@ function StorefrontContent() {
         {/* ══════════════════════════════════════════════════════════
             3. ACTIVE FILTER CHIPS SUMMARY BAR
            ══════════════════════════════════════════════════════════ */}
-        {selectedDiscoveryFilters.length > 0 && (
+        {(selectedDiscoveryFilters.length > 0 || activePillar) && (
           <section className="bg-white rounded-2xl border border-stone-200/90 p-3.5 shadow-xs animate-fade-in flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-stone-500 font-bold uppercase tracking-wider flex items-center gap-1.5 mr-1">
                 <Sparkles className="w-3.5 h-3.5 text-[#C8A65E]" />
                 Active Discovery Filters:
               </span>
+              {activePillar && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivePillar(null);
+                    const params = new URLSearchParams(window.location.search);
+                    params.delete('pillar');
+                    params.delete('dimension');
+                    const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+                    window.history.replaceState(null, '', newUrl);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#92400E] border border-[#F59E0B]/40 transition-all cursor-pointer group"
+                  title="Click to remove pillar filter"
+                >
+                  <span>{DISCOVERY_PILLARS.find((p) => p.id === activePillar)?.name || activePillar}</span>
+                  <X className="w-3.5 h-3.5 text-[#92400E] group-hover:scale-115 transition-transform" />
+                </button>
+              )}
               {selectedDiscoveryFilters.map((fid) => (
                 <button
                   key={fid}
@@ -668,7 +707,7 @@ function StorefrontContent() {
               onClick={clearAllFilters}
               className="text-xs font-bold text-rose-600 hover:text-rose-800 transition underline cursor-pointer"
             >
-              Clear All ({selectedDiscoveryFilters.length})
+              Clear All ({selectedDiscoveryFilters.length + (activePillar ? 1 : 0)})
             </button>
           </section>
         )}
@@ -719,26 +758,27 @@ function StorefrontContent() {
         {loadingCatalog ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
             <div className="w-10 h-10 border-2 border-[#79539B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs text-stone-500 font-mono">Connecting to Sacred Sanctuary Vault...</p>
+            <p className="text-xs text-stone-500 font-mono">Connecting to Sacred Sanctuary Collection...</p>
           </div>
         ) : filteredProducts.length === 0 ? (
           /* ── ELEGANT SANCTUARY EMPTY STATE ── */
-          <div className="py-16 px-4 text-center max-w-md mx-auto space-y-4 bg-white rounded-3xl border border-stone-200/90 shadow-sm animate-fade-in my-6">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#EAE2F2] border border-[#79539B]/30 flex items-center justify-center text-[#79539B] shadow-inner">
+          <div className="py-16 px-6 text-center max-w-lg mx-auto space-y-4 bg-white rounded-3xl border border-[#E8DFC8] shadow-[0_8px_30px_rgba(42,29,54,0.06)] animate-fade-in my-8">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#FAF5FF] border border-[#79539B]/30 flex items-center justify-center text-[#79539B] shadow-inner">
               <Sparkles className="w-8 h-8 text-[#79539B]" />
             </div>
-            <h3 className="font-serif text-2xl font-bold text-stone-900">No Matching Specimens</h3>
-            <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-sans">
-              No products in our current consecrated collection match all of your selected energy dimensions.
-              Try clearing some filter tags or exploring by physical specimen.
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+              No products available still now
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-sans max-w-md mx-auto">
+              There are currently no products uploaded under this selection in our sacred collection. Founder Soumyaa Naveen is continuously consecrating new specimens.
             </p>
-            <div className="pt-2">
+            <div className="pt-3 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="px-6 py-2.5 rounded-full bg-[#79539B] hover:bg-[#684587] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer active:scale-95"
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#601A8A] to-[#4F1373] hover:brightness-110 text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer active:scale-95"
               >
-                Clear All Filters &amp; View Vault
+                Browse All Products
               </button>
             </div>
           </div>
@@ -841,7 +881,7 @@ function StorefrontContent() {
                         <button
                           type="button"
                           onClick={(e) => handleQuickAdd(prod, e)}
-                          aria-label={`Add ${prod.name} to vault`}
+                          aria-label={`Add ${prod.name} to your cart`}
                           className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EAE2F2] hover:bg-[#79539B] text-[#79539B] hover:text-white flex items-center justify-center transition-all duration-200 shadow-xs cursor-pointer active:scale-95 flex-shrink-0"
                           title="Quick Add to Cart"
                         >

@@ -94,7 +94,7 @@ export const CATEGORY_DEFINITIONS = [
       { label: 'Consecrated Altarpieces', desc: 'Vedic blessed by Soumyaa Naveen' },
       { label: 'High Vibrational', desc: 'Continuous spatial energy cleansing' },
       { label: 'Museum Quality', desc: 'Natural untampered raw crystals' },
-      { label: 'Safe Delivery', desc: 'Reinforced luxury protective vault box' },
+      { label: 'Safe Delivery', desc: 'Reinforced luxury protective armored box' },
     ],
   },
 ];
@@ -285,7 +285,7 @@ export default function LuxuryCategorySliders() {
                 href="/shop"
                 className="self-start sm:self-auto px-5 py-2.5 rounded-full bg-[#EAE2F2] hover:bg-[#D8CBE4] text-[#79539B] hover:text-[#684587] text-xs font-sans font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-xs"
               >
-                <span>Explore All In Vault</span>
+                <span>Explore All In Store</span>
                 <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
               </Link>
             </div>

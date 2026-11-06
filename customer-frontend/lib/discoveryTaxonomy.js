@@ -446,6 +446,12 @@ export function productMatchesDiscoveryFilters(product, selectedFilterIds = []) 
 
     // 1. Purpose matching
     if (fid.startsWith('purpose:')) {
+      if (stripped === 'money-abundance' && (pDesc.includes('money') || pDesc.includes('wealth') || pDesc.includes('abundance') || pName.includes('pyrite') || pName.includes('citrine'))) return true;
+      if (stripped === 'love-relationships' && (pDesc.includes('love') || pDesc.includes('relationship') || pName.includes('rose quartz') || pDesc.includes('rose quartz'))) return true;
+      if (stripped === 'protection' && (pDesc.includes('protect') || pDesc.includes('shield') || pName.includes('tourmaline') || pName.includes('obsidian') || pName.includes('tiger'))) return true;
+      if (stripped === 'peace-relaxation' && (pDesc.includes('calm') || pDesc.includes('peace') || pDesc.includes('relax') || pName.includes('amethyst'))) return true;
+      if (stripped === 'confidence' && (pDesc.includes('confidence') || pDesc.includes('courage') || pName.includes('tiger'))) return true;
+      if (stripped === 'healing-wellness' && (pDesc.includes('heal') || pDesc.includes('wellness') || pName.includes('fluorite') || pName.includes('clear quartz'))) return true;
       const purposeName = stripped.replace(/-/g, ' ');
       return pName.includes(purposeName) || pDesc.includes(purposeName) || assignedSet.has(purposeName);
     }
@@ -455,11 +461,11 @@ export function productMatchesDiscoveryFilters(product, selectedFilterIds = []) 
       // Chakras
       if (stripped.includes('root') && (pChakra.includes('root') || pChakra.includes('muladhara'))) return true;
       if (stripped.includes('sacral') && (pChakra.includes('sacral') || pChakra.includes('svadhishthana'))) return true;
-      if (stripped.includes('solar-plexus') && (pChakra.includes('solar plexus') || pChakra.includes('manipura'))) return true;
-      if (stripped.includes('heart') && (pChakra.includes('heart') || pChakra.includes('anahata'))) return true;
+      if (stripped.includes('solar-plexus') && (pChakra.includes('solar plexus') || pChakra.includes('manipura') || pName.includes('pyrite') || pName.includes('citrine'))) return true;
+      if (stripped.includes('heart') && (pChakra.includes('heart') || pChakra.includes('anahata') || pName.includes('rose quartz') || pDesc.includes('heart'))) return true;
       if (stripped.includes('throat') && (pChakra.includes('throat') || pChakra.includes('vishuddha'))) return true;
-      if (stripped.includes('third-eye') && (pChakra.includes('third eye') || pChakra.includes('ajna'))) return true;
-      if (stripped.includes('crown') && (pChakra.includes('crown') || pChakra.includes('sahasrara'))) return true;
+      if (stripped.includes('third-eye') && (pChakra.includes('third eye') || pChakra.includes('ajna') || pName.includes('amethyst') || pDesc.includes('third eye'))) return true;
+      if (stripped.includes('crown') && (pChakra.includes('crown') || pChakra.includes('sahasrara') || pName.includes('clear quartz') || pName.includes('amethyst'))) return true;
       // Zodiac
       if (stripped.startsWith('zodiac-')) {
         const sign = stripped.replace('zodiac-', '');
@@ -476,7 +482,7 @@ export function productMatchesDiscoveryFilters(product, selectedFilterIds = []) 
       return pCrystal.includes(crystalName) || pName.includes(crystalName) || pDesc.includes(crystalName);
     }
     if (fid.startsWith('specimen:')) {
-      if (stripped === 'raw-stones' && (pCategory.includes('raw') || pCategory.includes('geode') || pName.includes('raw'))) return true;
+      if (stripped === 'raw-stones' && (pCategory.includes('raw') || pCategory.includes('geode') || pName.includes('raw') || pName.includes('geode') || pName.includes('cluster'))) return true;
       if (stripped === 'towers-points' && (pCategory.includes('tower') || pName.includes('tower') || pName.includes('point'))) return true;
       if (stripped === 'tumbled-stones' && (pCategory.includes('tumble') || pName.includes('tumble'))) return true;
       if (stripped === 'pyramids' && (pCategory.includes('pyramid') || pName.includes('pyramid'))) return true;
@@ -488,8 +494,12 @@ export function productMatchesDiscoveryFilters(product, selectedFilterIds = []) 
 
     // 4. Jewellery matching
     if (fid.startsWith('jewellery:')) {
-      if (stripped === 'bracelets' && (pCategory.includes('bracelet') || pCategory.includes('band') || pName.includes('bracelet'))) return true;
-      if (stripped === 'malas' && (pCategory.includes('mala') || pName.includes('mala'))) return true;
+      if (stripped === 'bracelets') {
+        return pName.includes('bracelet') || pName.includes('bracelete') || pCategory.includes('bracelet') || (pCategory.includes('band') && !pName.includes('mala'));
+      }
+      if (stripped === 'malas') {
+        return pName.includes('mala') || pCategory.includes('mala');
+      }
       if (stripped === 'necklaces' && (pCategory.includes('necklace') || pName.includes('necklace'))) return true;
       if (stripped === 'pendants' && (pCategory.includes('pendant') || pName.includes('pendant'))) return true;
       if (stripped === 'rings' && (pCategory.includes('ring') || pName.includes('ring'))) return true;
@@ -541,6 +551,113 @@ export function productMatchesDiscoveryFilters(product, selectedFilterIds = []) 
     if (!anyMatchedInDimension) {
       return false;
     }
+  }
+
+  return true;
+}
+
+/**
+ * Test whether a product matches an entire discovery pillar
+ */
+export function productMatchesPillar(product, pillarId) {
+  if (!product || !pillarId || pillarId === 'all') return true;
+  const pName = (product.name || '').toLowerCase();
+  const pCategory = (product.category || '').toLowerCase();
+  const pDesc = (product.description || product.short_description || '').toLowerCase();
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  const assigned = Array.isArray(product.assigned_filters)
+    ? product.assigned_filters
+    : (Array.isArray(product.assignedFilters) ? product.assignedFilters : []);
+
+  const pillarPrefixes = {
+    purpose: ['purpose:'],
+    energy_system: ['energy:'],
+    crystal_specimen: ['crystal:', 'specimen:'],
+    jewellery: ['jewellery:'],
+    bead_size: ['bead:'],
+    home_space: ['home:'],
+  };
+
+  const prefixes = pillarPrefixes[pillarId];
+  if (prefixes && assigned.some((f) => prefixes.some((pfx) => f.startsWith(pfx)))) {
+    return true;
+  }
+
+  if (pillarId === 'jewellery') {
+    return (
+      pName.includes('bracelet') ||
+      pName.includes('bracelete') ||
+      pName.includes('mala') ||
+      pName.includes('necklace') ||
+      pName.includes('pendant') ||
+      pName.includes('ring') ||
+      pCategory.includes('bracelet') ||
+      pCategory.includes('band') ||
+      pCategory.includes('mala') ||
+      pCategory.includes('jewel')
+    );
+  }
+
+  if (pillarId === 'crystal_specimen') {
+    return (
+      pCategory.includes('raw') ||
+      pCategory.includes('geode') ||
+      pCategory.includes('stone') ||
+      pCategory.includes('cluster') ||
+      pCategory.includes('tower') ||
+      pCategory.includes('pyramid') ||
+      pCategory.includes('crystal') ||
+      pName.includes('pyrite') ||
+      pName.includes('amethyst') ||
+      pName.includes('quartz') ||
+      pName.includes('cluster') ||
+      pName.includes('raw') ||
+      pName.includes('geode')
+    );
+  }
+
+  if (pillarId === 'home_space') {
+    return (
+      pCategory.includes('home') ||
+      pCategory.includes('decor') ||
+      pCategory.includes('tree') ||
+      pCategory.includes('vastu') ||
+      pName.includes('tree') ||
+      (pName.includes('pyramid') && !pName.includes('bracelet')) ||
+      pName.includes('fountain') ||
+      pName.includes('altar')
+    );
+  }
+
+  if (pillarId === 'bead_size') {
+    return variants.length > 0 || pName.includes('mm') || Boolean(product.beadSize || product.bead_size);
+  }
+
+  if (pillarId === 'energy_system') {
+    return (
+      Boolean(product.chakra || product.zodiac) ||
+      pDesc.includes('chakra') ||
+      pDesc.includes('energy') ||
+      pDesc.includes('aura') ||
+      pDesc.includes('vastu') ||
+      pName.includes('chakra') ||
+      pName.includes('7')
+    );
+  }
+
+  if (pillarId === 'purpose') {
+    return (
+      Boolean(product.short_description) ||
+      pDesc.includes('love') ||
+      pDesc.includes('wealth') ||
+      pDesc.includes('money') ||
+      pDesc.includes('peace') ||
+      pDesc.includes('calm') ||
+      pDesc.includes('protect') ||
+      pDesc.includes('positive') ||
+      pDesc.includes('healing') ||
+      pDesc.includes('abundance')
+    );
   }
 
   return true;

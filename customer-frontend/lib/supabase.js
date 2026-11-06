@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { generateNextOrderNumber } from './orderNumber';
+import { generateNextOrderNumber } from './orderNumber.js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cmsiounkoqpwjccczebk.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ylcqcDVWnCBJ9EhGPeEMKQ_P7-nnoVP';
@@ -155,26 +155,116 @@ export function normalizeProduct(raw) {
 
       const inferred = [...list];
       const catLower = (raw.category || '').toLowerCase();
-      if (catLower.includes('bracelet') || catLower.includes('bands')) {
+      const nameLower = (raw.name || raw.title || '').toLowerCase();
+      const shortDescLower = (raw.short_description || raw.subtitle || '').toLowerCase();
+      const descLower = (raw.description || '').toLowerCase();
+      const chakraLower = (raw.chakra || '').toLowerCase();
+      const zodiacLower = (raw.zodiac || '').toLowerCase();
+
+      // 1. Jewellery
+      if ((catLower.includes('bracelet') || catLower.includes('bands') || nameLower.includes('bracelet') || nameLower.includes('bracelete')) && !nameLower.includes('mala')) {
         if (!inferred.includes('jewellery:bracelets')) inferred.push('jewellery:bracelets');
       }
-      if (catLower.includes('mala')) {
+      if (catLower.includes('mala') || nameLower.includes('mala')) {
         if (!inferred.includes('jewellery:malas')) inferred.push('jewellery:malas');
       }
-      if (catLower.includes('tree')) {
+      if (catLower.includes('necklace') || nameLower.includes('necklace')) {
+        if (!inferred.includes('jewellery:necklaces')) inferred.push('jewellery:necklaces');
+      }
+      if (catLower.includes('pendant') || nameLower.includes('pendant')) {
+        if (!inferred.includes('jewellery:pendants')) inferred.push('jewellery:pendants');
+      }
+
+      // 2. Crystal Specimen
+      if (catLower.includes('tree') || nameLower.includes('tree')) {
         if (!inferred.includes('home:crystal-trees')) inferred.push('home:crystal-trees');
         if (!inferred.includes('specimen:crystal-trees')) inferred.push('specimen:crystal-trees');
       }
-      if (catLower.includes('raw') || catLower.includes('geode')) {
+      if (catLower.includes('raw') || catLower.includes('geode') || nameLower.includes('raw') || nameLower.includes('geode') || nameLower.includes('pyrite')) {
         if (!inferred.includes('specimen:raw-stones')) inferred.push('specimen:raw-stones');
         if (!inferred.includes('specimen:clusters-geodes')) inferred.push('specimen:clusters-geodes');
       }
+      if (catLower.includes('tower') || nameLower.includes('tower') || nameLower.includes('point')) {
+        if (!inferred.includes('specimen:towers-points')) inferred.push('specimen:towers-points');
+      }
+      if (catLower.includes('pyramid') || nameLower.includes('pyramid')) {
+        if (!inferred.includes('specimen:pyramids')) inferred.push('specimen:pyramids');
+      }
+
+      // Crystal identities
       if (raw.crystal_type) {
         const cKey = `crystal:${raw.crystal_type.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
         if (!inferred.includes(cKey)) inferred.push(cKey);
       }
+      if (nameLower.includes('amethyst') || nameLower.includes('amethyts') || descLower.includes('amethyst')) {
+        if (!inferred.includes('crystal:amethyst')) inferred.push('crystal:amethyst');
+      }
+      if (nameLower.includes('rose quartz') || descLower.includes('rose quartz')) {
+        if (!inferred.includes('crystal:rose-quartz')) inferred.push('crystal:rose-quartz');
+      }
+      if (nameLower.includes('fluorite') || descLower.includes('fluorite')) {
+        if (!inferred.includes('crystal:fluorite')) inferred.push('crystal:fluorite');
+      }
+      if (nameLower.includes('pyrite') || descLower.includes('pyrite')) {
+        if (!inferred.includes('crystal:pyrite')) inferred.push('crystal:pyrite');
+      }
+
+      // 3. Purpose
+      if (descLower.includes('money') || descLower.includes('wealth') || descLower.includes('abundance') || shortDescLower.includes('wealth') || nameLower.includes('pyrite')) {
+        if (!inferred.includes('purpose:money-abundance')) inferred.push('purpose:money-abundance');
+      }
+      if (descLower.includes('love') || shortDescLower.includes('love') || shortDescLower.includes('relationship') || nameLower.includes('rose quartz')) {
+        if (!inferred.includes('purpose:love-relationships')) inferred.push('purpose:love-relationships');
+      }
+      if (descLower.includes('protect') || descLower.includes('shield') || descLower.includes('negativity')) {
+        if (!inferred.includes('purpose:protection')) inferred.push('purpose:protection');
+      }
+      if (descLower.includes('calm') || shortDescLower.includes('calm') || nameLower.includes('amethyst') || nameLower.includes('amethyts')) {
+        if (!inferred.includes('purpose:peace-relaxation')) inferred.push('purpose:peace-relaxation');
+      }
+      if (descLower.includes('confidence') || descLower.includes('power')) {
+        if (!inferred.includes('purpose:confidence')) inferred.push('purpose:confidence');
+      }
+      if (descLower.includes('heal') || descLower.includes('wellness') || nameLower.includes('fluorite')) {
+        if (!inferred.includes('purpose:healing-wellness')) inferred.push('purpose:healing-wellness');
+      }
+      if (descLower.includes('business') || descLower.includes('career')) {
+        if (!inferred.includes('purpose:career-business')) inferred.push('purpose:career-business');
+      }
+
+      // 4. Energy System
+      if (chakraLower.includes('heart') || descLower.includes('heart chakra')) {
+        if (!inferred.includes('energy:heart-chakra')) inferred.push('energy:heart-chakra');
+      }
+      if (chakraLower.includes('third eye') || descLower.includes('third eye')) {
+        if (!inferred.includes('energy:third-eye-chakra')) inferred.push('energy:third-eye-chakra');
+      }
+      if (chakraLower.includes('crown') || descLower.includes('crown chakra')) {
+        if (!inferred.includes('energy:crown-chakra')) inferred.push('energy:crown-chakra');
+      }
+      if (chakraLower.includes('root') || descLower.includes('root chakra')) {
+        if (!inferred.includes('energy:root-chakra')) inferred.push('energy:root-chakra');
+      }
+      if (chakraLower.includes('solar plexus') || descLower.includes('solar plexus')) {
+        if (!inferred.includes('energy:solar-plexus-chakra')) inferred.push('energy:solar-plexus-chakra');
+      }
+
+      // 5. Bead sizes from variants or name
+      if (nameLower.includes('10mm') || nameLower.includes('10 mm')) {
+        if (!inferred.includes('bead:10mm')) inferred.push('bead:10mm');
+      }
+      if (nameLower.includes('8mm') || nameLower.includes('8 mm') || (nameLower.includes('fluorite') && nameLower.includes('bracelet'))) {
+        if (!inferred.includes('bead:8mm')) inferred.push('bead:8mm');
+      }
+      if (nameLower.includes('6mm') || nameLower.includes('6 mm')) {
+        if (!inferred.includes('bead:6mm')) inferred.push('bead:6mm');
+      }
+      if (nameLower.includes('4mm') || nameLower.includes('4 mm')) {
+        if (!inferred.includes('bead:4mm')) inferred.push('bead:4mm');
+      }
+
       variantsList.forEach((v) => {
-        const bs = (v.bead_size || v.beadSize || '').toLowerCase();
+        const bs = (v.bead_size || v.beadSize || v.variant_name || v.name || '').toLowerCase();
         if (bs.includes('4mm') && !inferred.includes('bead:4mm')) inferred.push('bead:4mm');
         if (bs.includes('6mm') && !inferred.includes('bead:6mm')) inferred.push('bead:6mm');
         if (bs.includes('8mm') && !inferred.includes('bead:8mm')) inferred.push('bead:8mm');
@@ -193,32 +283,41 @@ export function normalizeProduct(raw) {
 
       const inferred = [...list];
       const catLower = (raw.category || '').toLowerCase();
-      if (catLower.includes('bracelet') || catLower.includes('bands')) {
+      const nameLower = (raw.name || raw.title || '').toLowerCase();
+      const shortDescLower = (raw.short_description || raw.subtitle || '').toLowerCase();
+      const descLower = (raw.description || '').toLowerCase();
+      const chakraLower = (raw.chakra || '').toLowerCase();
+
+      if ((catLower.includes('bracelet') || catLower.includes('bands') || nameLower.includes('bracelet') || nameLower.includes('bracelete')) && !nameLower.includes('mala')) {
         if (!inferred.includes('jewellery:bracelets')) inferred.push('jewellery:bracelets');
       }
-      if (catLower.includes('mala')) {
+      if (catLower.includes('mala') || nameLower.includes('mala')) {
         if (!inferred.includes('jewellery:malas')) inferred.push('jewellery:malas');
       }
-      if (catLower.includes('tree')) {
-        if (!inferred.includes('home:crystal-trees')) inferred.push('home:crystal-trees');
-        if (!inferred.includes('specimen:crystal-trees')) inferred.push('specimen:crystal-trees');
-      }
-      if (catLower.includes('raw') || catLower.includes('geode')) {
+      if (catLower.includes('raw') || catLower.includes('geode') || nameLower.includes('raw') || nameLower.includes('geode') || nameLower.includes('pyrite')) {
         if (!inferred.includes('specimen:raw-stones')) inferred.push('specimen:raw-stones');
-        if (!inferred.includes('specimen:clusters-geodes')) inferred.push('specimen:clusters-geodes');
       }
-      if (raw.crystal_type) {
-        const cKey = `crystal:${raw.crystal_type.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-        if (!inferred.includes(cKey)) inferred.push(cKey);
+      if (nameLower.includes('amethyst') || nameLower.includes('amethyts')) {
+        if (!inferred.includes('crystal:amethyst')) inferred.push('crystal:amethyst');
       }
-      variantsList.forEach((v) => {
-        const bs = (v.bead_size || v.beadSize || '').toLowerCase();
-        if (bs.includes('4mm') && !inferred.includes('bead:4mm')) inferred.push('bead:4mm');
-        if (bs.includes('6mm') && !inferred.includes('bead:6mm')) inferred.push('bead:6mm');
-        if (bs.includes('8mm') && !inferred.includes('bead:8mm')) inferred.push('bead:8mm');
-        if (bs.includes('10mm') && !inferred.includes('bead:10mm')) inferred.push('bead:10mm');
-        if ((bs.includes('12mm') || bs.includes('14mm')) && !inferred.includes('bead:12mm-plus')) inferred.push('bead:12mm-plus');
-      });
+      if (nameLower.includes('rose quartz')) {
+        if (!inferred.includes('crystal:rose-quartz')) inferred.push('crystal:rose-quartz');
+      }
+      if (nameLower.includes('fluorite')) {
+        if (!inferred.includes('crystal:fluorite')) inferred.push('crystal:fluorite');
+      }
+      if (nameLower.includes('pyrite')) {
+        if (!inferred.includes('crystal:pyrite')) inferred.push('crystal:pyrite');
+      }
+      if (descLower.includes('money') || descLower.includes('wealth') || shortDescLower.includes('wealth') || nameLower.includes('pyrite')) {
+        if (!inferred.includes('purpose:money-abundance')) inferred.push('purpose:money-abundance');
+      }
+      if (nameLower.includes('10mm') || nameLower.includes('10 mm')) {
+        if (!inferred.includes('bead:10mm')) inferred.push('bead:10mm');
+      }
+      if (nameLower.includes('8mm') || nameLower.includes('8 mm') || (nameLower.includes('fluorite') && nameLower.includes('bracelet'))) {
+        if (!inferred.includes('bead:8mm')) inferred.push('bead:8mm');
+      }
       return inferred;
     })(),
     tags: raw.assigned_filters || raw.assignedFilters || raw.tags || [],
@@ -384,8 +483,6 @@ export async function saveProductToSupabase(productPayload) {
   }
 }
 
-import { ENERGY_STONES_CATALOG } from '../data/energyStones';
-
 /**
  * Normalizes an Energy Stone catalog record to full product format
  */
@@ -542,7 +639,15 @@ export async function saveOrderToSupabase(order) {
       buyer_name: buyerName,
       buyer_email: buyerEmail,
       buyer_phone: order.buyerPhone || order.shippingAddress?.phone || '',
-      shipping_address: order.shippingAddress || {},
+      shipping_address: {
+        ...(typeof order.shippingAddress === 'object' ? order.shippingAddress : { address_text: order.shippingAddress || '' }),
+        _tracking: {
+          current_stage: 'order_confirmed',
+          order_status: 'confirmed',
+          payment_status: 'verified',
+          last_updated: nowIso,
+        },
+      },
       items: order.items || [],
       subtotal: Number(order.subtotal || 0),
       shipping_fee: Number(order.shippingFee || 0),
@@ -562,12 +667,41 @@ export async function saveOrderToSupabase(order) {
       updated_at: nowIso,
     };
 
-    // 1. Insert into Supabase 'orders' table
-    const { data: orderResult, error: orderError } = await supabase
-      .from('orders')
-      .insert([payload])
-      .select()
-      .single();
+    // 1. Insert into Supabase 'orders' table (with fallback for schema versions)
+    let orderResult = null;
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([payload])
+        .select()
+        .single();
+
+      if (error) {
+        // Core columns fallback
+        const safePayload = {
+          order_number: payload.order_number,
+          buyer_name: payload.buyer_name,
+          buyer_email: payload.buyer_email,
+          buyer_phone: payload.buyer_phone,
+          shipping_address: payload.shipping_address,
+          items: payload.items,
+          subtotal: payload.subtotal,
+          shipping_fee: payload.shipping_fee,
+          total: payload.total,
+          total_amount: payload.total_amount,
+          currency: payload.currency,
+          razorpay_order_id: payload.razorpay_order_id,
+          razorpay_payment_id: payload.razorpay_payment_id,
+          status: payload.status,
+          created_at: payload.created_at,
+          updated_at: payload.updated_at,
+        };
+        const fallbackRes = await supabase.from('orders').insert([safePayload]).select().single();
+        orderResult = fallbackRes.data;
+      } else {
+        orderResult = data;
+      }
+    } catch (_) {}
 
     const createdOrderId = orderResult?.id || payload.order_number;
 
@@ -597,7 +731,7 @@ export async function saveOrderToSupabase(order) {
           order_id: createdOrderId,
           milestone_key: 'vault_packaging',
           stage_number: 3,
-          title: 'Insured Vault Packaging & Dispatch',
+          title: 'Insured Secure Packaging & Dispatch',
           description: 'Your specimen is carefully padded with protective packaging and sealed with its authentication label before dispatch.',
           status: 'pending',
         },
@@ -675,10 +809,33 @@ export async function saveOrderToSupabase(order) {
 }
 
 /**
+ * Normalizes an order from Supabase or fallback tracking payload
+ */
+export function normalizeOrder(raw) {
+  if (!raw) return raw;
+  const tracking = raw.shipping_address?._tracking || {};
+  return {
+    ...raw,
+    current_stage: raw.current_stage || tracking.current_stage || raw.status || 'order_placed',
+    order_status: raw.order_status || tracking.order_status || raw.status || 'Confirmed',
+    payment_status: raw.payment_status || tracking.payment_status || 'Paid',
+    delivery_partner_id: raw.delivery_partner_id || tracking.delivery_partner_id || null,
+    delivery_partner_name: raw.delivery_partner_name || tracking.delivery_partner_name || raw.carrier || null,
+    tracking_url: raw.tracking_url || tracking.tracking_url || null,
+    estimated_delivery_at: raw.estimated_delivery_at || tracking.estimated_delivery_at || null,
+    estimated_delivery_text: raw.estimated_delivery_text || tracking.estimated_delivery_text || null,
+    carrier: raw.carrier || tracking.delivery_partner_name || null,
+    tracking_number: raw.tracking_number || tracking.tracking_number || null,
+    items: raw.items || raw.order_items || [],
+  };
+}
+
+/**
  * Query orders from Supabase with joined order items
  */
 export async function getSupabaseOrders() {
   try {
+    let orders = [];
     const { data, error } = await supabase
       .from('orders')
       .select(`
@@ -696,8 +853,17 @@ export async function getSupabaseOrders() {
       `)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data || [];
+    if (error) {
+      // Fallback query without join
+      const { data: rawOrders } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+      orders = rawOrders || [];
+    } else {
+      orders = data || [];
+    }
+    return orders.map(normalizeOrder);
   } catch (err) {
     console.warn('Supabase fetch orders notice:', err.message);
     return [];
@@ -734,9 +900,19 @@ export async function getSupabaseOrdersByUser(userId, email) {
       return [];
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
+    let { data, error } = await query;
+    if (error) {
+      // Fallback query without relation join
+      let fallbackQuery = supabase.from('orders').select('*').order('created_at', { ascending: false });
+      if (userId) {
+        fallbackQuery = fallbackQuery.eq('user_id', userId);
+      } else {
+        fallbackQuery = fallbackQuery.eq('buyer_email', email.toLowerCase().trim());
+      }
+      const fallbackRes = await fallbackQuery;
+      data = fallbackRes.data || [];
+    }
+    return (data || []).map(normalizeOrder);
   } catch (err) {
     console.warn('Supabase fetch user orders notice:', err.message);
     return [];
@@ -1500,9 +1676,9 @@ export const STAGE_CONFIGS = [
   {
     key: 'vault_packaging',
     stageNumber: 3,
-    title: 'Insured Vault Packaging & Dispatch',
+    title: 'Insured Secure Packaging & Dispatch',
     description: 'Your specimen is carefully padded with protective packaging and sealed with its authentication label before dispatch.',
-    location: 'Pune Vault',
+    location: 'Pune Facility',
   },
   {
     key: 'in_transit',
