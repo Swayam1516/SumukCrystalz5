@@ -93,15 +93,15 @@ export default function AboutPage() {
 
       {/* 2. FOUNDER STORY SPOTLIGHT */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="glass-panel-3d p-8 sm:p-14 border border-gold-500/25 relative overflow-hidden shadow-2xl">
+        <div className="rounded-3xl bg-gradient-to-br from-[#1A1124] via-[#140D1F] to-[#0A0512] border-2 border-[#D4AF37]/45 p-8 sm:p-14 relative overflow-hidden shadow-[0_24px_70px_rgba(15,10,25,0.45)] text-white">
           {/* Subtle background glow */}
-          <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-gold-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -top-20 -left-20 w-96 h-96 bg-amethyst-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-20 -left-20 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
             {/* Left: Founder Photo & Badge */}
             <div className="lg:col-span-5 flex flex-col items-center">
-              <div className="relative w-full max-w-md aspect-[4/5] rounded-2xl overflow-hidden border-2 border-gold-500/40 shadow-2xl group">
+              <div className="relative w-full max-w-md aspect-[4/5] rounded-2xl overflow-hidden border-2 border-[#D4AF37]/50 shadow-2xl group">
                 <Image
                   src="/images/soumya-profile.jpeg"
                   alt="Soumyaa Naveen - Founder of Sumuk Crystalz 5"
@@ -111,16 +111,16 @@ export default function AboutPage() {
                   priority
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-luxe-950/90 via-transparent to-transparent flex flex-col justify-end p-6">
-                  <span className="text-[10px] font-mono tracking-widest text-gold-400 uppercase font-bold">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent flex flex-col justify-end p-6">
+                  <span className="text-[10px] font-mono tracking-widest text-[#F3E5AB] uppercase font-bold">
                     Reiki Master &amp; Mineral Curator
                   </span>
-                  <p className="font-serif text-2xl font-bold text-white mt-0.5 text-3d-subtle">
+                  <p className="font-serif text-2xl font-bold text-white mt-0.5 drop-shadow-md">
                     Soumyaa Naveen
                   </p>
-                  <p className="text-xs text-luxe-300 mt-1 flex items-center gap-2 font-mono">
+                  <p className="text-xs text-stone-300 mt-1 flex items-center gap-2 font-mono">
                     <span>Sumuk Crystalz 5</span>
-                    <span className="text-gold-300">@sumukcrystalz5</span>
+                    <span className="text-[#F3E5AB]">@sumukcrystalz5</span>
                   </p>
                 </div>
               </div>
@@ -130,9 +130,9 @@ export default function AboutPage() {
                 href="https://www.instagram.com/sumukcrystalz5?stkn=d3NqcW1pbnV3ZDRn"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="option-pill-3d mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/[0.04] border border-gold-500/30 text-gold-300 text-xs font-mono uppercase tracking-[0.16em] font-semibold transition group shadow-md hover:bg-white/[0.08]"
+                className="mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/15 border border-[#D4AF37]/40 text-[#F3E5AB] text-xs font-mono uppercase tracking-[0.16em] font-semibold transition group shadow-md"
               >
-                <Instagram className="w-4 h-4 text-gold-400 group-hover:scale-110 transition-transform" />
+                <Instagram className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform" />
                 <span>JOIN COMMUNITY: @SUMUKCRYSTALZ5</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </a>
@@ -140,25 +140,25 @@ export default function AboutPage() {
 
             {/* Right: The Narrative */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.06] border border-[#D4AF37]/30 text-[#E5C378] text-[11px] font-mono uppercase tracking-widest font-semibold">
-                <Award className="w-3.5 h-3.5" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-[#D4AF37]/40 text-[#F3E5AB] text-[11px] font-mono uppercase tracking-widest font-semibold shadow-xs">
+                <Award className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>Meet the Founder</span>
               </div>
 
-              <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-snug tracking-tight">
+              <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-snug tracking-tight drop-shadow-sm">
                 &ldquo;Every crystal tells an ancient story—mined from the Earth, chosen with intention.&rdquo;
               </h2>
 
-              <div className="space-y-4 text-base sm:text-[17px] text-stone-100 leading-relaxed font-normal">
+              <div className="space-y-4 text-base sm:text-[17px] text-stone-200 leading-relaxed font-normal">
                 <p>
                   <strong className="text-white font-semibold">Welcome to Sumuk Crystalz 5.</strong> I’m <strong className="text-[#F3E5AB] font-bold">Soumyaa Naveen</strong>, an Usui Reiki Master, Aura Analyst, Numerologist, and intuitive practitioner dedicated to natural crystals and conscious energetic alignment.
                 </p>
 
                 <p>
-                  Every crystal tells an ancient story—from the tranquil, intuitive depths of raw <strong className="text-[#D8B4FE] font-semibold">Amethyst</strong> to the bold, protective warmth of <strong className="text-[#FCD34D] font-semibold">Tiger’s Eye</strong> and the gentle, heart-centered compassion of <strong className="text-[#FBCFE8] font-semibold">Rose Quartz</strong>. What started as a personal passion for authentic minerals evolved into <strong className="text-[#FDE68A] font-bold">@sumukcrystalz5</strong>, a sanctuary connecting collectors and seekers to genuine high-vibrational earth treasures and holistic healing modalities.
+                  Every crystal tells an ancient story—from the tranquil, intuitive depths of raw <strong className="text-[#E9D5FF] font-semibold">Amethyst</strong> to the bold, protective warmth of <strong className="text-[#FDE68A] font-semibold">Tiger’s Eye</strong> and the gentle, heart-centered compassion of <strong className="text-[#FCE7F3] font-semibold">Rose Quartz</strong>. What started as a personal passion for authentic minerals evolved into <strong className="text-[#FDE047] font-bold">@sumukcrystalz5</strong>, a sanctuary connecting collectors and seekers to genuine high-vibrational earth treasures and holistic healing modalities.
                 </p>
 
-                <div className="p-5 rounded-2xl bg-[#1A1224]/90 border border-[#D4AF37]/40 shadow-inner text-white font-normal italic leading-relaxed">
+                <div className="p-5 sm:p-6 rounded-2xl bg-[#241733]/90 border border-[#D4AF37]/50 shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)] text-[#FDFBF7] font-normal italic leading-relaxed">
                   &ldquo;At Sumuk Crystalz 5, every piece is hand-selected with intention and sacredly consecrated. Beyond curating crystals, I offer private sessions in Reiki, Aura Scanning, Tarot, Numerology, Psychic Surgery, and Bespoke Crystal Creations to help you realign your energetic sovereign flow.&rdquo;
                 </div>
               </div>
