@@ -484,7 +484,14 @@ export default function ShopMegaMenu({ onClose }) {
                 <Link
                   key={dim.id}
                   href={dim.href}
-                  onClick={onClose}
+                  onClick={(e) => {
+                    if (activeDimension !== dim.id) {
+                      e.preventDefault();
+                      setActiveDimension(dim.id);
+                    } else {
+                      onClose();
+                    }
+                  }}
                   onMouseEnter={() => setActiveDimension(dim.id)}
                   className={`flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all duration-200 group cursor-pointer ${
                     isSelected

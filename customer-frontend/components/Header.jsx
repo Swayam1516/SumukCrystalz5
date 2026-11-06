@@ -64,6 +64,7 @@ export default function Header() {
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef(null);
   const shopDropdownRef = useRef(null);
+  const megaMenuRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
@@ -76,13 +77,43 @@ export default function Header() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setUserDropdownOpen(false);
       }
-      if (shopDropdownRef.current && !shopDropdownRef.current.contains(event.target)) {
+      if (
+        shopDropdownOpen &&
+        shopDropdownRef.current &&
+        !shopDropdownRef.current.contains(event.target) &&
+        megaMenuRef.current &&
+        !megaMenuRef.current.contains(event.target)
+      ) {
         setShopDropdownOpen(false);
       }
     }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setShopDropdownOpen(false);
+        setUserDropdownOpen(false);
+        setMobileMenuOpen(false);
+      }
+    }
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [shopDropdownOpen]);
+
+  // Lock body scroll when shop mega menu is open
+  useEffect(() => {
+    if (shopDropdownOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [shopDropdownOpen]);
 
   const cartCount = mounted ? getTotalCount() : 0;
   const currentUser = mounted ? user : null;
@@ -110,7 +141,7 @@ export default function Header() {
             : 'bg-[#F8F6F2]/90 border-b border-[#EAE2F2] text-[#29242D] shadow-[0_2px_12px_rgba(41,36,45,0.03)]'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-18 sm:h-20 flex items-center justify-between relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 sm:h-20 flex items-center justify-between relative">
           {/* LEFT: Faceted Gold Wireframe Crystal Logo + Brand Name */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group flex-shrink-0 whitespace-nowrap">
@@ -343,18 +374,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* SHOP MEGA MENU FULL OVERLAY (NEVER CUT OR HALF) */}
-        {shopDropdownOpen && (
-          <div className="fixed inset-0 top-18 sm:top-20 z-50 bg-[#16121D]/60 backdrop-blur-sm overflow-y-auto overscroll-contain animate-fade-in flex justify-center items-start p-3 sm:p-5 lg:p-7">
-            {/* Click outside to close backdrop */}
-            <div
-              className="fixed inset-0 -z-10"
-              onClick={() => setShopDropdownOpen(false)}
-            />
-            <ShopMegaMenu onClose={() => setShopDropdownOpen(false)} />
-          </div>
-        )}
-
         {/* Navigation Slide Drawer */}
         {mobileMenuOpen && (
           <div className="mt-2 max-w-7xl mx-auto rounded-2xl px-6 pt-5 pb-6 bg-white/95 backdrop-blur-2xl border border-[#EAE2F2] space-y-3 animate-fade-in shadow-xl text-[#29242D]">
@@ -493,6 +512,22 @@ export default function Header() {
           </div>
         )}
       </header>
+
+      {/* SHOP MEGA MENU FULL OVERLAY (RENDERED OUTSIDE HEADER TO ATTACH DIRECTLY TO VIEWPORT) */}
+      {shopDropdownOpen && (
+        <div
+          ref={megaMenuRef}
+          className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm overflow-y-auto overscroll-contain animate-fade-in flex justify-center items-start pt-20 sm:pt-24 md:pt-28 pb-12 px-3 sm:px-6"
+        >
+          {/* Backdrop click to close */}
+          <div
+            className="fixed inset-0 -z-10 cursor-pointer"
+            onClick={() => setShopDropdownOpen(false)}
+            aria-hidden="true"
+          />
+          <ShopMegaMenu onClose={() => setShopDropdownOpen(false)} />
+        </div>
+      )}
 
       {/* Global Auth Modal */}
       <AuthModal />
