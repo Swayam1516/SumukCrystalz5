@@ -153,6 +153,11 @@ function StorefrontContent() {
   const [maxPrice, setMaxPrice] = useState(50000);
   const [sortBy, setSortBy] = useState('bestselling');
   const [quickAddedId, setQuickAddedId] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Drawers & Modals
   const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
@@ -410,7 +415,7 @@ function StorefrontContent() {
     return found ? found.label : 'All Sanctuary Specimens';
   }, [selectedDiscoveryFilters, activePillar, filteredProducts.length, activeCategory]);
 
-  const cartTotalItems = getTotalCount();
+  const cartTotalItems = mounted ? getTotalCount() : 0;
   const displayCartCount = cartTotalItems > 0 ? cartTotalItems : 0;
 
   return (

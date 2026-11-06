@@ -120,7 +120,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="light scroll-smooth">
+    <html lang="en" className="light scroll-smooth" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -133,7 +133,10 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-[#F8F6F2] text-[#29242D] font-sans antialiased overflow-x-hidden w-full max-w-full pb-16 md:pb-0 selection:bg-[#EAE2F2] selection:text-[#79539B]">
+      <body
+        className="min-h-screen flex flex-col bg-[#F8F6F2] text-[#29242D] font-sans antialiased overflow-x-hidden w-full max-w-full pb-16 md:pb-0 selection:bg-[#EAE2F2] selection:text-[#79539B]"
+        suppressHydrationWarning
+      >
         <ServiceWorkerCleaner />
         <IntroductorySacredBanner />
         <AnnouncementBanner />

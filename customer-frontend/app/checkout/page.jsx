@@ -126,6 +126,11 @@ export default function CheckoutPage() {
   const [status, setStatus] = useState('idle'); // 'idle' | 'processing' | 'verifying' | 'error'
   const [errorMessage, setErrorMessage] = useState('');
   const [agreedUnboxingPolicy, setAgreedUnboxingPolicy] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Prefill user data if logged in
   useEffect(() => {
@@ -401,6 +406,17 @@ export default function CheckoutPage() {
       setErrorMessage(err.message || 'Payment initiation failed. Please try again.');
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center px-4 py-16 bg-[#FAF7FD]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-purple-900 font-mono tracking-wider uppercase">Loading Sacred Checkout...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (

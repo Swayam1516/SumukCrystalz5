@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCartStore } from '../store/useCart';
@@ -15,7 +15,13 @@ import {
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { openDrawer, getTotalCount } = useCartStore();
-  const cartCount = getTotalCount();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const cartCount = mounted ? getTotalCount() : 0;
 
   const navItems = [
     {

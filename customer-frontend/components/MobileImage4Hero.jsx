@@ -22,10 +22,12 @@ export default function MobileImage4Hero() {
   const [greeting, setGreeting] = useState('Good Morning ☀️');
   const [searchQuery, setSearchQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const cartCount = getTotalCount();
+  const [mounted, setMounted] = useState(false);
+  const cartCount = mounted ? getTotalCount() : 0;
 
   // Dynamic greeting based on current local client time
   useEffect(() => {
+    setMounted(true);
     const updateGreeting = () => {
       const hour = new Date().getHours();
       if (hour >= 5 && hour < 12) {

@@ -207,3 +207,42 @@ EXCEPTION WHEN OTHERS THEN
     -- Ignore
 END $$;
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- 8. CREATE DELIVERY SETTINGS TABLE & SEED GLOBAL CONFIGURATION
+-- ─────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.delivery_settings (
+    id TEXT PRIMARY KEY DEFAULT 'global',
+    origin_city TEXT DEFAULT 'Pune',
+    origin_state TEXT DEFAULT 'Maharashtra',
+    origin_lat NUMERIC(10, 6) DEFAULT 18.5204,
+    origin_lng NUMERIC(10, 6) DEFAULT 73.8567,
+    tier_1_max_km NUMERIC(10, 2) DEFAULT 50,
+    tier_1_fee NUMERIC(10, 2) DEFAULT 50,
+    tier_2_max_km NUMERIC(10, 2) DEFAULT 150,
+    tier_2_fee NUMERIC(10, 2) DEFAULT 100,
+    interstate_fee NUMERIC(10, 2) DEFAULT 150,
+    free_shipping_threshold NUMERIC(10, 2) DEFAULT 5000,
+    is_free_shipping_enabled BOOLEAN DEFAULT true,
+    shipping_enabled BOOLEAN DEFAULT true,
+    shipping_fee NUMERIC(10, 2) DEFAULT 80.00,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+INSERT INTO public.delivery_settings (id, shipping_enabled, shipping_fee, origin_city, origin_state)
+VALUES ('global', true, 80.00, 'Pune', 'Maharashtra')
+ON CONFLICT (id) DO UPDATE SET
+    shipping_enabled = EXCLUDED.shipping_enabled,
+    shipping_fee = EXCLUDED.shipping_fee,
+    updated_at = NOW();
+
+ALTER TABLE public.delivery_settings ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Public full access on delivery_settings" ON public.delivery_settings;
+    CREATE POLICY "Public full access on delivery_settings" ON public.delivery_settings FOR ALL USING (true) WITH CHECK (true);
+EXCEPTION WHEN OTHERS THEN
+    -- Ignore
+END $$;
+
+
