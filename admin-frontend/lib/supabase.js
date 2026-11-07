@@ -1505,17 +1505,20 @@ export async function getSupabaseOrderTracking(orderId, order = null) {
   }
 
   // 2. Query order_tracking_events table if it exists in Supabase
-  try {
-    const { data, error } = await supabase
-      .from('order_tracking_events')
-      .select('*')
-      .eq('order_id', orderId)
-      .order('stage_number', { ascending: true });
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+  if (isUuid) {
+    try {
+      const { data, error } = await supabase
+        .from('order_tracking_events')
+        .select('*')
+        .eq('order_id', orderId)
+        .order('stage_number', { ascending: true });
 
-    if (!error && Array.isArray(data) && data.length > 0) {
-      return data;
-    }
-  } catch (_) {}
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    } catch (_) {}
+  }
 
   // 3. Fallback to generating standard 6 milestones matching the order's state
   const currentStatus = order?.status || order?.order_status || 'created';

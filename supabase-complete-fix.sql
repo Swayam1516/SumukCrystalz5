@@ -245,4 +245,58 @@ EXCEPTION WHEN OTHERS THEN
     -- Ignore
 END $$;
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- 9. CREATE REVIEWS & ORDER ITEMS TABLES FOR PATRON PRODUCT REVIEWS
+-- ─────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID,
+    product_id UUID,
+    order_id UUID,
+    rating INTEGER NOT NULL DEFAULT 5 CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    photo_url TEXT,
+    is_verified BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON public.reviews(product_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON public.reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_order_id ON public.reviews(order_id);
+
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Public full access on reviews" ON public.reviews;
+    CREATE POLICY "Public full access on reviews" ON public.reviews FOR ALL USING (true) WITH CHECK (true);
+EXCEPTION WHEN OTHERS THEN
+    -- Ignore
+END $$;
+
+-- Ensure order_items exists and has is_reviewed column
+CREATE TABLE IF NOT EXISTS public.order_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID,
+    product_id UUID,
+    product_name TEXT NOT NULL DEFAULT '',
+    product_image TEXT,
+    price NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    is_reviewed BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Public full access on order_items" ON public.order_items;
+    CREATE POLICY "Public full access on order_items" ON public.order_items FOR ALL USING (true) WITH CHECK (true);
+EXCEPTION WHEN OTHERS THEN
+    -- Ignore
+END $$;
+
+
 

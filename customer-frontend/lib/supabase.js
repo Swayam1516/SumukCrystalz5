@@ -1706,18 +1706,22 @@ export const STAGE_CONFIGS = [
 export async function getSupabaseOrderTracking(orderId) {
   if (!orderId) return [];
 
-  try {
-    const { data, error } = await supabase
-      .from('order_tracking_events')
-      .select('*')
-      .eq('order_id', orderId)
-      .order('stage_number', { ascending: true });
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
 
-    if (!error && Array.isArray(data) && data.length > 0) {
-      return data;
+  if (isUuid && !isSupabaseOfflineState()) {
+    try {
+      const { data, error } = await supabase
+        .from('order_tracking_events')
+        .select('*')
+        .eq('order_id', orderId)
+        .order('stage_number', { ascending: true });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    } catch (err) {
+      console.warn('Notice querying order_tracking_events:', err.message);
     }
-  } catch (err) {
-    console.warn('Notice querying order_tracking_events:', err.message);
   }
 
   // Resilient fallback based on STAGE_CONFIGS

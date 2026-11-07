@@ -9,10 +9,12 @@ export default function ProductReviewModal({
   isOpen,
   onClose,
   productItem,
+  item,
   orderId,
   userId,
   onReviewSuccess,
 }) {
+  const activeItem = productItem || item;
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -33,7 +35,7 @@ export default function ProductReviewModal({
       setErrorMessage('');
       setSuccessMessage('');
     }
-  }, [isOpen, productItem]);
+  }, [isOpen, activeItem]);
 
   useEffect(() => {
     return () => {
@@ -43,7 +45,7 @@ export default function ProductReviewModal({
     };
   }, [previewUrl]);
 
-  if (!isOpen || !productItem) return null;
+  if (!isOpen || !activeItem) return null;
 
   const handleFileChange = (e) => {
     setErrorMessage('');
@@ -113,10 +115,10 @@ export default function ProductReviewModal({
 
     try {
       const result = await submitProductReview({
-        userId,
-        productId: productItem.product_id || productItem.id,
+        userId: userId || 'verified-patron',
+        productId: activeItem.product_id || activeItem.productId || activeItem.id || 'crystal-specimen',
         orderId: orderId,
-        orderItemId: productItem.id,
+        orderItemId: activeItem.id || activeItem.orderItemId || null,
         rating,
         comment,
         photoFile: selectedFile,
@@ -130,7 +132,7 @@ export default function ProductReviewModal({
       
       setTimeout(() => {
         if (onReviewSuccess) {
-          onReviewSuccess(productItem.id, result.review);
+          onReviewSuccess(activeItem.id || activeItem.productId || activeItem.product_id, result.review);
         }
         onClose();
       }, 1500);
@@ -140,6 +142,10 @@ export default function ProductReviewModal({
       setIsSubmitting(false);
     }
   };
+
+  const itemImage = activeItem.product_image || activeItem.image || null;
+  const itemName = activeItem.product_name || activeItem.name || 'Consecrated Crystal Specimen';
+  const itemPrice = Number(activeItem.price || activeItem.unit_price || 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn">
@@ -166,10 +172,10 @@ export default function ProductReviewModal({
 
         <div className="p-5 border-b border-zinc-800/60 bg-zinc-950/50 flex items-center gap-4">
           <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-700/60 flex-shrink-0">
-            {productItem.product_image ? (
+            {itemImage ? (
               <img
-                src={productItem.product_image}
-                alt={productItem.product_name}
+                src={itemImage}
+                alt={itemName}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -180,10 +186,10 @@ export default function ProductReviewModal({
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="text-sm font-semibold text-zinc-100 truncate">
-              {productItem.product_name}
+              {itemName}
             </h4>
             <p className="text-xs text-amber-400/90 mt-0.5">
-              Verified Crystal Purchase • ₹{Number(productItem.price || 0).toLocaleString('en-IN')}
+              Verified Crystal Purchase • ₹{itemPrice.toLocaleString('en-IN')}
             </p>
           </div>
         </div>

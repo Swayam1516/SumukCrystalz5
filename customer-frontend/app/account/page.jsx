@@ -79,6 +79,25 @@ function AccountPageContent() {
   const [selectedReviewItem, setSelectedReviewItem] = useState(null);
   const [selectedReviewOrderId, setSelectedReviewOrderId] = useState(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewedItemKeys, setReviewedItemKeys] = useState(new Set());
+
+  // Load previously reviewed items from localStorage
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = JSON.parse(localStorage.getItem('sumuk_customer_reviews') || '[]');
+        if (Array.isArray(cached) && cached.length > 0) {
+          const keys = new Set();
+          cached.forEach((r) => {
+            if (r.product_id) keys.add(r.product_id);
+            if (r.order_id) keys.add(r.order_id);
+            if (r.product_name) keys.add(r.product_name);
+          });
+          setReviewedItemKeys(keys);
+        }
+      }
+    } catch (_) {}
+  }, []);
 
   // Profile Data State
   const [profileData, setProfileData] = useState({
@@ -934,47 +953,99 @@ function AccountPageContent() {
                       </div>
                     </div>
 
-                    {/* Items List */}
+                    {/* Items List with Per-Product Write Review Option */}
                     <div className="space-y-3">
-                      {ord.items.map((it, itemIdx) => (
-                        <div key={itemIdx} className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3.5">
-                            <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-[#F8F6F2] border border-[#EAE2F2] flex-shrink-0">
-                              <Image
-                                src={it.image}
-                                alt={it.name}
-                                fill
-                                className="object-cover"
-                              />
+                      {ord.items.map((it, itemIdx) => {
+                        const itId = it.productId || it.product_id || it.id || it.name;
+                        const isItemReviewed = reviewedItemKeys.has(itId) || reviewedItemKeys.has(it.name);
+
+                        return (
+                          <div
+                            key={itemIdx}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 p-3.5 rounded-2xl bg-[#FAF7F2]/70 border border-[#EAE2F2]/70 hover:bg-[#FAF7F2] transition-colors"
+                          >
+                            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                              <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-white border border-[#EAE2F2] flex-shrink-0 shadow-2xs">
+                                <Image
+                                  src={it.image || '/images/products/amethyst.jpg'}
+                                  alt={it.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-serif font-bold text-sm text-[#29242D] truncate">
+                                  {it.name}
+                                </h4>
+                                <div className="flex items-center gap-2 pt-0.5">
+                                  <span className="inline-block px-1.5 py-0.5 rounded bg-[#EAE2F2] border border-[#79539B]/30 text-[10px] font-mono font-bold text-[#79539B]">
+                                    ID: {it.productId || it.product_id || (it.name?.toLowerCase().includes('mala') ? 'MA001' : (it.name?.toLowerCase().includes('decor') || it.name?.toLowerCase().includes('geode') ? 'HO001' : 'BR001'))}
+                                  </span>
+                                  <span className="text-xs text-[#29242D]/60">
+                                    {it.beadSize} • Qty: {it.quantity}
+                                  </span>
+                                </div>
+                                {it.selectedEnergization && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] text-[#C8A65E] font-medium pt-0.5">
+                                    <Sparkles className="w-2.5 h-2.5" />
+                                    <span>Consecrated with 432Hz Sound</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-serif font-bold text-sm text-[#29242D]">
-                                {it.name}
-                              </h4>
-                              <div className="flex items-center gap-2 pt-0.5">
-                                <span className="inline-block px-1.5 py-0.5 rounded bg-[#EAE2F2] border border-[#79539B]/30 text-[10px] font-mono font-bold text-[#79539B]">
-                                  ID: {it.productId || it.product_id || (it.name?.toLowerCase().includes('mala') ? 'MA001' : (it.name?.toLowerCase().includes('decor') || it.name?.toLowerCase().includes('geode') ? 'HO001' : 'BR001'))}
-                                </span>
-                                <span className="text-xs text-[#29242D]/60">
-                                  {it.beadSize} • Qty: {it.quantity}
+
+                            <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#EAE2F2]/50">
+                              <div className="text-left sm:text-right pr-1">
+                                <span className="font-sans font-semibold text-sm tabular-nums text-[#29242D]">
+                                  ₹{(it.price * it.quantity).toLocaleString('en-IN')}
                                 </span>
                               </div>
-                              {it.selectedEnergization && (
-                                <span className="inline-flex items-center gap-1 text-[10px] text-[#C8A65E] font-medium pt-0.5">
-                                  <Sparkles className="w-2.5 h-2.5" />
-                                  <span>Consecrated with 432Hz Sound</span>
-                                </span>
-                              )}
+
+                              <div className="flex items-center gap-2">
+                                {isItemReviewed ? (
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-3 py-1.5 rounded-full shadow-2xs">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>Reviewed</span>
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedReviewItem(it);
+                                      setSelectedReviewOrderId(ord.id || ord._id);
+                                      setIsReviewModalOpen(true);
+                                    }}
+                                    className="px-3.5 py-1.5 rounded-full bg-white hover:bg-[#FAF7F2] border border-[#EADBBA] hover:border-[#D4AF37] text-[#79539B] hover:text-[#5E397B] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap"
+                                    title={`Write review for ${it.name}`}
+                                  >
+                                    <Star className="w-3.5 h-3.5 text-[#C8A65E] fill-[#C8A65E]/30" />
+                                    <span>Write Review</span>
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    addItem({
+                                      id: it.productId || it.id || 'crystal',
+                                      name: it.name,
+                                      price: it.price,
+                                      image: it.image,
+                                      variantLabel: it.beadSize,
+                                      quantity: 1,
+                                    });
+                                    openDrawer();
+                                  }}
+                                  className="p-1.5 rounded-full bg-white hover:bg-[#EAE2F2] border border-[#EAE2F2] text-[#79539B] transition-colors cursor-pointer shadow-2xs"
+                                  title={`Buy ${it.name} again`}
+                                >
+                                  <RefreshCw className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
                           </div>
-
-                          <div className="text-right">
-                            <span className="font-sans font-semibold text-sm tabular-nums text-[#29242D]">
-                              ₹{(it.price * it.quantity).toLocaleString('en-IN')}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Order Action Buttons */}
@@ -1009,32 +1080,22 @@ function AccountPageContent() {
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedReviewItem(ord.items[0]);
-                            setSelectedReviewOrderId(ord._id);
-                            setIsReviewModalOpen(true);
-                          }}
-                          className="px-3.5 py-1.5 rounded-full bg-white hover:bg-[#F8F6F2] border border-[#EAE2F2] text-[#29242D] text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
-                        >
-                          <Star className="w-3.5 h-3.5 text-[#C8A65E]" />
-                          <span>Write Review</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            addItem({
-                              id: ord.items[0].productId || ord.items[0].id || 'crystal',
-                              name: ord.items[0].name,
-                              price: ord.items[0].price,
-                              image: ord.items[0].image,
-                              variantLabel: ord.items[0].beadSize,
-                              quantity: 1,
+                            ord.items.forEach((itemToBuy) => {
+                              addItem({
+                                id: itemToBuy.productId || itemToBuy.id || 'crystal',
+                                name: itemToBuy.name,
+                                price: itemToBuy.price,
+                                image: itemToBuy.image,
+                                variantLabel: itemToBuy.beadSize,
+                                quantity: 1,
+                              });
                             });
                             openDrawer();
                           }}
-                          className="px-4 py-1.5 rounded-full bg-[#79539B] hover:bg-[#684587] text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                          className="px-4 py-1.5 rounded-full bg-[#79539B] hover:bg-[#684587] text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
                         >
-                          Buy Again
+                          <RefreshCw className="w-3 h-3" />
+                          <span>Buy Order Again</span>
                         </button>
                       </div>
                     </div>
@@ -2115,8 +2176,14 @@ function AccountPageContent() {
             setSelectedReviewItem(null);
             setSelectedReviewOrderId(null);
           }}
+          productItem={selectedReviewItem}
           item={selectedReviewItem}
           orderId={selectedReviewOrderId}
+          userId={user?.id || user?._id || 'verified-patron'}
+          onReviewSuccess={(itemId) => {
+            const itemKey = itemId || selectedReviewItem?.productId || selectedReviewItem?.product_id || selectedReviewItem?.name;
+            setReviewedItemKeys((prev) => new Set([...prev, itemKey, selectedReviewItem?.name]));
+          }}
         />
       )}
     </div>
