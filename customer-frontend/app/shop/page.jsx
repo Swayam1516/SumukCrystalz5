@@ -16,6 +16,7 @@ import {
   productMatchesDiscoveryFilters,
   productMatchesPillar,
 } from '../../lib/discoveryTaxonomy';
+import DualTierFilterTicker from '../../components/DualTierFilterTicker';
 import {
   Search,
   ShoppingCart,
@@ -366,6 +367,36 @@ function StorefrontContent() {
       list = list.filter((p) => productMatchesPillar(p, activePillar));
     }
 
+    // 1c. Category avatar or ?category= parameter filtering
+    if (activeCategory && activeCategory !== 'for_you' && activeCategory !== 'all') {
+      const catKey = activeCategory.toLowerCase();
+      list = list.filter((p) => {
+        const name = (p.name || '').toLowerCase();
+        const cat = (p.category || '').toLowerCase();
+        const desc = (p.description || '').toLowerCase();
+
+        if (catKey === 'bracelets') {
+          return name.includes('bracelet') || name.includes('bracelete') || cat.includes('bracelet') || cat.includes('band');
+        }
+        if (catKey === 'malas') {
+          return name.includes('mala') || cat.includes('mala');
+        }
+        if (catKey === 'raw_crystals' || catKey === 'stones' || catKey === 'crystals') {
+          return name.includes('raw') || name.includes('stone') || name.includes('geode') || name.includes('cluster') || cat.includes('stone') || cat.includes('raw') || cat.includes('geode') || cat.includes('cluster');
+        }
+        if (catKey === 'home_decor' || catKey === 'trees') {
+          return name.includes('tree') || cat.includes('tree') || name.includes('decor') || cat.includes('decor') || name.includes('plate') || cat.includes('plate');
+        }
+        if (catKey === 'energy_bands' || catKey === 'chakras') {
+          return Boolean(p.chakra) || name.includes('chakra') || desc.includes('chakra');
+        }
+        if (catKey === 'combos' || catKey === 'towers') {
+          return name.includes('tower') || name.includes('point') || cat.includes('tower') || name.includes('combo') || cat.includes('combo');
+        }
+        return cat.includes(catKey) || name.includes(catKey);
+      });
+    }
+
     // 2. Search query filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -395,7 +426,7 @@ function StorefrontContent() {
     }
 
     return list;
-  }, [catalog, selectedDiscoveryFilters, activePillar, searchQuery, minPrice, maxPrice, sortBy]);
+  }, [catalog, selectedDiscoveryFilters, activePillar, activeCategory, searchQuery, minPrice, maxPrice, sortBy]);
 
   const activeCategoryTitle = useMemo(() => {
     if (selectedDiscoveryFilters.length > 0) {
@@ -663,6 +694,30 @@ function StorefrontContent() {
               );
             })}
           </div>
+        </section>
+
+        {/* ── DUAL TIER INTENTION & ENERGY REGISTER BAR (IMAGE 2) ── */}
+        <section className="rounded-2xl overflow-hidden shadow-md border border-stone-800 my-1 bg-[#050505]">
+          <DualTierFilterTicker
+            selectedIntention={selectedDiscoveryFilters.find((f) => f.startsWith('purpose:')) || (selectedDiscoveryFilters.length === 0 ? 'all' : '')}
+            onSelectIntention={(intentionId) => {
+              if (intentionId === 'all') {
+                const next = selectedDiscoveryFilters.filter((f) => !f.startsWith('purpose:'));
+                setSelectedDiscoveryFilters(next);
+                const params = new URLSearchParams(window.location.search);
+                if (next.length > 0) params.set('filter', next.join(','));
+                else params.delete('filter');
+                params.delete('purpose');
+                window.history.replaceState(null, '', `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`);
+              } else {
+                toggleFilter(intentionId);
+              }
+            }}
+            selectedModality={selectedDiscoveryFilters.find((f) => f.startsWith('energy:')) || ''}
+            onSelectModality={(modalityId) => {
+              toggleFilter(modalityId);
+            }}
+          />
         </section>
 
         {/* ══════════════════════════════════════════════════════════

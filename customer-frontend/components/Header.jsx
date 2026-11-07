@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCartStore } from '../store/useCart';
@@ -513,11 +514,12 @@ export default function Header() {
         )}
       </header>
 
-      {/* SHOP MEGA MENU FULL OVERLAY (RENDERED OUTSIDE HEADER TO ATTACH DIRECTLY TO VIEWPORT) */}
-      {shopDropdownOpen && (
+      {/* SHOP MEGA MENU FULL OVERLAY (PORTAL DIRECTLY TO BODY — NEVER CUT, CLIPPED OR HALF) */}
+      {shopDropdownOpen && mounted && typeof document !== 'undefined' && createPortal(
         <div
           ref={megaMenuRef}
-          className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm overflow-y-auto overscroll-contain animate-fade-in flex justify-center items-start pt-20 sm:pt-24 md:pt-28 pb-12 px-3 sm:px-6"
+          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md overflow-y-auto overscroll-contain animate-fade-in flex justify-center items-start pt-16 sm:pt-20 md:pt-24 pb-16 px-3 sm:px-6"
+          style={{ minHeight: '100vh', width: '100vw' }}
         >
           {/* Backdrop click to close */}
           <div
@@ -526,7 +528,8 @@ export default function Header() {
             aria-hidden="true"
           />
           <ShopMegaMenu onClose={() => setShopDropdownOpen(false)} />
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Global Auth Modal */}

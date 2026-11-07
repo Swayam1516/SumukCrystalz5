@@ -7,6 +7,7 @@ import ServiceWorkerCleaner from '../components/ServiceWorkerCleaner';
 import AnnouncementBanner from '../components/AnnouncementBanner';
 import IntroductorySacredBanner from '../components/IntroductorySacredBanner';
 import MobileBottomNav from '../components/MobileBottomNav';
+import AICustomerChatbot from '../components/AICustomerChatbot';
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sumukcrystalz.com'),
@@ -145,6 +146,7 @@ export default function RootLayout({ children }) {
         <Footer />
         <CartDrawer />
         <AuthModal />
+        <AICustomerChatbot />
         <MobileBottomNav />
       </body>
     </html>

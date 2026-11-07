@@ -197,26 +197,6 @@ function AccountPageContent() {
   const [securityToast, setSecurityToast] = useState('');
   const [updatingPassword, setUpdatingPassword] = useState(false);
 
-  // Active Sessions State
-  const [sessions, setSessions] = useState([
-    {
-      id: 'sess-1',
-      device: 'Windows PC (Chrome 124)',
-      location: 'Pune, Maharashtra, India',
-      ip: '103.211.***.***',
-      activeNow: true,
-      lastActive: 'Active Now',
-    },
-    {
-      id: 'sess-2',
-      device: 'iPhone 15 Pro (Safari)',
-      location: 'Mumbai, Maharashtra, India',
-      ip: '49.36.***.***',
-      activeNow: false,
-      lastActive: 'Yesterday, 8:42 PM',
-    },
-  ]);
-
   // FAQ Accordion Open State
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
@@ -495,12 +475,6 @@ function AccountPageContent() {
 
   const handleRemoveWishlist = (id) => {
     setWishlist(wishlist.filter((w) => w.id !== id));
-  };
-
-  const handleRevokeOtherSessions = () => {
-    setSessions(sessions.filter((s) => s.activeNow));
-    setSecurityToast('All secondary sessions have been revoked.');
-    setTimeout(() => setSecurityToast(''), 3000);
   };
 
   if (!mounted) return null;
@@ -1834,7 +1808,7 @@ function AccountPageContent() {
                   Account Security & Access Keys
                 </h2>
                 <p className="text-xs text-[#29242D]/60 mt-0.5">
-                  Protect your patron account, manage confidential passwords, and audit active sessions.
+                  Protect your patron account and manage confidential passwords.
                 </p>
               </div>
 
@@ -1941,55 +1915,6 @@ function AccountPageContent() {
                   }`}
                 />
               </button>
-            </div>
-
-            {/* Active Sessions Card */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-[#EAE2F2] shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-[#EAE2F2]/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-4 h-4 text-[#79539B]" />
-                  <h3 className="font-serif font-bold text-base text-[#29242D]">
-                    Active Login Sessions
-                  </h3>
-                </div>
-
-                {sessions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={handleRevokeOtherSessions}
-                    className="text-xs text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
-                  >
-                    Revoke Other Sessions
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                {sessions.map((s) => (
-                  <div
-                    key={s.id}
-                    className="p-3.5 rounded-2xl bg-[#F8F6F2] border border-[#EAE2F2] flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[#29242D]">{s.device}</span>
-                        {s.activeNow && (
-                          <span className="px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                            Current Session
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-[#29242D]/60 mt-0.5">
-                        {s.location} • IP: {s.ip}
-                      </p>
-                    </div>
-
-                    <span className="text-[11px] font-medium text-[#29242D]/50 font-mono">
-                      {s.lastActive}
-                    </span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Cinematic3DCrystalHero from '../components/Cinematic3DCrystalHero';
+import DualTierFilterTicker from '../components/DualTierFilterTicker';
 import CoverFlow3DSlideshow from '../components/CoverFlow3DSlideshow';
 import Services3DCoverFlow from '../components/Services3DCoverFlow';
 import TestimonialSlideshow from '../components/TestimonialSlideshow';
@@ -22,6 +23,14 @@ export default function HomePage() {
           Static, clean 4K artwork with fully interactive actions
          ══════════════════════════════════════════════════════════ */}
       <Cinematic3DCrystalHero />
+
+      {/* ══════════════════════════════════════════════════════════
+          1B. DUAL TIER INTENTION & ENERGY FILTER REGISTER (IMAGE 2)
+          Directs directly to shop with active intention / modality filter
+         ══════════════════════════════════════════════════════════ */}
+      <section className="relative z-30 w-full shadow-md">
+        <DualTierFilterTicker />
+      </section>
 
       {/* ══════════════════════════════════════════════════════════
           2. CRYSTAL SANCTUARY MASTERWORKS (CRYSTALS SLIDESHOW)

@@ -26,6 +26,7 @@ import {
   Headphones,
   Radio,
   Search,
+  Compass,
 } from 'lucide-react';
 
 // Custom SVG Crystal Cluster Emblem
@@ -97,6 +98,12 @@ function CrystalFacetArtwork() {
 
 const PRIMARY_ACTIONS = [
   {
+    id: 'guide',
+    label: 'Website UI Guide',
+    icon: Compass,
+    query: 'Show me the website navigation guide and how to use the UI',
+  },
+  {
     id: 'find',
     label: 'Find a Crystal',
     icon: Sparkles,
@@ -154,7 +161,7 @@ export default function AICustomerChatbot() {
       isWelcomeBox: true,
       text: 'Sanctuary dialogue refreshed.\nHow can I help you explore **Sumuk Crystalz** today?',
       products: [],
-      quickReplies: ['Find a Crystal Under ₹1000', 'Track My Order', 'Shipping Rates', 'Water Safety Guide'],
+      quickReplies: ['Website UI Guide', 'How to Filter Products', 'How to Write a Review', 'Track My Order', 'Shipping Rates'],
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -332,7 +339,7 @@ export default function AICustomerChatbot() {
         isWelcomeBox: true,
         text: 'Sanctuary dialogue refreshed.\nHow can I help you explore **Sumuk Crystalz** today?',
         products: [],
-        quickReplies: ['Find a Crystal Under ₹1000', 'Track My Order', 'Shipping Rates', 'Water Safety Guide'],
+        quickReplies: ['Website UI Guide', 'How to Filter Products', 'How to Write a Review', 'Track My Order', 'Shipping Rates'],
         timestamp: new Date().toISOString(),
       },
     ]);

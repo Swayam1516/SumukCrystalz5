@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 // Exact dataset preserved from existing records
 export const DEFAULT_INTENTIONS = [
@@ -36,8 +37,25 @@ export default function DualTierFilterTicker({
   isMarquee = false,
   className = '',
 }) {
+  const router = useRouter();
   const row1ScrollRef = useRef(null);
   const row2ScrollRef = useRef(null);
+
+  const handleIntentionClick = (itemId) => {
+    if (onSelectIntention) {
+      onSelectIntention(itemId);
+    } else {
+      router.push(itemId === 'all' ? '/shop' : `/shop?filter=${encodeURIComponent(itemId)}`);
+    }
+  };
+
+  const handleModalityClick = (itemId) => {
+    if (onSelectModality) {
+      onSelectModality(itemId);
+    } else {
+      router.push(`/shop?filter=${encodeURIComponent(itemId)}`);
+    }
+  };
 
   // Enable seamless mouse wheel horizontal scrolling
   useEffect(() => {
@@ -109,14 +127,14 @@ export default function DualTierFilterTicker({
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => onSelectIntention && onSelectIntention(item.id)}
+                    onClick={() => handleIntentionClick(item.id)}
                     className="group inline-flex items-center cursor-pointer transition-all duration-200 outline-none"
                   >
                     <span
                       className={`text-[13.5px] tracking-normal transition-colors duration-200 ${
                         isActive
-                          ? 'text-white font-semibold'
-                          : 'text-[#D1D5DB] font-medium group-hover:text-white'
+                          ? 'text-white font-bold'
+                          : 'text-[#F3F4F6] font-medium group-hover:text-white'
                       }`}
                     >
                       {item.label}
@@ -149,14 +167,14 @@ export default function DualTierFilterTicker({
                     <button
                       key={`dup-${item.id}`}
                       type="button"
-                      onClick={() => onSelectIntention && onSelectIntention(item.id)}
+                      onClick={() => handleIntentionClick(item.id)}
                       className="group inline-flex items-center cursor-pointer transition-all duration-200 outline-none"
                     >
                       <span
                         className={`text-[13.5px] tracking-normal transition-colors duration-200 ${
                           isActive
-                            ? 'text-white font-semibold'
-                            : 'text-[#D1D5DB] font-medium group-hover:text-white'
+                            ? 'text-white font-bold'
+                            : 'text-[#F3F4F6] font-medium group-hover:text-white'
                         }`}
                       >
                         {item.label}
@@ -222,14 +240,14 @@ export default function DualTierFilterTicker({
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => onSelectModality && onSelectModality(item.id)}
+                    onClick={() => handleModalityClick(item.id)}
                     className="group inline-flex items-center cursor-pointer transition-all duration-200 outline-none relative"
                   >
                     <span
                       className={`text-[13px] tracking-[-0.01em] transition-all duration-200 ${
                         isActive
-                          ? 'text-white font-medium underline underline-offset-8 decoration-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]'
-                          : 'text-[#9CA3AF] font-normal group-hover:text-white'
+                          ? 'text-white font-semibold underline underline-offset-8 decoration-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]'
+                          : 'text-[#E5E7EB] font-medium group-hover:text-white'
                       }`}
                     >
                       {item.label}
@@ -251,14 +269,14 @@ export default function DualTierFilterTicker({
                     <button
                       key={`dup-${item.id}`}
                       type="button"
-                      onClick={() => onSelectModality && onSelectModality(item.id)}
+                      onClick={() => handleModalityClick(item.id)}
                       className="group inline-flex items-center cursor-pointer transition-all duration-200 outline-none relative"
                     >
                       <span
                         className={`text-[13px] tracking-[-0.01em] transition-all duration-200 ${
                           isActive
-                            ? 'text-white font-medium underline underline-offset-8 decoration-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]'
-                            : 'text-[#9CA3AF] font-normal group-hover:text-white'
+                            ? 'text-white font-semibold underline underline-offset-8 decoration-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]'
+                            : 'text-[#E5E7EB] font-medium group-hover:text-white'
                         }`}
                       >
                         {item.label}

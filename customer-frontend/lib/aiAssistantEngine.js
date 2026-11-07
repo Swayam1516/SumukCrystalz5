@@ -483,6 +483,75 @@ export async function processCustomerMessage({
     };
   }
 
+  // 0. UI & WEBSITE NAVIGATION GUIDE INTENT
+  const isUiGuideQuery =
+    lower.includes('ui') ||
+    lower.includes('website guide') ||
+    lower.includes('how to use') ||
+    lower.includes('how do i use') ||
+    lower.includes('how does the site work') ||
+    lower.includes('navigation') ||
+    lower.includes('how to filter') ||
+    lower.includes('how to review') ||
+    lower.includes('write review') ||
+    lower.includes('how to write a review') ||
+    lower.includes('how to buy') ||
+    lower.includes('how to checkout') ||
+    lower.includes('where is my cart') ||
+    lower.includes('how to order') ||
+    lower.includes('where is founder story') ||
+    lower.includes('how to book consultation') ||
+    lower.includes('how to book service') ||
+    lower.includes('how to search');
+
+  if (isUiGuideQuery) {
+    if (lower.includes('review')) {
+      return {
+        reply: `**How to Write a Product Review**\n\n1. Sign in to your account and tap **[MY ACCOUNT & ORDERS](/account)** in the top navigation.\n2. Go to the **Orders** tab to view your placed orders.\n3. Every product in your order now features its own dedicated **Write Review** button.\n4. Tap **Write Review**, select your 1–5 star rating, write your honest feedback, upload an optional photo, and submit!\n5. Once submitted, your review is permanently saved with a green **Reviewed** checkmark badge.`,
+        products: [],
+        quickReplies: ['Go to My Orders', 'Browse Shop', 'Help on WhatsApp'],
+      };
+    }
+
+    if (lower.includes('filter') || lower.includes('category') || lower.includes('search')) {
+      return {
+        reply: `**How to Browse & Filter Products**\n\n1. **Shop Mega Menu**: Tap **[SHOP](/shop)** in the header navigation to open our 6-Dimension Category menu (Purpose, Energy System, Crystal Specimen, Jewellery, Bead Size, Home & Space).\n2. **Intentions & Energy Bar**: On the **[Shop Page](/shop)** and homepage, use the dark two-tier register bar to filter by intentions (*Love & Relationships, Money & Abundance, Protection*) or sacred energy modalities (*7 Chakras, Zodiac, Numerology, Vastu*).\n3. **Search Bar**: Type any crystal name (e.g. *Pyrite, Amethyst, Rose Quartz*) or bead size directly into the search bar at the top of the storefront.\n4. **Discovery Filters Drawer**: Tap the **Filters** button to fine-tune price range, bead sizes (4mm–12mm+), or sort by bestselling and customer ratings.`,
+        products: [],
+        quickReplies: ['Explore Shop', '7 Chakra Crystals', 'Pyrite Wealth Bands'],
+      };
+    }
+
+    if (lower.includes('cart') || lower.includes('checkout') || lower.includes('buy') || lower.includes('order')) {
+      return {
+        reply: `**How to Place an Order & Checkout**\n\n1. **Add to Cart**: Click the **Cart Icon** or **Explore Collection** on any crystal card to add it to your consecrated cart.\n2. **Review Cart**: Tap the **Shopping Cart Icon** in the top-right header anytime to slide out your cart drawer.\n3. **Checkout**: Tap **Proceed to Sanctuary Checkout** to enter your delivery address and choose secure payment (Razorpay UPI, Cards, NetBanking, or COD).\n4. **Confirmation**: You will receive an instant order confirmation with live tracking in your **[My Account](/account)** dashboard.`,
+        products: [],
+        quickReplies: ['View My Cart', 'Track My Order', 'Shipping Info'],
+      };
+    }
+
+    if (lower.includes('founder') || lower.includes('soumya') || lower.includes('story')) {
+      return {
+        reply: `**Founder Story & Philosophy**\n\nTap **[FOUNDER STORY](/about)** in the top navigation to read about **Soumyaa Naveen**, certified Usui Reiki Master, Aura Analyst, and Mineral Curator.\n\nDiscover how each crystal is ethically fair-mined, individually hand-selected, and energetically consecrated with Solfeggio 432Hz sound frequencies and sacred mantras before arriving at your sanctuary.`,
+        products: [],
+        quickReplies: ['Read Founder Story', 'View Modalities & Services', 'WhatsApp Founder'],
+      };
+    }
+
+    if (lower.includes('service') || lower.includes('consultation') || lower.includes('session') || lower.includes('reiki') || lower.includes('aura')) {
+      return {
+        reply: `**How to Book a Sacred Service / Consultation**\n\n1. Tap **[SERVICES](/services)** in the top navigation to view all 9 metaphysical modalities.\n2. Choose from **Usui Reiki Healing, Aura Biofield Scanning, Numerology Dossiers, Tarot Readings, Psychic Surgery**, and **Bespoke Crystal Creations**.\n3. Tap on any service card to view complete session options and pricing tiers.\n4. Book directly via WhatsApp or submit your session inquiry form with your preferred date!`,
+        products: [],
+        quickReplies: ['Explore All Services', 'Book on WhatsApp', 'Find Crystals'],
+      };
+    }
+
+    return {
+      reply: `**Sumuk Crystalz 5 — Website Navigation Guide**\n\nWelcome to our sacred sanctuary! Here is a quick guide to using the website:\n\n1. **[SHOP](/shop)**: Browse authentic consecrated crystals, jewellery, malas, and gemstone trees. Use the two-tier filter ticker to filter by Intention or Energy System.\n2. **[SERVICES](/services)**: Book personalized Reiki, Aura Checking, Tarot, and Numerology sessions with Usui Reiki Master Soumyaa Naveen.\n3. **[FOUNDER STORY](/about)**: Learn about our mineral sourcing and consecration rituals.\n4. **[MY ACCOUNT & ORDERS](/account)**: Track your shipments in real-time, review purchased products, and manage your sanctuary profile.\n5. **Shopping Cart**: Tap the cart icon in the top right anytime to view selected items and proceed to secure checkout.`,
+      products: [],
+      quickReplies: ['How to Filter Products', 'How to Write a Review', 'How to Place an Order', 'Explore Services'],
+    };
+  }
+
   // 1. ORDER TRACKING INTENT
   const isOrderQuery =
     lower.includes('track') ||

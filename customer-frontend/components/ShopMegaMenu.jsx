@@ -151,7 +151,7 @@ export const DIMENSION_CARDS = {
       name: 'Seven Chakra Crystals',
       intention: 'Align • Activate • Balance',
       image: '/images/categories/category-stones.jpg',
-      href: '/shop?pillar=energy_system&filter=energy:root-chakra',
+      href: '/shop?pillar=energy_system&filter=energy:7-chakras',
     },
     {
       id: 'energy_heart',
@@ -183,7 +183,7 @@ export const DIMENSION_CARDS = {
       name: 'Zodiac Alignment',
       intention: 'Birthstones & Astrological Resonators',
       image: '/images/megamenu/tigers-eye.png',
-      href: '/shop?pillar=energy_system&filter=energy:zodiac-leo',
+      href: '/shop?pillar=energy_system&filter=energy:zodiac',
     },
     {
       id: 'energy_vastu',
@@ -191,7 +191,7 @@ export const DIMENSION_CARDS = {
       name: 'Vastu Energy Direction',
       intention: 'North, East & Centre Harmony',
       image: '/images/categories/category-stones.jpg',
-      href: '/shop?pillar=energy_system&filter=energy:vastu-north',
+      href: '/shop?pillar=energy_system&filter=energy:vastu',
     },
   ],
 
@@ -484,13 +484,8 @@ export default function ShopMegaMenu({ onClose }) {
                 <Link
                   key={dim.id}
                   href={dim.href}
-                  onClick={(e) => {
-                    if (activeDimension !== dim.id) {
-                      e.preventDefault();
-                      setActiveDimension(dim.id);
-                    } else {
-                      onClose();
-                    }
+                  onClick={() => {
+                    onClose?.();
                   }}
                   onMouseEnter={() => setActiveDimension(dim.id)}
                   className={`flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all duration-200 group cursor-pointer ${

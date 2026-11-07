@@ -438,40 +438,82 @@ export function productMatchesDiscoveryFilters(product, selectedFilterIds = []) 
   // Helper: test if product matches a single filter ID
   const matchesSingleFilter = (filterId) => {
     const fid = filterId.toLowerCase();
+    if (fid === 'all') return true;
     if (assignedSet.has(fid)) return true;
 
     // Check stripped value (e.g., 'money-abundance')
     const stripped = fid.includes(':') ? fid.split(':')[1] : fid;
+    if (stripped === 'all') return true;
     if (assignedSet.has(stripped)) return true;
 
     // 1. Purpose matching
     if (fid.startsWith('purpose:')) {
-      if (stripped === 'money-abundance' && (pDesc.includes('money') || pDesc.includes('wealth') || pDesc.includes('abundance') || pName.includes('pyrite') || pName.includes('citrine'))) return true;
-      if (stripped === 'love-relationships' && (pDesc.includes('love') || pDesc.includes('relationship') || pName.includes('rose quartz') || pDesc.includes('rose quartz'))) return true;
-      if (stripped === 'protection' && (pDesc.includes('protect') || pDesc.includes('shield') || pName.includes('tourmaline') || pName.includes('obsidian') || pName.includes('tiger'))) return true;
-      if (stripped === 'peace-relaxation' && (pDesc.includes('calm') || pDesc.includes('peace') || pDesc.includes('relax') || pName.includes('amethyst'))) return true;
-      if (stripped === 'confidence' && (pDesc.includes('confidence') || pDesc.includes('courage') || pName.includes('tiger'))) return true;
-      if (stripped === 'healing-wellness' && (pDesc.includes('heal') || pDesc.includes('wellness') || pName.includes('fluorite') || pName.includes('clear quartz'))) return true;
+      if (stripped === 'money-abundance' && (pDesc.includes('money') || pDesc.includes('wealth') || pDesc.includes('abundance') || pDesc.includes('prosperity') || pName.includes('pyrite') || pName.includes('citrine'))) return true;
+      if (stripped === 'love-relationships' && (pDesc.includes('love') || pDesc.includes('relationship') || pDesc.includes('romance') || pName.includes('rose quartz') || pDesc.includes('rose quartz') || pDesc.includes('rhodonite'))) return true;
+      if (stripped === 'protection' && (pDesc.includes('protect') || pDesc.includes('shield') || pDesc.includes('evil eye') || pDesc.includes('grounding') || pName.includes('tourmaline') || pName.includes('obsidian') || pName.includes('tiger') || pDesc.includes('black tourmaline'))) return true;
+      if (stripped === 'peace-relaxation' && (pDesc.includes('calm') || pDesc.includes('peace') || pDesc.includes('relax') || pDesc.includes('serenity') || pDesc.includes('stress') || pName.includes('amethyst') || pName.includes('selenite'))) return true;
+      if (stripped === 'focus-studies' && (pDesc.includes('focus') || pDesc.includes('study') || pDesc.includes('studies') || pDesc.includes('concentration') || pDesc.includes('clarity') || pName.includes('fluorite') || pName.includes('clear quartz'))) return true;
+      if (stripped === 'confidence' && (pDesc.includes('confidence') || pDesc.includes('courage') || pDesc.includes('power') || pName.includes('tiger') || pName.includes('carnelian') || pDesc.includes('solar plexus'))) return true;
+      if (stripped === 'career-business' && (pDesc.includes('career') || pDesc.includes('business') || pDesc.includes('success') || pDesc.includes('luck') || pName.includes('pyrite') || pName.includes('aventurine') || pName.includes('green aventurine'))) return true;
+      if (stripped === 'manifestation' && (pDesc.includes('manifest') || pDesc.includes('manifestation') || pDesc.includes('intention') || pName.includes('pyrite') || pName.includes('clear quartz') || pName.includes('citrine'))) return true;
+      if (stripped === 'spiritual-growth' && (pDesc.includes('spiritual') || pDesc.includes('meditation') || pDesc.includes('intuition') || pDesc.includes('awakening') || pName.includes('amethyst') || pName.includes('labradorite') || pName.includes('selenite') || pName.includes('chakra'))) return true;
+      if (stripped === 'healing-wellness' && (pDesc.includes('heal') || pDesc.includes('wellness') || pDesc.includes('vitality') || pDesc.includes('recovery') || pName.includes('fluorite') || pName.includes('clear quartz') || pName.includes('jasper') || pName.includes('jade'))) return true;
       const purposeName = stripped.replace(/-/g, ' ');
       return pName.includes(purposeName) || pDesc.includes(purposeName) || assignedSet.has(purposeName);
     }
 
     // 2. Energy System matching
     if (fid.startsWith('energy:')) {
-      // Chakras
-      if (stripped.includes('root') && (pChakra.includes('root') || pChakra.includes('muladhara'))) return true;
-      if (stripped.includes('sacral') && (pChakra.includes('sacral') || pChakra.includes('svadhishthana'))) return true;
-      if (stripped.includes('solar-plexus') && (pChakra.includes('solar plexus') || pChakra.includes('manipura') || pName.includes('pyrite') || pName.includes('citrine'))) return true;
-      if (stripped.includes('heart') && (pChakra.includes('heart') || pChakra.includes('anahata') || pName.includes('rose quartz') || pDesc.includes('heart'))) return true;
-      if (stripped.includes('throat') && (pChakra.includes('throat') || pChakra.includes('vishuddha'))) return true;
+      // General Chakras grouping
+      if (stripped === '7-chakras' || stripped === 'chakras' || stripped === 'chakra') {
+        return Boolean(pChakra && pChakra.length > 0) || pName.includes('chakra') || pDesc.includes('chakra');
+      }
+      // Specific Chakras
+      if (stripped.includes('root') && (pChakra.includes('root') || pChakra.includes('muladhara') || pDesc.includes('root chakra'))) return true;
+      if (stripped.includes('sacral') && (pChakra.includes('sacral') || pChakra.includes('svadhishthana') || pDesc.includes('sacral chakra'))) return true;
+      if (stripped.includes('solar-plexus') && (pChakra.includes('solar plexus') || pChakra.includes('manipura') || pName.includes('pyrite') || pName.includes('citrine') || pDesc.includes('solar plexus'))) return true;
+      if (stripped.includes('heart') && (pChakra.includes('heart') || pChakra.includes('anahata') || pName.includes('rose quartz') || pDesc.includes('heart chakra') || pDesc.includes('heart'))) return true;
+      if (stripped.includes('throat') && (pChakra.includes('throat') || pChakra.includes('vishuddha') || pDesc.includes('throat chakra'))) return true;
       if (stripped.includes('third-eye') && (pChakra.includes('third eye') || pChakra.includes('ajna') || pName.includes('amethyst') || pDesc.includes('third eye'))) return true;
-      if (stripped.includes('crown') && (pChakra.includes('crown') || pChakra.includes('sahasrara') || pName.includes('clear quartz') || pName.includes('amethyst'))) return true;
+      if (stripped.includes('crown') && (pChakra.includes('crown') || pChakra.includes('sahasrara') || pName.includes('clear quartz') || pName.includes('amethyst') || pDesc.includes('crown chakra'))) return true;
+
       // Zodiac
+      if (stripped === 'zodiac' || stripped === 'astrology') {
+        return Boolean(pZodiac && pZodiac.length > 0) || pName.includes('zodiac') || pDesc.includes('zodiac') || pDesc.includes('astrology') || pDesc.includes('birthstone');
+      }
       if (stripped.startsWith('zodiac-')) {
         const sign = stripped.replace('zodiac-', '');
         return pZodiac.includes(sign) || pDesc.includes(sign) || pName.includes(sign);
       }
-      // Planetary, Numerology, Aura, Vastu
+
+      // Numerology
+      if (stripped === 'numerology' || stripped === 'numbers') {
+        return pDesc.includes('numerology') || pDesc.includes('number') || pName.includes('numerology') || pDesc.includes('life path') || assigned.some((a) => a.includes('num-'));
+      }
+      if (stripped.startsWith('num-')) {
+        const numVal = stripped.replace('num-', '');
+        return pDesc.includes(`number ${numVal}`) || pDesc.includes(`life path ${numVal}`) || assignedSet.has(stripped);
+      }
+
+      // Planetary
+      if (stripped === 'planetary' || stripped === 'planetary-energy') {
+        return pDesc.includes('planet') || pDesc.includes('astrology') || pDesc.includes('sun') || pDesc.includes('moon') || pDesc.includes('mars') || pDesc.includes('jupiter') || pDesc.includes('saturn') || pDesc.includes('mercury') || pDesc.includes('venus') || pDesc.includes('rahu') || pDesc.includes('ketu') || assigned.some((a) => a.includes('planet-'));
+      }
+      if (stripped.startsWith('planet-')) {
+        const planet = stripped.replace('planet-', '');
+        return pDesc.includes(planet) || pName.includes(planet);
+      }
+
+      // Aura & Energy
+      if (stripped === 'aura-energy' || stripped === 'aura') {
+        return pDesc.includes('aura') || pName.includes('aura') || pDesc.includes('biofield') || pDesc.includes('vibration') || pDesc.includes('energy');
+      }
+
+      // Vastu Remedy
+      if (stripped === 'vastu' || stripped === 'vastu-remedy') {
+        return pDesc.includes('vastu') || pName.includes('vastu') || pCategory.includes('tree') || pName.includes('tree') || pCategory.includes('pyramid') || pName.includes('pyramid') || pCategory.includes('plate') || pName.includes('plate');
+      }
+
       const energyTerm = stripped.replace(/-/g, ' ');
       return pDesc.includes(energyTerm) || pName.includes(energyTerm);
     }
